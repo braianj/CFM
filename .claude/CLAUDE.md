@@ -188,9 +188,16 @@ labels with team IDs when participants are known.
   could still reach, mirroring the official per-team sheets, and never includes
   the other tournament.
 - The rosters view shows the registered squad of every team in scope, or of a
-  single team when one is selected. It falls back to the versioned rosters while
-  `players` is empty in Firestore, the same way matches and teams do. The panel
-  must keep reading the raw `players` collection so its publish check stays true.
+  single team when one is selected. The panel must keep reading the raw `players`
+  collection so its publish check stays true.
+- The public rosters merge `src/data/players.ts` with the published documents by
+  ID (`mergeRosters`). Never switch between the two lists on a condition such as
+  `players.length`: a published collection arrives over several snapshots, and an
+  all-or-nothing switch blanks the squads that have not arrived yet.
+- Because the versioned squad is the baseline, a player is removed by setting
+  `active: false`, never by deleting the document. A deleted document would fall
+  back to the versioned entry and the player would reappear. Deactivating also
+  keeps the events that already reference that player.
 - Changing tournament clears the team filter, and a stored team outside the
   selected scope falls back to all teams.
 - Matches are grouped chronologically by day.

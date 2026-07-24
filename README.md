@@ -46,7 +46,7 @@ Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambi
 - cargar o quitar resultados, incluso parciales en vivo;
 - indicar si un partido se definió en tiempo reglamentario, en tiempo extra o por penales;
 - registrar goles y asistencias;
-- administrar los planteles y números de camiseta;
+- administrar los planteles, y dar de baja o reactivar jugadores;
 - definir los convocados y su número de camiseta para cada partido;
 - registrar primera y segunda asistencia, período y tiempo de juego;
 - registrar faltas, faltas graves y minutos de penalización;
@@ -62,7 +62,7 @@ La web pública puede ser visitada por cualquiera sin iniciar sesión. Las regla
 
 Los equipos, el fixture oficial y la configuración están versionados en el proyecto y funcionan como respaldo cuando Firestore está vacío o no responde. Los resultados y las estadísticas se administran desde el panel.
 
-Los planteles inscriptos están en `src/data/players.ts`: 139 jugadores en los once equipos. Se guarda el nombre y el rol declarado (`C` capitán, `A` asistente, `GK` arquero). Algunas planillas de inscripción incluyen documento y fecha de nacimiento, y esos datos no se almacenan ni se publican. Los números de camiseta tampoco viven ahí, sino en la convocatoria de cada partido.
+Los planteles inscriptos están en `src/data/players.ts`: 139 jugadores en los once equipos. El sitio los combina con lo publicado en Firestore usando el ID de cada jugador, así que un plantel nunca queda vacío mientras los documentos todavía están llegando. Por eso el panel da de baja a un jugador en vez de borrarlo: si se borrara el documento, volvería a aparecer desde el repositorio. Se guarda el nombre y el rol declarado (`C` capitán, `A` asistente, `GK` arquero). Algunas planillas de inscripción incluyen documento y fecha de nacimiento, y esos datos no se almacenan ni se publican. Los números de camiseta tampoco viven ahí, sino en la convocatoria de cada partido.
 
 Los IDs de los partidos siguen los códigos de la organización: `h-1` a `h-15` y `d-1` a `d-10` para la fase regular, más `h-rep-a`, `h-rep-b`, `h-final-a`, `h-final-b`, `d-rep`, `d-sf1`, `d-sf2`, `d-3er` y `d-final`.
 

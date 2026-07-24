@@ -11,6 +11,7 @@ import { TIMEZONE, tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
 import type { Category, Match, MatchEvent, Team } from './types/tournament'
 import { ALL_TEAMS, filterMatchesByTeam } from './utils/matches'
+import { mergeRosters } from './utils/rosters'
 import { calculatePlayerStatistics } from './utils/statistics'
 import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
@@ -48,8 +49,7 @@ export default function App() {
   const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
   const { matches, teams, players, events, usingLiveData } = useTournamentData()
 
-  // Rosters fall back to the versioned squads while none are published, like matches and teams.
-  const rosterPlayers = players.length ? players : officialPlayers
+  const rosterPlayers = useMemo(() => mergeRosters(officialPlayers, players), [players])
   const categories = scopeCategories[scope]
   const scopedTeams = useMemo(() => teams.filter((team) => categories.includes(team.category)), [categories, teams])
   const scopedMatches = useMemo(() => matches.filter((match) => categories.includes(match.category)), [categories, matches])

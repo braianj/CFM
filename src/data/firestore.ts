@@ -59,9 +59,6 @@ export const removeMatchEvent = (eventId: string) =>
 export const savePlayer = (player: Player) =>
   setDoc(doc(db, 'players', player.id), player)
 
-export const removePlayer = (playerId: string) =>
-  deleteDoc(doc(db, 'players', playerId))
-
 export const saveMatchRosterEntry = (entry: MatchRosterEntry) =>
   setDoc(doc(db, 'matchRosters', entry.id), entry)
 

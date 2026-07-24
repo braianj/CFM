@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { SegmentedControl } from '../components/SegmentedControl'
-import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, removePlayer, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
+import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
 import { players as officialPlayers } from '../data/players'
 import { TIMEZONE, stageLabels, statusLabels } from '../data/tournamentConfig'
@@ -278,7 +278,19 @@ function StatisticsAdmin({ category, matches, teams, players, rosters, events, n
       <section className={styles.section}>
         <h2>Planteles</h2>
         <PlayerForm category={category} teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
-        <div className={styles.events}>{players.map((player) => <div key={player.id}><span><strong>{player.name}</strong> · #{player.number ?? '—'} · {teams.find((team) => team.id === player.teamId)?.name}</span><button type="button" className={styles.danger} onClick={() => removePlayer(player.id)}>Eliminar</button></div>)}</div>
+        <p className={styles.hint}>Dar de baja oculta al jugador del sitio y de las convocatorias, sin perder las estadísticas que ya tenga cargadas.</p>
+        <div className={styles.events}>{players.map((player) => (
+          <div key={player.id} className={player.active ? undefined : styles.inactive}>
+            <span><strong>{player.name}</strong>{player.role ? ` · ${player.role}` : ''} · {teams.find((team) => team.id === player.teamId)?.name}{player.active ? '' : ' · dado de baja'}</span>
+            <button
+              type="button"
+              className={player.active ? styles.danger : undefined}
+              onClick={() => savePlayer({ ...player, active: !player.active })}
+            >
+              {player.active ? 'Dar de baja' : 'Reactivar'}
+            </button>
+          </div>
+        ))}</div>
       </section>
       <section className={styles.section}>
         <h2>Cargar gol, asistencia o falta</h2>
@@ -333,7 +345,7 @@ function MatchRosterForm({ match, teams, players, entries, onSaved }: {
   match: Match; teams: Team[]; players: Player[]; entries: MatchRosterEntry[]; onSaved: () => void
 }) {
   const eligibleTeamIds = [match.homeTeamId, match.awayTeamId]
-  const availablePlayers = players.filter((player) => eligibleTeamIds.includes(player.teamId) && !entries.some((entry) => entry.playerId === player.id))
+  const availablePlayers = players.filter((player) => player.active && eligibleTeamIds.includes(player.teamId) && !entries.some((entry) => entry.playerId === player.id))
   const [playerId, setPlayerId] = useState('')
   const [jerseyNumber, setJerseyNumber] = useState('')
   const submit = async (event: FormEvent) => {
