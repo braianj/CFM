@@ -5,6 +5,8 @@ import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { StatisticsTable } from './components/StatisticsTable'
 import { TeamFilter } from './components/TeamFilter'
+import { TeamRosters } from './components/TeamRosters'
+import { players as officialPlayers } from './data/players'
 import { TIMEZONE, tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
 import type { Category, Match, MatchEvent, Team } from './types/tournament'
@@ -13,7 +15,7 @@ import { calculatePlayerStatistics } from './utils/statistics'
 import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
 
-type View = 'matches' | 'standings' | 'statistics'
+type View = 'matches' | 'rosters' | 'standings' | 'statistics'
 type Scope = Category | 'all'
 
 const scopeCategories: Record<Scope, Category[]> = {
@@ -30,6 +32,7 @@ const scopeLabels: Record<Scope, string> = {
 
 const viewSubtitles: Record<View, string> = {
   matches: 'Calendario y resultados',
+  rosters: 'Jugadores inscriptos por equipo',
   standings: 'Tabla calculada desde los resultados',
   statistics: 'Goles, asistencias y faltas',
 }
@@ -41,10 +44,12 @@ const readStored = <T extends string>(key: string, allowed: T[], fallback: T): T
 
 export default function App() {
   const [scope, setScopeState] = useState<Scope>(() => readStored('cfm-category', ['all', 'men', 'women'], 'all'))
-  const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'standings', 'statistics'], 'matches'))
+  const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'rosters', 'standings', 'statistics'], 'matches'))
   const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
-  const { matches, teams, events, usingLiveData } = useTournamentData()
+  const { matches, teams, players, events, usingLiveData } = useTournamentData()
 
+  // Rosters fall back to the versioned squads while none are published, like matches and teams.
+  const rosterPlayers = players.length ? players : officialPlayers
   const categories = scopeCategories[scope]
   const scopedTeams = useMemo(() => teams.filter((team) => categories.includes(team.category)), [categories, teams])
   const scopedMatches = useMemo(() => matches.filter((match) => categories.includes(match.category)), [categories, matches])
@@ -86,8 +91,8 @@ export default function App() {
           { value: 'all', label: 'Todos' }, { value: 'men', label: 'Masculino' }, { value: 'women', label: 'Femenino' },
         ]} />
         <SegmentedControl label="Vista" value={view} onChange={setView} options={[
-          { value: 'matches', label: 'Partidos' }, { value: 'standings', label: 'Posiciones' },
-          { value: 'statistics', label: 'Estadísticas' },
+          { value: 'matches', label: 'Partidos' }, { value: 'rosters', label: 'Planteles' },
+          { value: 'standings', label: 'Posiciones' }, { value: 'statistics', label: 'Estadísticas' },
         ]} />
       </header>
       <main className={styles.main}>
@@ -109,6 +114,15 @@ export default function App() {
               timezone={TIMEZONE}
               showCategory={categories.length > 1}
               scrollKey={`${scope}-${selectedTeam?.id ?? ALL_TEAMS}`}
+            />
+          </>
+        ) : view === 'rosters' ? (
+          <>
+            <TeamFilter teams={scopedTeams} value={selectedTeam?.id ?? ALL_TEAMS} onChange={setTeamId} />
+            <TeamRosters
+              teams={selectedTeam ? [selectedTeam] : scopedTeams}
+              players={rosterPlayers}
+              showCategory={categories.length > 1}
             />
           </>
         ) : view === 'standings' ? (

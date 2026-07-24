@@ -1,0 +1,12 @@
+.rosters { display: grid; gap: 1rem; }
+.team { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.heading { align-items: center; border-bottom: 1px solid var(--border); display: grid; gap: .75rem; grid-template-columns: 5px 1fr auto; padding: .85rem .9rem; }
+.marker { border-radius: 99px; height: 30px; width: 5px; }
+.heading h2 { font-size: 1rem; margin: 0; }
+.heading p { color: var(--muted); font-size: .72rem; font-weight: 750; margin: .15rem 0 0; }
+.count { background: var(--surface-muted); border-radius: 99px; color: var(--muted); font-size: .75rem; font-weight: 850; padding: .3rem .6rem; }
+.squad { display: grid; gap: .1rem; list-style: none; margin: 0; padding: .5rem 0; }
+.squad li { border-top: 1px solid var(--border); font-size: .88rem; font-weight: 700; padding: .55rem .9rem; }
+.squad li:first-child { border-top: 0; }
+.pending { color: var(--muted); font-size: .8rem; font-style: italic; margin: 0; padding: 1rem .9rem; }
+.empty { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); padding: 2rem 1rem; text-align: center; }

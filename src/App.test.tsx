@@ -90,6 +90,45 @@ describe('App', () => {
     })
   })
 
+  describe('when looking at the rosters', () => {
+    it('should list every team of the selected scope', () => {
+      render(<App />)
+
+      selectView('Planteles')
+
+      expect(screen.getByRole('heading', { name: 'Ñires' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'CAU Kipas' })).toBeInTheDocument()
+    })
+
+    it('should show the registered players of a team', () => {
+      render(<App />)
+
+      selectView('Planteles')
+
+      expect(screen.getByText('Nicolas Badaracco')).toBeInTheDocument()
+      expect(screen.getByText('Milagros Cavalleri')).toBeInTheDocument()
+    })
+
+    it('should narrow to a single team when one is selected', () => {
+      render(<App />)
+      selectView('Planteles')
+
+      selectTeam('men-los-nires')
+
+      expect(screen.getByRole('heading', { name: 'Ñires' })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'CAU Kipas' })).toBeNull()
+    })
+
+    it('should say so when a club has not submitted its roster', () => {
+      render(<App />)
+      selectView('Planteles')
+
+      selectTeam('men-cau-1')
+
+      expect(screen.getByText('El plantel todavía no fue publicado.')).toBeInTheDocument()
+    })
+  })
+
   describe('when the tournament changes', () => {
     it('should clear a filter that belongs to the other category', () => {
       render(<App />)

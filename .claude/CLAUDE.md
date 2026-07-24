@@ -169,9 +169,14 @@ labels with team IDs when participants are known.
   listing, and one standings or statistics section per tournament.
 - Every match card shows its tournament only while both categories are listed.
 - Tournament, view and team-filter selections persist in local storage.
+- Views are `matches`, `rosters`, `standings` and `statistics`.
 - The matches view filters by team. A team's listing keeps the playoff matches it
   could still reach, mirroring the official per-team sheets, and never includes
   the other tournament.
+- The rosters view shows the registered squad of every team in scope, or of a
+  single team when one is selected. It falls back to the versioned rosters while
+  `players` is empty in Firestore, the same way matches and teams do. The panel
+  must keep reading the raw `players` collection so its publish check stays true.
 - Changing tournament clears the team filter, and a stored team outside the
   selected scope falls back to all teams.
 - Matches are grouped chronologically by day.
