@@ -41,6 +41,9 @@ export const subscribeToTournamentData = (
 export const saveMatch = (match: Match) =>
   setDoc(doc(db, 'matches', match.id), match)
 
+export const saveTeam = (team: Team) =>
+  setDoc(doc(db, 'teams', team.id), team)
+
 export const saveMatchEvent = (event: MatchEvent) =>
   setDoc(doc(db, 'matchEvents', event.id), event)
 

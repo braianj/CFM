@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
-import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
+import { SegmentedControl } from '../components/SegmentedControl'
+import { removeMatchEvent, removePlayer, saveMatch, saveMatchEvent, savePlayer, saveTeam } from '../data/firestore'
 import { stageLabels, statusLabels } from '../data/tournamentConfig'
-import { removeMatchEvent, removePlayer, saveMatch, saveMatchEvent, savePlayer, seedFirestore } from '../data/firestore'
+import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
-import type { Match, MatchEventType, MatchStatus, Player, Team } from '../types/tournament'
+import type { Category, Match, MatchEventType, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
 import styles from './AdminApp.module.css'
 
-const statuses: MatchStatus[] = ['upcoming', 'live', 'finished', 'postponed', 'tbd']
-const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
+type AdminView = 'matches' | 'teams' | 'statistics'
+
 const timezone = 'America/Argentina/Ushuaia'
+const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
+const stagesByCategory: Record<Category, MatchStage[]> = {
+  men: ['regular', 'semifinal-a', 'semifinal-b', 'final-a', 'final-b'],
+  women: ['regular', 'final'],
+}
 
 const getTeamName = (teamId: string | undefined, label: string | undefined, teams: Team[]) =>
   teams.find((team) => team.id === teamId)?.name ?? label ?? 'A confirmar'
@@ -25,11 +31,11 @@ export function AdminApp() {
   const { matches, teams, players, events } = useTournamentData()
   const [user, setUser] = useState<User | null>(null)
   const [message, setMessage] = useState('')
-  const [selectedMatchId, setSelectedMatchId] = useState('')
+  const [view, setView] = useState<AdminView>('matches')
+  const [category, setCategory] = useState<Category>('men')
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
   const isAdmin = user?.email === ADMIN_EMAIL
-  const selectedMatch = matches.find((match) => match.id === selectedMatchId)
 
   const login = async () => {
     setMessage('')
@@ -49,7 +55,7 @@ export function AdminApp() {
       <div className={styles.panel}>
         <div className={styles.logo}>CFM</div>
         <h1>Administración</h1>
-        <p>Ingresá con la cuenta autorizada para actualizar partidos y estadísticas.</p>
+        <p>Ingresá con la cuenta autorizada para actualizar el torneo.</p>
         <button type="button" onClick={login}>Ingresar con Google</button>
         {message && <p className={styles.error}>{message}</p>}
         <a href="./">Volver al sitio público</a>
@@ -57,85 +63,192 @@ export function AdminApp() {
     </main>
   )
 
+  const categoryTeams = teams.filter((team) => team.category === category)
+  const categoryMatches = matches.filter((match) => match.category === category)
+  const notify = (text: string) => setMessage(text)
+
   return (
     <main className={styles.admin}>
       <header>
-        <div><span>CFM Ushuaia Hockey</span><h1>Panel de administración</h1></div>
+        <div><span>CFM Ushuaia Hockey</span><h1>Administración</h1></div>
         <button type="button" className={styles.secondary} onClick={() => signOut(auth)}>Salir</button>
       </header>
-      <p className={styles.notice}>Sesión: {user.email}. Los cambios se publican inmediatamente.</p>
-      <section className={styles.section}>
-        <div className={styles.sectionTitle}><h2>Partidos</h2><button type="button" className={styles.secondary} onClick={async () => { await seedFirestore(); setMessage('Datos iniciales cargados.') }}>Cargar datos iniciales</button></div>
-        {(['men', 'women'] as const).map((category) => (
-          <div className={styles.tournamentGroup} key={category}>
-            <h3>{category === 'men' ? 'Masculino' : 'Femenino'}</h3>
-            <div className={styles.matchList}>{matches.filter((match) => match.category === category).map((match) => <MatchEditor key={match.id} match={match} teams={teams} onSaved={() => setMessage('Partido actualizado.')} />)}</div>
-          </div>
-        ))}
-      </section>
-      <section className={styles.section}>
-        <h2>Planteles</h2>
-        <PlayerForm teams={teams} onSaved={() => setMessage('Jugador/a guardado/a.')} />
-        <div className={styles.events}>{players.map((player) => <div key={player.id}><span><strong>{player.name}</strong> · #{player.number ?? '—'} · {teams.find((team) => team.id === player.teamId)?.name}</span><button type="button" className={styles.danger} onClick={() => removePlayer(player.id)}>Eliminar</button></div>)}</div>
-      </section>
-      <section className={styles.section}>
-        <h2>Goles, asistencias y faltas</h2>
-        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{getMatchOptionLabel(match, teams)}</option>)}</select></label>
-        {selectedMatch && <EventForm match={selectedMatch} teams={teams} players={players} onSaved={() => setMessage('Estadística publicada.')} />}
-        <div className={styles.events}>{events.map((event) => {
-          const match = matches.find((item) => item.id === event.matchId)
-          return <div key={event.id}><span><strong>{event.playerName}</strong> · {event.type === 'goal' ? 'Gol' : event.type === 'penalty' ? 'Falta' : 'Falta grave'}{match ? ` · ${getMatchName(match, teams)}` : ''}</span><button type="button" className={styles.danger} onClick={() => removeMatchEvent(event.id)}>Eliminar</button></div>
-        })}</div>
-      </section>
+      <nav className={styles.mainTabs} aria-label="Administración">
+        <SegmentedControl label="Sección" value={view} onChange={setView} options={[
+          { value: 'matches', label: 'Partidos' },
+          { value: 'teams', label: 'Equipos' },
+          { value: 'statistics', label: 'Estadísticas' },
+        ]} />
+      </nav>
+      <SegmentedControl label="Torneo" value={category} onChange={setCategory} options={[
+        { value: 'men', label: 'Masculino' },
+        { value: 'women', label: 'Femenino' },
+      ]} />
+
+      {view === 'matches' && (
+        <>
+          <section className={styles.section}>
+            <h2>Crear partido</h2>
+            <MatchForm category={category} teams={categoryTeams} onSaved={() => notify('Partido creado.')} />
+          </section>
+          <section className={styles.section}>
+            <h2>Partidos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
+            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura 90 minutos.</p>
+            <div className={styles.matchList}>{categoryMatches.map((match) => (
+              <MatchEditor key={match.id} match={match} teams={teams} onSaved={() => notify('Resultado actualizado.')} />
+            ))}</div>
+          </section>
+        </>
+      )}
+
+      {view === 'teams' && (
+        <section className={styles.section}>
+          <h2>Equipos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
+          <p className={styles.hint}>{category === 'men' ? 'Se mantienen seis equipos.' : 'Se mantienen cuatro equipos.'} Editá sus nombres antes de armar el calendario.</p>
+          <div className={styles.teamList}>{categoryTeams.map((team, index) => (
+            <TeamEditor key={team.id} team={team} position={index + 1} onSaved={() => notify('Equipo actualizado.')} />
+          ))}</div>
+        </section>
+      )}
+
+      {view === 'statistics' && (
+        <StatisticsAdmin
+          category={category}
+          matches={categoryMatches}
+          teams={categoryTeams}
+          players={players.filter((player) => player.category === category)}
+          events={events.filter((event) => event.category === category)}
+          notify={notify}
+        />
+      )}
+
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
     </main>
   )
 }
 
-function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; onSaved: () => void }) {
-  const [draft, setDraft] = useState(match)
-  useEffect(() => setDraft(match), [match])
+function TeamEditor({ team, position, onSaved }: { team: Team; position: number; onSaved: () => void }) {
+  const [name, setName] = useState(team.name)
+  useEffect(() => setName(team.name), [team.name])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    await saveMatch(draft)
+    if (!name.trim()) return
+    await saveTeam({ ...team, name: name.trim(), shortName: name.trim() })
+    onSaved()
+  }
+  return (
+    <form className={styles.teamEditor} onSubmit={submit}>
+      <span>{position}</span>
+      <label>Nombre del equipo<input value={name} onChange={(event) => setName(event.target.value)} /></label>
+      <button type="submit">Guardar</button>
+    </form>
+  )
+}
+
+function MatchForm({ category, teams, onSaved }: { category: Category; teams: Team[]; onSaved: () => void }) {
+  const [homeTeamId, setHomeTeamId] = useState('')
+  const [awayTeamId, setAwayTeamId] = useState('')
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
+  const [stage, setStage] = useState<MatchStage>('regular')
+
+  useEffect(() => { setHomeTeamId(''); setAwayTeamId(''); setStage('regular') }, [category])
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!homeTeamId || !awayTeamId || homeTeamId === awayTeamId || !date || !time) return
+    await saveMatch({
+      id: crypto.randomUUID(),
+      category,
+      startDateTime: `${date}T${time}:00-03:00`,
+      stage,
+      homeTeamId,
+      awayTeamId,
+      homeScore: null,
+      awayScore: null,
+      status: 'upcoming',
+      countsForStandings: stage === 'regular',
+      venue: 'Pista Municipal',
+    })
+    setHomeTeamId(''); setAwayTeamId(''); setDate(''); setTime(''); onSaved()
+  }
+  return (
+    <form className={styles.createMatch} onSubmit={submit}>
+      <label>Equipo local<select required value={homeTeamId} onChange={(event) => setHomeTeamId(event.target.value)}><option value="">Seleccionar…</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
+      <label>Equipo visitante<select required value={awayTeamId} onChange={(event) => setAwayTeamId(event.target.value)}><option value="">Seleccionar…</option>{teams.filter((team) => team.id !== homeTeamId).map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
+      <label>Fecha<input required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+      <label>Hora<input required type="time" value={time} onChange={(event) => setTime(event.target.value)} /></label>
+      <label>Etapa<select value={stage} onChange={(event) => setStage(event.target.value as MatchStage)}>{stagesByCategory[category].map((value) => <option key={value} value={value}>{stageLabels[value]}</option>)}</select></label>
+      <button type="submit">Crear partido</button>
+    </form>
+  )
+}
+
+function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; onSaved: () => void }) {
+  const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
+  const [awayScore, setAwayScore] = useState<number | null>(match.awayScore)
+  useEffect(() => { setHomeScore(match.homeScore); setAwayScore(match.awayScore) }, [match.homeScore, match.awayScore])
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    await saveMatch({ ...match, homeScore, awayScore })
     onSaved()
   }
   return (
     <form className={styles.match} onSubmit={submit}>
       <div className={styles.matchHeader}>
-        <div>
-          <strong>{getMatchName(match, teams)}</strong>
-          <span>{formatDay(match.startDateTime, timezone)} · {formatTime(match.startDateTime, timezone)} · {stageLabels[match.stage]}</span>
-        </div>
-        <select aria-label={`Estado de ${getMatchName(match, teams)}`} value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as MatchStatus })}>{statuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}</select>
+        <div><strong>{getMatchName(match, teams)}</strong><span>{formatDay(match.startDateTime, timezone)} · {formatTime(match.startDateTime, timezone)} · {stageLabels[match.stage]}</span></div>
+        <span className={`${styles.status} ${styles[match.status]}`}>{statusLabels[match.status]}</span>
       </div>
       <div className={styles.scoreEditor}>
-        <label><span>{getTeamName(match.homeTeamId, match.homeLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.homeTeamId, match.homeLabel, teams)}`} type="number" min="0" placeholder="—" value={draft.homeScore ?? ''} onChange={(event) => setDraft({ ...draft, homeScore: event.target.value === '' ? null : Number(event.target.value) })} /></label>
+        <label><span>{getTeamName(match.homeTeamId, match.homeLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.homeTeamId, match.homeLabel, teams)}`} type="number" min="0" placeholder="—" value={homeScore ?? ''} onChange={(event) => setHomeScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <span className={styles.versus}>—</span>
-        <label><span>{getTeamName(match.awayTeamId, match.awayLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`} type="number" min="0" placeholder="—" value={draft.awayScore ?? ''} onChange={(event) => setDraft({ ...draft, awayScore: event.target.value === '' ? null : Number(event.target.value) })} /></label>
-        <button type="submit">Guardar cambios</button>
+        <label><span>{getTeamName(match.awayTeamId, match.awayLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`} type="number" min="0" placeholder="—" value={awayScore ?? ''} onChange={(event) => setAwayScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
+        <button type="submit">Guardar resultado</button>
       </div>
     </form>
   )
 }
 
-function PlayerForm({ teams, onSaved }: { teams: Team[]; onSaved: () => void }) {
-  const [teamId, setTeamId] = useState(teams[0]?.id ?? '')
+function StatisticsAdmin({ category, matches, teams, players, events, notify }: {
+  category: Category; matches: Match[]; teams: Team[]; players: Player[]
+  events: ReturnType<typeof useTournamentData>['events']; notify: (message: string) => void
+}) {
+  const [selectedMatchId, setSelectedMatchId] = useState('')
+  const selectedMatch = matches.find((match) => match.id === selectedMatchId)
+  return (
+    <>
+      <section className={styles.section}>
+        <h2>Planteles</h2>
+        <PlayerForm category={category} teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
+        <div className={styles.events}>{players.map((player) => <div key={player.id}><span><strong>{player.name}</strong> · #{player.number ?? '—'} · {teams.find((team) => team.id === player.teamId)?.name}</span><button type="button" className={styles.danger} onClick={() => removePlayer(player.id)}>Eliminar</button></div>)}</div>
+      </section>
+      <section className={styles.section}>
+        <h2>Cargar gol, asistencia o falta</h2>
+        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{getMatchOptionLabel(match, teams)}</option>)}</select></label>
+        {selectedMatch && <EventForm match={selectedMatch} teams={teams} players={players} onSaved={() => notify('Estadística publicada.')} />}
+        <div className={styles.events}>{events.map((event) => {
+          const match = matches.find((item) => item.id === event.matchId)
+          return <div key={event.id}><span><strong>{event.playerName}</strong> · {event.type === 'goal' ? 'Gol' : event.type === 'penalty' ? 'Falta' : 'Falta grave'}{match ? ` · ${getMatchName(match, teams)}` : ''}</span><button type="button" className={styles.danger} onClick={() => removeMatchEvent(event.id)}>Eliminar</button></div>
+        })}</div>
+      </section>
+    </>
+  )
+}
+
+function PlayerForm({ category, teams, onSaved }: { category: Category; teams: Team[]; onSaved: () => void }) {
+  const [teamId, setTeamId] = useState('')
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
+  useEffect(() => setTeamId(''), [category])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!name.trim() || !teamId) return
-    await savePlayer({
-      id: crypto.randomUUID(), category: teams.find((team) => team.id === teamId)!.category,
-      teamId, name: name.trim(), number: number === '' ? undefined : Number(number), active: true,
-    })
+    await savePlayer({ id: crypto.randomUUID(), category, teamId, name: name.trim(), number: number === '' ? undefined : Number(number), active: true })
     setName(''); setNumber(''); onSaved()
   }
   return (
     <form className={styles.eventForm} onSubmit={submit}>
-      <label>Equipo<select value={teamId} onChange={(event) => setTeamId(event.target.value)}>{teams.map((team) => <option key={team.id} value={team.id}>{team.name} · {team.category === 'men' ? 'Masculino' : 'Femenino'}</option>)}</select></label>
+      <label>Equipo<select required value={teamId} onChange={(event) => setTeamId(event.target.value)}><option value="">Seleccionar…</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
       <label>Nombre<input required value={name} onChange={(event) => setName(event.target.value)} /></label>
       <label>Número<input type="number" min="0" value={number} onChange={(event) => setNumber(event.target.value)} /></label>
       <button type="submit">Agregar al plantel</button>
@@ -167,8 +280,7 @@ function EventForm({ match, teams, players, onSaved }: { match: Match; teams: Te
       playerId: player.id, playerName: player.name,
       assistId: type === 'goal' ? assist?.id : undefined, assistName: type === 'goal' ? assist?.name : undefined,
       secondAssistId: type === 'goal' ? secondAssist?.id : undefined, secondAssistName: type === 'goal' ? secondAssist?.name : undefined,
-      period, gameTime: gameTime.trim() || undefined,
-      penaltyMinutes: type === 'goal' ? undefined : penaltyMinutes,
+      period, gameTime: gameTime.trim() || undefined, penaltyMinutes: type === 'goal' ? undefined : penaltyMinutes,
     })
     setPlayerId(''); setAssistId(''); setSecondAssistId(''); setGameTime(''); onSaved()
   }

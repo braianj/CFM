@@ -35,21 +35,21 @@ https://braianj.github.io/CFM/admin/
 
 Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambios se publican inmediatamente. Desde el panel se puede:
 
-- cambiar el estado de un partido;
+- editar los seis equipos masculinos y cuatro femeninos;
+- crear partidos seleccionando equipos, fecha, hora y etapa;
 - cargar o quitar resultados, incluso parciales en vivo;
 - registrar goles y asistencias;
 - administrar los planteles y números de camiseta;
 - registrar primera y segunda asistencia, período y tiempo de juego;
 - registrar faltas, faltas graves y minutos de penalización;
-- cargar los datos iniciales la primera vez.
 
-Un partido en vivo puede conservar ambos resultados vacíos. También puede tener un resultado parcial; no contará para posiciones hasta que su estado sea `finished`.
+Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 90 minutos y finalizado después. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
 
 La web pública puede ser visitada por cualquiera sin iniciar sesión. Las reglas de Firestore permiten lectura pública y escritura exclusiva de la cuenta administradora.
 
 ## Datos iniciales y configuración
 
-Los equipos, el calendario de muestra y la configuración siguen versionados en el proyecto como respaldo. El botón **Cargar datos iniciales** del panel los copia a Firebase. Después de eso, los resultados y estadísticas se actualizan desde el panel.
+Los equipos, el calendario de muestra y la configuración siguen versionados en el proyecto como respaldo. Los equipos, partidos, resultados y estadísticas se administran normalmente desde el panel.
 
 Los datos masculino y femenino usan `category: 'men'` y `category: 'women'` respectivamente. Los IDs también llevan la categoría como prefijo para impedir cruces accidentales.
 

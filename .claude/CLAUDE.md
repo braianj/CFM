@@ -83,6 +83,11 @@ Supported statuses:
 - `postponed`
 - `tbd`
 
+For scheduled matches with real participants, status is automatic: upcoming
+before kickoff, live for 90 minutes, and finished afterward. The application
+recalculates statuses every 30 seconds. `tbd` remains for placeholder
+participants and `postponed` is preserved as an exceptional override.
+
 A live match may have:
 
 - two `null` scores: display `—` and wait for results;
@@ -177,8 +182,11 @@ Firebase is configured in project `cfm-hockey` on the free Spark plan:
 
 The public app subscribes to Firestore and falls back to versioned seed data
 when the remote database is empty or unavailable. The administration page is
-available at `/admin/` and can seed the remote database, edit match status and
-scores, and publish or delete match events.
+available at `/admin/`. Its primary tabs are Matches, Teams, and Statistics;
+each has a men's/women's tournament selector. It edits the fixed six men's and
+four women's team slots, creates scheduled matches, edits scores, manages
+rosters, and publishes or deletes match events. Never expose internal match
+IDs in the interface.
 
 Collections:
 
