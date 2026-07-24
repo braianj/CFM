@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { SegmentedControl } from '../components/SegmentedControl'
-import { removeMatchEvent, removeMatchRosterEntry, removePlayer, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
+import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, removePlayer, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
 import { stageLabels, statusLabels } from '../data/tournamentConfig'
 import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
@@ -14,8 +14,8 @@ type AdminView = 'matches' | 'teams' | 'statistics'
 const timezone = 'America/Argentina/Ushuaia'
 const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
 const stagesByCategory: Record<Category, MatchStage[]> = {
-  men: ['regular', 'semifinal-a', 'semifinal-b', 'final-a', 'final-b'],
-  women: ['regular', 'final'],
+  men: ['regular', 'repechaje-a', 'repechaje-b', 'final-a', 'final-b'],
+  women: ['regular', 'repechaje', 'semifinal-2', 'semifinal-1', 'third-place', 'final'],
 }
 
 const getTeamName = (teamId: string | undefined, label: string | undefined, teams: Team[]) =>
@@ -104,7 +104,7 @@ export function AdminApp() {
       {view === 'teams' && (
         <section className={styles.section}>
           <h2>Equipos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
-          <p className={styles.hint}>{category === 'men' ? 'Se mantienen seis equipos.' : 'Se mantienen cuatro equipos.'} Editá sus nombres antes de armar el calendario.</p>
+          <p className={styles.hint}>{category === 'men' ? 'Se mantienen seis equipos.' : 'Se mantienen cinco equipos.'} Editá sus nombres antes de armar el calendario.</p>
           <div className={styles.teamList}>{categoryTeams.map((team, index) => (
             <TeamEditor key={team.id} team={team} position={index + 1} onSaved={() => notify('Equipo actualizado.')} />
           ))}</div>
@@ -123,9 +123,39 @@ export function AdminApp() {
         />
       )}
 
+      <FixturePublisher notify={notify} />
+
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
     </main>
+  )
+}
+
+function FixturePublisher({ notify }: { notify: (message: string) => void }) {
+  const [publishing, setPublishing] = useState(false)
+  const publish = async () => {
+    if (!window.confirm('Se borran todos los equipos y partidos publicados y se cargan los del fixture oficial. Las estadísticas ya cargadas quedarían sin partido asociado. ¿Continuar?')) return
+    setPublishing(true)
+    try {
+      await publishOfficialFixture()
+      notify('Fixture oficial publicado.')
+    } catch {
+      notify('No se pudo publicar el fixture. Volvé a intentarlo.')
+    } finally {
+      setPublishing(false)
+    }
+  }
+  return (
+    <section className={styles.section}>
+      <h2>Fixture oficial</h2>
+      <p className={styles.hint}>
+        Reemplaza equipos y partidos por el fixture oficial cargado en el sitio. Los planteles,
+        convocatorias y estadísticas no se tocan. Usalo una sola vez, antes de cargar resultados.
+      </p>
+      <button type="button" className={styles.danger} disabled={publishing} onClick={publish}>
+        {publishing ? 'Publicando…' : 'Reemplazar por el fixture oficial'}
+      </button>
+    </section>
   )
 }
 
@@ -169,7 +199,6 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
       awayScore: null,
       status: 'upcoming',
       countsForStandings: stage === 'regular',
-      venue: 'Pista Municipal',
     })
     setHomeTeamId(''); setAwayTeamId(''); setDate(''); setTime(''); onSaved()
   }

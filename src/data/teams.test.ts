@@ -15,9 +15,9 @@ describe('getTeamsByCategory', () => {
         'CAU Blanco',
         'CAU Verde',
         'CAU Negro',
-        'ACEMHH',
-        'Alpacas',
-        'LOS ÑIRES',
+        'Ñires',
+        'All-Pakas',
+        'Ovejas Negras',
       ])
     })
 
@@ -27,6 +27,28 @@ describe('getTeamsByCategory', () => {
         .map((team) => team.id)
 
       expect(new Set(cauIds).size).toBe(3)
+    })
+
+    it('should not field a men’s ACEMHH team', () => {
+      expect(menTeams.some((team) => team.name.includes('ACEMHH'))).toBe(false)
+    })
+  })
+
+  describe('when selecting the women’s tournament', () => {
+    let womenTeams: Team[]
+
+    beforeEach(() => {
+      womenTeams = getTeamsByCategory('women')
+    })
+
+    it('should return the five exact team names', () => {
+      expect(womenTeams.map((team) => team.name)).toEqual([
+        'CAU Kipas',
+        'All-Pakas Damas',
+        'Ovejas Negras Damas',
+        'ACEMHH Damas',
+        'Ñires Zorras',
+      ])
     })
   })
 })

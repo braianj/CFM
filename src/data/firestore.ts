@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   setDoc,
   writeBatch,
@@ -66,11 +67,18 @@ export const saveMatchRosterEntry = (entry: MatchRosterEntry) =>
 export const removeMatchRosterEntry = (entryId: string) =>
   deleteDoc(doc(db, 'matchRosters', entryId))
 
-export async function seedFirestore() {
+// Deletes every published team and match, then republishes the versioned official
+// fixture. Scores, rosters and events are stored in other collections and survive.
+export async function publishOfficialFixture() {
+  const [publishedTeams, publishedMatches] = await Promise.all([
+    getDocs(collection(db, 'teams')),
+    getDocs(collection(db, 'matches')),
+  ])
+
   const batch = writeBatch(db)
+  publishedTeams.forEach((item) => batch.delete(item.ref))
+  publishedMatches.forEach((item) => batch.delete(item.ref))
   seedTeams.forEach((team) => batch.set(doc(db, 'teams', team.id), team))
   seedMatches.forEach((match) => batch.set(doc(db, 'matches', match.id), match))
   await batch.commit()
 }
-
-export const staticTeams: Team[] = seedTeams

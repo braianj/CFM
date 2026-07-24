@@ -36,9 +36,9 @@ describe('getAutomaticMatchStatus', () => {
     })
   })
 
-  describe('when the match duration has elapsed', () => {
+  describe('when the next scheduled slot has started', () => {
     it('should mark the match as finished even without a score', () => {
-      expect(getAutomaticMatchStatus(match, new Date('2026-07-24T11:31:00-03:00'))).toBe('finished')
+      expect(getAutomaticMatchStatus(match, new Date('2026-07-24T11:00:00-03:00'))).toBe('finished')
     })
   })
 

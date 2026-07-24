@@ -2,7 +2,7 @@
 
 Sitio público para seguir los torneos masculino y femenino de hockey sobre hielo, con un panel privado gratuito para publicar resultados y estadísticas.
 
-> Los partidos y resultados incluidos son datos de muestra. Reemplazalos por la programación oficial antes del torneo.
+Incluye el fixture oficial de la Copa Fin del Mundo 2026: seis equipos masculinos y cinco femeninos, del sábado 25 de julio al sábado 1 de agosto.
 
 ## Desarrollo
 
@@ -35,7 +35,7 @@ https://braianj.github.io/CFM/admin/
 
 Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambios se publican inmediatamente. Desde el panel se puede:
 
-- editar los seis equipos masculinos y cuatro femeninos;
+- editar los seis equipos masculinos y cinco femeninos;
 - crear partidos seleccionando equipos, fecha, hora y etapa;
 - cargar o quitar resultados, incluso parciales en vivo;
 - registrar goles y asistencias;
@@ -43,14 +43,19 @@ Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambi
 - definir los convocados y su número de camiseta para cada partido;
 - registrar primera y segunda asistencia, período y tiempo de juego;
 - registrar faltas, faltas graves y minutos de penalización;
+- reemplazar equipos y partidos publicados por el fixture oficial versionado.
 
-Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 90 minutos y finalizado después. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
+Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 60 minutos y finalizado después. Ese valor acompaña la grilla oficial, que programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
+
+La acción **Reemplazar por el fixture oficial** borra todos los equipos y partidos publicados y vuelve a cargar los del repositorio. No toca planteles, convocatorias ni estadísticas. Usala una sola vez, antes de empezar a cargar resultados.
 
 La web pública puede ser visitada por cualquiera sin iniciar sesión. Las reglas de Firestore permiten lectura pública y escritura exclusiva de la cuenta administradora.
 
 ## Datos iniciales y configuración
 
-Los equipos, el calendario de muestra y la configuración siguen versionados en el proyecto como respaldo. Los equipos, partidos, resultados y estadísticas se administran normalmente desde el panel.
+Los equipos, el fixture oficial y la configuración están versionados en el proyecto y funcionan como respaldo cuando Firestore está vacío o no responde. Los resultados y las estadísticas se administran desde el panel.
+
+Los IDs de los partidos siguen los códigos de la organización: `h-1` a `h-15` y `d-1` a `d-10` para la fase regular, más `h-rep-a`, `h-rep-b`, `h-final-a`, `h-final-b`, `d-rep`, `d-sf1`, `d-sf2`, `d-3er` y `d-final`.
 
 Los datos masculino y femenino usan `category: 'men'` y `category: 'women'` respectivamente. Los IDs también llevan la categoría como prefijo para impedir cruces accidentales.
 
@@ -76,9 +81,9 @@ Para agregar un partido a los datos iniciales, agregá un objeto a la lista `mat
 
 ```ts
 {
-  id: 'w-07',
+  id: 'd-11',
   category: 'women',
-  startDateTime: '2026-07-27T10:30:00-03:00',
+  startDateTime: '2026-07-30T10:30:00-03:00',
   stage: 'regular',
   homeTeamId: 'women-cau-kipas',
   awayTeamId: 'women-acemhh',
@@ -86,7 +91,6 @@ Para agregar un partido a los datos iniciales, agregá un objeto a la lista `mat
   awayScore: null,
   status: 'upcoming',
   countsForStandings: true,
-  venue: 'Pista Municipal',
 }
 ```
 
@@ -113,11 +117,15 @@ Los estados permitidos son `upcoming`, `live`, `finished`, `postponed` y `tbd`. 
 
 ### Playoffs y participantes pendientes
 
-Los playoffs de muestra usan etiquetas en lugar de equipos:
+Masculino (seis equipos): 2.º–3.º juegan el Repechaje A y 5.º–6.º el Repechaje B; el ganador del Repechaje A enfrenta al 1.º en la Final A y el del Repechaje B al 4.º en la Final B.
+
+Femenino (cinco equipos): 5.ª–4.ª juegan el Repechaje y 2.ª–3.ª la Semifinal 2; la ganadora del Repechaje enfrenta a la 1.ª en la Semifinal 1. Las perdedoras de ambas semifinales definen el tercer puesto y las ganadoras juegan la Final.
+
+Mientras no se conozcan los participantes, los partidos usan etiquetas en lugar de equipos:
 
 ```ts
-homeLabel: 'Ganador Semifinal A',
-awayLabel: '1.º de fase regular',
+homeLabel: '1.º de fase regular',
+awayLabel: 'Ganador del Repechaje A',
 countsForStandings: false,
 ```
 

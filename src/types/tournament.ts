@@ -4,11 +4,15 @@ export type MatchStatus = 'upcoming' | 'live' | 'finished' | 'postponed' | 'tbd'
 
 export type MatchStage =
   | 'regular'
-  | 'semifinal-a'
-  | 'semifinal-b'
+  | 'repechaje'
+  | 'repechaje-a'
+  | 'repechaje-b'
+  | 'semifinal-1'
+  | 'semifinal-2'
+  | 'third-place'
+  | 'final'
   | 'final-a'
   | 'final-b'
-  | 'final'
 
 export interface Team {
   id: string

@@ -14,8 +14,7 @@
 .participant span { font-size: .82rem; font-weight: 750; }
 .participant strong { font-size: 1.15rem; }
 @media (min-width: 600px) {
-  .bracket { align-items: center; grid-template-columns: repeat(2, 1fr); }
-  .single { grid-template-columns: 1fr; }
+  .bracket { align-items: center; grid-template-columns: repeat(var(--columns, 2), 1fr); }
   .round + .round { position: relative; }
   .round + .round::before { border-top: 2px solid var(--border-strong); content: ''; left: -1rem; position: absolute; top: 50%; width: 1rem; }
 }

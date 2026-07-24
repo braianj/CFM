@@ -1,6 +1,8 @@
 import type { Match, MatchStatus } from '../types/tournament'
 
-export const MATCH_DURATION_MINUTES = 90
+// The official fixture schedules consecutive games 60 minutes apart, so a longer
+// window would leave two matches marked live at the same time.
+export const MATCH_DURATION_MINUTES = 60
 
 export function getAutomaticMatchStatus(match: Match, now = new Date()): MatchStatus {
   if (match.status === 'postponed') return 'postponed'

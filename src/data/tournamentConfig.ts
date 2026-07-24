@@ -9,9 +9,9 @@ export const tournamentConfigs: Record<Category, TournamentConfig> = {
     scoring: { win: 3, draw: 1, loss: 0 },
     qualification: [
       { from: 1, to: 1, label: 'Final A', tone: 'primary' },
-      { from: 2, to: 3, label: 'Semifinal A', tone: 'primary' },
+      { from: 2, to: 3, label: 'Repechaje A', tone: 'primary' },
       { from: 4, to: 4, label: 'Final B', tone: 'secondary' },
-      { from: 5, to: 6, label: 'Semifinal B', tone: 'secondary' },
+      { from: 5, to: 6, label: 'Repechaje B', tone: 'secondary' },
     ],
   },
   women: {
@@ -20,17 +20,25 @@ export const tournamentConfigs: Record<Category, TournamentConfig> = {
     shortName: 'Femenino',
     timezone: 'America/Argentina/Ushuaia',
     scoring: { win: 3, draw: 1, loss: 0 },
-    qualification: [{ from: 1, to: 2, label: 'Final', tone: 'primary' }],
+    qualification: [
+      { from: 1, to: 1, label: 'Semifinal 1', tone: 'primary' },
+      { from: 2, to: 3, label: 'Semifinal 2', tone: 'primary' },
+      { from: 4, to: 5, label: 'Repechaje', tone: 'secondary' },
+    ],
   },
 }
 
 export const stageLabels = {
   regular: 'Fase regular',
-  'semifinal-a': 'Semifinal A',
-  'semifinal-b': 'Semifinal B',
+  repechaje: 'Repechaje',
+  'repechaje-a': 'Repechaje A',
+  'repechaje-b': 'Repechaje B',
+  'semifinal-1': 'Semifinal 1',
+  'semifinal-2': 'Semifinal 2',
+  'third-place': 'Tercer puesto',
+  final: 'Final',
   'final-a': 'Final A',
   'final-b': 'Final B',
-  final: 'Final',
 } as const
 
 export const statusLabels = {

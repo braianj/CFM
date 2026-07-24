@@ -59,19 +59,26 @@ Never mix team IDs or matches across categories.
 - CAU Blanco (`men-cau-1`)
 - CAU Verde (`men-cau-2`)
 - CAU Negro (`men-cau-3`)
-- ACEMHH (`men-acemhh`)
-- Alpacas (`men-allpacas`)
-- LOS ÑIRES (`men-los-nires`)
+- Ñires (`men-los-nires`)
+- All-Pakas (`men-allpacas`)
+- Ovejas Negras (`men-ovejas-negras`)
 
 The three CAU teams are separate teams. Never aggregate their results or
 replace them with a generic `CAU` team.
 
+ACEMHH does not field a men's team. `men-acemhh` no longer exists; Ovejas Negras
+is a different club that also fields a women's team.
+
 ### Women's teams
 
-- CAU Kipas
-- ACEMHH
-- ALLPACAS
-- LOS ÑIRES – Las Zorras
+- CAU Kipas (`women-cau-kipas`)
+- All-Pakas Damas (`women-allpacas`)
+- Ovejas Negras Damas (`women-ovejas-negras`)
+- ACEMHH Damas (`women-acemhh`)
+- Ñires Zorras (`women-los-nires-zorras`)
+
+Team IDs are stable across renames. Never rewrite an ID to match a new display
+name; published matches reference the ID.
 
 ## Match Rules
 
@@ -84,9 +91,14 @@ Supported statuses:
 - `tbd`
 
 For scheduled matches with real participants, status is automatic: upcoming
-before kickoff, live for 90 minutes, and finished afterward. The application
-recalculates statuses every 30 seconds. `tbd` remains for placeholder
-participants and `postponed` is preserved as an exceptional override.
+before kickoff, live for `MATCH_DURATION_MINUTES`, and finished afterward. The
+application recalculates statuses every 30 seconds. `tbd` remains for
+placeholder participants and `postponed` is preserved as an exceptional
+override.
+
+`MATCH_DURATION_MINUTES` must never exceed the smallest gap between consecutive
+slots in the fixture, or two matches show as live at once. The official 2026
+fixture uses 60-minute slots.
 
 A live match may have:
 
@@ -128,18 +140,23 @@ Never let a match against a fourth team affect a three-team mini-table.
 
 ## Playoffs
 
-Men:
+Men (six teams):
 
-- 1st → Final A
-- 2nd–3rd → Semifinal A
-- winner Semifinal A vs 1st → Final A
-- 4th → Final B
-- 5th–6th → Semifinal B
-- winner Semifinal B vs 4th → Final B
+- 2nd–3rd → Repechaje A (`repechaje-a`)
+- 5th–6th → Repechaje B (`repechaje-b`)
+- 1st vs winner Repechaje A → Final A (`final-a`)
+- 4th vs winner Repechaje B → Final B (`final-b`)
 
-Women:
+Women (five teams):
 
-- 1st–2nd → Final
+- 5th–4th → Repechaje (`repechaje`)
+- 2nd–3rd → Semifinal 2 (`semifinal-2`)
+- winner Repechaje vs 1st → Semifinal 1 (`semifinal-1`)
+- loser SF1 vs loser SF2 → Tercer puesto (`third-place`)
+- winner SF1 vs winner SF2 → Final (`final`)
+
+The men's tournament has no semifinals and the women's tournament has no
+Final A/B. Never reuse a stage across categories except `regular` and `final`.
 
 Unknown playoff participants use `homeLabel` and `awayLabel`. Replace those
 labels with team IDs when participants are known.
@@ -170,6 +187,14 @@ Standings tests must cover:
 
 Team tests must protect exact public names and the three independent CAU IDs.
 
+Fixture tests must protect the hand-entered schedule:
+
+- unique match IDs and unique start times;
+- team references that exist inside the match's own category;
+- a complete single round robin per category (15 men's, 10 women's matches);
+- playoff matches excluded from standings and scheduled after the regular phase;
+- every registered team appearing in the schedule.
+
 ## Firebase Administration
 
 Firebase is configured in project `cfm-hockey` on the free Spark plan:
@@ -184,9 +209,14 @@ The public app subscribes to Firestore and falls back to versioned seed data
 when the remote database is empty or unavailable. The administration page is
 available at `/admin/`. Its primary tabs are Matches, Teams, and Statistics;
 each has a men's/women's tournament selector. It edits the fixed six men's and
-four women's team slots, creates scheduled matches, edits scores, manages
+five women's team slots, creates scheduled matches, edits scores, manages
 rosters, and publishes or deletes match events. Never expose internal match
 IDs in the interface.
+
+A `Fixture oficial` action replaces every published team and match with the
+versioned seed data. It is destructive for `teams` and `matches` and leaves
+`players`, `matchRosters`, and `matchEvents` untouched. It must stay behind an
+explicit confirmation, and it must not run automatically on load.
 
 Collections:
 
