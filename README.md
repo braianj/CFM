@@ -158,13 +158,9 @@ El tiempo extra y los penales pagan lo mismo, pero se guardan por separado y tie
 
 ## Analítica de uso
 
-El sitio usa Google Analytics para Firebase. Está implementado pero **apagado** hasta que se complete un paso manual:
+El sitio usa Google Analytics para Firebase, con el identificador `MEASUREMENT_ID` en `src/firebase.ts`. Los informes están en la consola de Firebase, sección **Analytics**, y en la propiedad de Google Analytics del proyecto.
 
-1. En la consola de Firebase, proyecto `cfm-hockey`, entrá a **Configuración del proyecto → Integraciones → Google Analytics** y habilitalo.
-2. Firebase devuelve un identificador con formato `G-XXXXXXXXXX`.
-3. Pegalo en `MEASUREMENT_ID`, en `src/firebase.ts`, y subí el cambio.
-
-Mientras ese valor esté vacío, `track()` no hace nada y el compilador elimina el SDK del bundle, así que la web no carga ni un byte de analítica.
+Para apagar la analítica alcanza con vaciar `MEASUREMENT_ID`: `track()` deja de hacer nada y el compilador elimina el SDK del bundle. El SDK se descarga aparte, después de que la página ya se ve, así que no retrasa la primera carga.
 
 Se registran automáticamente las visitas, las sesiones y los visitantes nuevos. Además se registran estos eventos propios:
 
