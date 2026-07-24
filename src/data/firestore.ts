@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   setDoc,
@@ -11,8 +12,31 @@ import {
 import { matches as seedMatches } from './matches'
 import { players as seedPlayers } from './players'
 import { teams as seedTeams } from './teams'
-import { db } from '../firebase'
+import { OWNER_EMAIL, db } from '../firebase'
 import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types/tournament'
+import { adminDocId, sortAdminEmails } from '../utils/admins'
+
+// The owner is always an administrator, which is also what firestore.rules says.
+export async function isAdministrator(email: string | null | undefined) {
+  if (!email) return false
+  const id = adminDocId(email)
+  if (id === adminDocId(OWNER_EMAIL)) return true
+  const entry = await getDoc(doc(db, 'admins', id))
+  return entry.exists()
+}
+
+// Only an administrator may list the collection, so a denied read means "not one".
+export const subscribeToAdmins = (onAdmins: (emails: string[]) => void, onError: () => void) =>
+  onSnapshot(
+    collection(db, 'admins'),
+    (snapshot) => onAdmins(sortAdminEmails(snapshot.docs.map((item) => item.id))),
+    onError,
+  )
+
+export const saveAdmin = (email: string) =>
+  setDoc(doc(db, 'admins', adminDocId(email)), { email: adminDocId(email) })
+
+export const removeAdmin = (email: string) => deleteDoc(doc(db, 'admins', adminDocId(email)))
 
 export const subscribeToTournamentData = (
   onMatches: (matches: Match[]) => void,

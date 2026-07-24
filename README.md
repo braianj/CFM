@@ -41,7 +41,7 @@ El panel está disponible en:
 https://braianj.github.io/CFM/admin/
 ```
 
-Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambios se publican inmediatamente. Desde el panel se puede:
+Solo los administradores pueden escribir datos. El ingreso usa Google y los cambios se publican inmediatamente. Desde el panel se puede:
 
 - editar los seis equipos masculinos y cinco femeninos;
 - crear partidos seleccionando equipos, fecha, hora y etapa;
@@ -58,7 +58,7 @@ Los estados se calculan automáticamente desde el horario: próximo antes del in
 
 La acción **Publicar fixture y planteles oficiales** borra todos los equipos y partidos publicados, vuelve a cargar los del repositorio y agrega los planteles inscriptos. No toca convocatorias ni estadísticas. Usala una sola vez, antes de empezar a cargar resultados. Mientras los datos publicados no coincidan con los del repositorio, el panel lo avisa con un recuadro arriba de todo.
 
-La web pública puede ser visitada por cualquiera sin iniciar sesión. Las reglas de Firestore permiten lectura pública y escritura exclusiva de la cuenta administradora.
+La web pública puede ser visitada por cualquiera sin iniciar sesión. Las reglas de Firestore permiten lectura pública de los datos del torneo y escritura exclusiva de los administradores.
 
 ## Datos iniciales y configuración
 
@@ -155,6 +155,16 @@ Ganar en tiempo reglamentario suma 3 y perder 0. Si el partido se define en tiem
 El tiempo extra y los penales pagan lo mismo, pero se guardan por separado y tienen su propia clave de puntaje, así que se puede cambiar uno sin tocar el otro. Estos torneos no tienen empates: `draw` existe solo como red de seguridad ante datos mal cargados.
 
 `qualification` controla las zonas visuales de la tabla. Se pueden cambiar sus posiciones y etiquetas sin tocar componentes.
+
+## Administradores
+
+El panel tiene una sección **Administradores**. Para dar acceso a alguien, escribí su correo de Google y listo: entra con ese correo y puede editar el torneo. No hace falta tocar código ni volver a deployar.
+
+La cuenta `braianj@gmail.com` es la dueña, está fija en el código y en las reglas, y no se puede quitar. Eso evita quedarse sin acceso al panel y permite crear el primer administrador cuando la lista está vacía.
+
+La lista vive en la colección `admins` de Firestore y no es pública, porque son direcciones personales. Cada persona logueada puede leer solamente su propia entrada; la lista completa la ven únicamente los administradores.
+
+> Las reglas de Firestore **no** se publican desde GitHub Actions. Si cambia `firestore.rules`, hay que pegarlas en la consola de Firebase (Firestore Database → Reglas → Publicar).
 
 ## Analítica de uso
 

@@ -26,4 +26,6 @@ export const db = initializeFirestore(app, { ignoreUndefinedProperties: true })
 export const googleProvider = new GoogleAuthProvider()
 googleProvider.setCustomParameters({ prompt: 'select_account' })
 
-export const ADMIN_EMAIL = 'braianj@gmail.com'
+// Hardcoded owner. Kept in the Firestore rules too, so the tournament can never be
+// locked out and so the first administrator can be added to an empty list.
+export const OWNER_EMAIL = 'braianj@gmail.com'

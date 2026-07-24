@@ -1,13 +1,36 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email == 'braianj@gmail.com';
+    function signedInEmail() {
+      return request.auth != null ? request.auth.token.email.lower() : '';
     }
 
-    match /{document=**} {
-      allow read: if true;
+    // The owner is hardcoded so the tournament can never be locked out of its own
+    // panel, and so the very first administrator can be added to an empty list.
+    function isOwner() {
+      return signedInEmail() == 'braianj@gmail.com';
+    }
+
+    function isAdmin() {
+      return isOwner()
+        || (request.auth != null
+            && exists(/databases/$(database)/documents/admins/$(signedInEmail())));
+    }
+
+    // Tournament data is public to read and administrator-only to write. Every
+    // collection is listed on purpose: a new one must be granted access explicitly
+    // instead of inheriting a blanket rule.
+    match /teams/{document}        { allow read: if true; allow write: if isAdmin(); }
+    match /players/{document}      { allow read: if true; allow write: if isAdmin(); }
+    match /matches/{document}      { allow read: if true; allow write: if isAdmin(); }
+    match /matchRosters/{document} { allow read: if true; allow write: if isAdmin(); }
+    match /matchEvents/{document}  { allow read: if true; allow write: if isAdmin(); }
+
+    // The administrator list holds personal addresses, so it is never public. A
+    // signed-in person may check their own entry; only an administrator sees the
+    // whole list or changes it.
+    match /admins/{email} {
+      allow read: if isAdmin() || signedInEmail() == email;
       allow write: if isAdmin();
     }
   }

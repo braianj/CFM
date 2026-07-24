@@ -283,8 +283,9 @@ Firebase is configured in project `cfm-hockey` on the free Spark plan:
 - project display name: CFM Ushuaia Hockey
 - Firestore region: `southamerica-west1`
 - authentication: Google
-- authorized administrator: `braianj@gmail.com`
-- public reads; writes restricted to the administrator email by Firestore rules
+- owner: `braianj@gmail.com`, hardcoded in `firestore.rules` and `src/firebase.ts`
+- other administrators live in the `admins` collection, keyed by lower-case email
+- public reads on tournament data; writes restricted to administrators
 
 The public app subscribes to Firestore and falls back to versioned seed data
 when the remote database is empty or unavailable. The administration page is
@@ -302,8 +303,22 @@ must not run automatically on load. The panel shows it as a warning banner while
 the published data differs from the versioned data, and as a discreet
 maintenance section once they match.
 
+Administrators are data, not code. `isAdmin()` in `firestore.rules` grants access to
+the owner or to anyone with a document in `admins`. The owner stays hardcoded on
+both sides so the tournament can never be locked out and so the first
+administrator can be added to an empty list.
+
+`firestore.rules` grants read access per collection instead of with a catch-all: a
+new collection is private until it is listed. The `admins` collection is never
+public, because it holds personal addresses. A signed-in person may read only
+their own entry; administrators may read and change the whole list.
+
+The rules are NOT deployed by CI. After changing `firestore.rules`, publish them in
+the Firebase console, and publish them before shipping code that depends on them.
+
 Collections:
 
+- `admins`
 - `teams`
 - `players`
 - `matchRosters`

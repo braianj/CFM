@@ -2,15 +2,16 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { track } from '../analytics'
 import { SegmentedControl } from '../components/SegmentedControl'
-import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
+import { isAdministrator, publishOfficialFixture, removeAdmin, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam, saveAdmin, subscribeToAdmins } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
 import { players as officialPlayers } from '../data/players'
 import { TIMEZONE, stageLabels, statusLabels } from '../data/tournamentConfig'
-import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
+import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
+import { adminDocId, isValidAdminEmail } from '../utils/admins'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
@@ -40,29 +41,53 @@ const getMatchOptionLabel = (match: Match, teams: Team[]) =>
 export function AdminApp() {
   const { matches, teams, players, rosters, events } = useTournamentData()
   const [user, setUser] = useState<User | null>(null)
+  const [access, setAccess] = useState<'checking' | 'granted' | 'denied'>('denied')
   const [message, setMessage] = useState('')
   const [view, setView] = useState<AdminView>('matches')
   const [category, setCategory] = useState<Category>('men')
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
-  const isAdmin = user?.email === ADMIN_EMAIL
+
+  // Membership lives in Firestore, so the answer arrives asynchronously.
+  useEffect(() => {
+    if (!user?.email) {
+      setAccess('denied')
+      return
+    }
+    let current = true
+    setAccess('checking')
+    isAdministrator(user.email)
+      .then((allowed) => current && setAccess(allowed ? 'granted' : 'denied'))
+      .catch(() => current && setAccess('denied'))
+    return () => { current = false }
+  }, [user])
 
   const login = async () => {
     setMessage('')
     try {
       const result = await signInWithPopup(auth, googleProvider)
-      if (result.user.email === ADMIN_EMAIL) void track('admin_action', { action: 'sign_in' })
-    if (result.user.email !== ADMIN_EMAIL) {
-        await signOut(auth)
-        setMessage('Esta cuenta no tiene permisos de administración.')
-        void track('admin_action', { action: 'sign_in_rejected' })
+      if (await isAdministrator(result.user.email)) {
+        void track('admin_action', { action: 'sign_in' })
+        return
       }
+      await signOut(auth)
+      setMessage('Esta cuenta no tiene permisos de administración.')
+      void track('admin_action', { action: 'sign_in_rejected' })
     } catch {
       setMessage('No se pudo iniciar sesión. Volvé a intentarlo.')
     }
   }
 
-  if (!isAdmin) return (
+  if (access === 'checking') return (
+    <main className={styles.login}>
+      <div className={styles.panel}>
+        <div className={styles.logo}>CFM</div>
+        <p>Verificando permisos…</p>
+      </div>
+    </main>
+  )
+
+  if (access !== 'granted') return (
     <main className={styles.login}>
       <div className={styles.panel}>
         <div className={styles.logo}>CFM</div>
@@ -139,10 +164,73 @@ export function AdminApp() {
       )}
 
       {dataPublished && <FixturePublisher notify={notify} />}
+      <AdminManager currentEmail={user?.email ?? ''} notify={notify} />
 
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
     </main>
+  )
+}
+
+function AdminManager({ currentEmail, notify }: { currentEmail: string; notify: (message: string) => void }) {
+  const [admins, setAdmins] = useState<string[]>([])
+  const [email, setEmail] = useState('')
+  const [failed, setFailed] = useState(false)
+  useEffect(() => subscribeToAdmins(setAdmins, () => setFailed(true)), [])
+
+  const owner = adminDocId(OWNER_EMAIL)
+  const me = adminDocId(currentEmail)
+  const listed = admins.includes(owner) ? admins : [owner, ...admins]
+
+  const add = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!isValidAdminEmail(email)) {
+      notify('Escribí una dirección de correo válida.')
+      return
+    }
+    try {
+      await saveAdmin(email)
+      setEmail('')
+      notify('Administrador agregado.')
+      void track('admin_action', { action: 'add_admin' })
+    } catch {
+      notify('No se pudo agregar. Revisá que las reglas de Firestore estén publicadas.')
+    }
+  }
+
+  const remove = async (entry: string) => {
+    if (!window.confirm(`Se le quita el acceso al panel a ${entry}. ¿Continuar?`)) return
+    try {
+      await removeAdmin(entry)
+      notify('Administrador quitado.')
+      void track('admin_action', { action: 'remove_admin' })
+    } catch {
+      notify('No se pudo quitar. Volvé a intentarlo.')
+    }
+  }
+
+  return (
+    <section className={styles.section}>
+      <h2>Administradores</h2>
+      <p className={styles.hint}>
+        Quien esté en esta lista puede entrar al panel con su cuenta de Google y editar el torneo.
+        {failed && ' No se pudo leer la lista: puede que falte publicar las reglas de Firestore.'}
+      </p>
+      <form className={styles.adminForm} onSubmit={add}>
+        <label>Correo de Google
+          <input type="email" placeholder="nombre@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
+        </label>
+        <button type="submit">Agregar</button>
+      </form>
+      <div className={styles.events}>{listed.map((entry) => (
+        <div key={entry}>
+          <span>{entry}{entry === owner ? ' · dueño' : ''}{entry === me && entry !== owner ? ' · vos' : ''}</span>
+          {entry !== owner && entry !== me && (
+            <button type="button" className={styles.danger} onClick={() => remove(entry)}>Quitar</button>
+          )}
+        </div>
+      ))}</div>
+    </section>
   )
 }
 
