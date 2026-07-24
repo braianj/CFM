@@ -52,6 +52,17 @@ export const players: Player[] = [
     'Luis Diego Chavarria Umaña',
     'Gian Valentino Cervini',
   ]),
+  ...roster('women', 'women-allpacas', [
+    'Alice Charlotte Claire Osmaston',
+    'Lizeth Patricia Molina Alvizuri',
+    'Morgan Elizabeth Lypka',
+    'Gisella Ramos Vasquez',
+    'Silvia Alvarado Wu',
+    'Valentina Gonzalez Baccaiani',
+    'Iara Agostina Catrileo Mansilla',
+    'Zoe Diaz',
+    'Elena Garcia Rosmanich',
+  ]),
   ...roster('women', 'women-los-nires-zorras', [
     'Ailin Melisa Aquino',
     'Catalina Lujan Bianciotto',

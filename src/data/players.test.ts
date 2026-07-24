@@ -41,6 +41,7 @@ describe('official rosters', () => {
     it.each([
       ['men-los-nires', 16],
       ['men-allpacas', 14],
+      ['women-allpacas', 9],
       ['women-los-nires-zorras', 10],
       ['women-acemhh', 8],
     ])('should hold the %s roster with %i players', (teamId, expected) => {
