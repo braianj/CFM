@@ -4,9 +4,11 @@ import { PlayoffBracket } from './components/PlayoffBracket'
 import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { StatisticsTable } from './components/StatisticsTable'
+import { TeamFilter } from './components/TeamFilter'
 import { tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
 import type { Category } from './types/tournament'
+import { ALL_TEAMS, filterMatchesByTeam } from './utils/matches'
 import { calculatePlayerStatistics } from './utils/statistics'
 import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
@@ -20,19 +22,30 @@ const readStored = <T extends string>(key: string, allowed: T[], fallback: T): T
 export default function App() {
   const [category, setCategoryState] = useState<Category>(() => readStored('cfm-category', ['men', 'women'], 'men'))
   const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'standings', 'statistics'], 'matches'))
+  const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
   const { matches, teams, events, usingLiveData } = useTournamentData()
   const config = tournamentConfigs[category]
   const categoryTeams = teams.filter((team) => team.category === category)
   const categoryMatches = useMemo(() => matches.filter((match) => match.category === category), [category, matches])
+  const selectedTeamId = categoryTeams.some((team) => team.id === teamId) ? teamId : ALL_TEAMS
+  const listedMatches = useMemo(
+    () => filterMatchesByTeam(categoryMatches, selectedTeamId),
+    [categoryMatches, selectedTeamId],
+  )
   const standings = useMemo(
     () => calculateStandings(category, teams, categoryMatches, config.scoring),
     [category, teams, categoryMatches, config.scoring],
   )
   const statistics = useMemo(() => calculatePlayerStatistics(category, events), [category, events])
 
+  const setTeamId = (next: string) => {
+    localStorage.setItem('cfm-team', next)
+    setTeamIdState(next)
+  }
   const setCategory = (next: Category) => {
     localStorage.setItem('cfm-category', next)
     setCategoryState(next)
+    setTeamId(ALL_TEAMS)
   }
   const setView = (next: View) => {
     localStorage.setItem('cfm-view', next)
@@ -60,7 +73,10 @@ export default function App() {
           <p>{view === 'matches' ? 'Calendario y resultados' : view === 'standings' ? 'Tabla calculada desde los resultados' : 'Goles, asistencias y faltas'}</p>
         </div>
         {view === 'matches' ? (
-          <MatchTimeline matches={categoryMatches} teams={categoryTeams} timezone={config.timezone} scrollKey={category} />
+          <>
+            <TeamFilter teams={categoryTeams} value={selectedTeamId} onChange={setTeamId} />
+            <MatchTimeline matches={listedMatches} teams={categoryTeams} timezone={config.timezone} scrollKey={`${category}-${selectedTeamId}`} />
+          </>
         ) : view === 'standings' ? (
           <>
             <StandingsTable rows={standings} bands={config.qualification} />

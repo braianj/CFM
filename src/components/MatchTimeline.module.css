@@ -1,3 +1,4 @@
 .timeline { display: grid; gap: 1.75rem; }
 .day h2 { color: var(--navy); font-size: 1rem; margin: 0 0 .85rem 1.5rem; }
 .line { border-left: 2px solid var(--border); display: grid; gap: .85rem; margin-left: .45rem; }
+.empty { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); padding: 2rem 1rem; text-align: center; }

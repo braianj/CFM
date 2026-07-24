@@ -25,6 +25,10 @@ export function MatchTimeline({ matches, teams, timezone, scrollKey }: Props) {
     // scrollKey intentionally makes this run once when the selected tournament changes.
   }, [scrollKey, matches])
 
+  if (!groups.length) {
+    return <div className={styles.empty}>No hay partidos programados para esta selección.</div>
+  }
+
   return (
     <div className={styles.timeline}>
       {groups.map((group) => (

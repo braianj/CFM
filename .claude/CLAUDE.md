@@ -164,7 +164,11 @@ labels with team IDs when participants are known.
 ## UI Behavior
 
 - Mobile-first, single-column sports interface.
-- Tournament and view selections persist in local storage.
+- Tournament, view and team-filter selections persist in local storage.
+- The matches view filters by team. A team's listing keeps the playoff matches it
+  could still reach, mirroring the official per-team sheets.
+- Changing tournament clears the team filter, and a stored team that no longer
+  belongs to the selected category falls back to all teams.
 - Matches are grouped chronologically by day.
 - Initial match scrolling targets live, then upcoming, then the final match.
 - Auto-scroll runs only on initial timeline mount or tournament change.

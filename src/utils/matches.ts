@@ -1,5 +1,19 @@
 import type { Match } from '../types/tournament'
 
+export const ALL_TEAMS = 'all'
+
+const hasPendingParticipant = (match: Match) => !match.homeTeamId || !match.awayTeamId
+
+// A team's listing keeps the playoff matches it could still reach, the same way the
+// official per-team sheets list every round as "según clasificación".
+export const filterMatchesByTeam = (matches: Match[], teamId: string) =>
+  teamId === ALL_TEAMS
+    ? matches
+    : matches.filter(
+        (match) =>
+          match.homeTeamId === teamId || match.awayTeamId === teamId || hasPendingParticipant(match),
+      )
+
 export const sortMatches = (matches: Match[]) =>
   [...matches].sort(
     (first, second) =>

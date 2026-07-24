@@ -1,0 +1,4 @@
+.filter { align-items: center; display: grid; gap: .65rem; grid-template-columns: auto 1fr; margin-bottom: 1.25rem; }
+.filter span { color: var(--muted); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.filter select { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--ink); font: inherit; font-weight: 800; min-height: 44px; padding: .55rem .75rem; width: 100%; }
+.filter select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
