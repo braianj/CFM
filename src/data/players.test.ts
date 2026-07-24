@@ -30,22 +30,47 @@ describe('official rosters', () => {
   })
 
   describe('when checking privacy', () => {
-    it('should store only the fields the site needs', () => {
+    const allowedFields = ['active', 'category', 'id', 'name', 'role', 'teamId']
+
+    it('should never store a field beyond what the site needs', () => {
       players.forEach((player) => {
-        expect(Object.keys(player).sort()).toEqual(['active', 'category', 'id', 'name', 'teamId'])
+        Object.keys(player).forEach((field) => expect(allowedFields).toContain(field))
       })
+    })
+
+    it('should store no identity document and no birth date', () => {
+      const serialized = JSON.stringify(players)
+
+      expect(serialized).not.toMatch(/\d{7}/)
+      expect(serialized).not.toMatch(/dni|pasaporte|nacimiento/i)
     })
   })
 
   describe('when checking the submitted rosters', () => {
+    it('should cover every registered team', () => {
+      teams.forEach((team) => expect(getPlayersByTeam(team.id).length).toBeGreaterThan(0))
+    })
+
     it.each([
+      ['men-cau-1', 14],
+      ['men-cau-2', 16],
+      ['men-cau-3', 13],
       ['men-los-nires', 16],
       ['men-allpacas', 14],
+      ['men-ovejas-negras', 13],
+      ['women-cau-kipas', 15],
       ['women-allpacas', 9],
-      ['women-los-nires-zorras', 10],
+      ['women-ovejas-negras', 11],
       ['women-acemhh', 8],
+      ['women-los-nires-zorras', 10],
     ])('should hold the %s roster with %i players', (teamId, expected) => {
       expect(getPlayersByTeam(teamId)).toHaveLength(expected)
+    })
+
+    it('should give every team at least one goalkeeper', () => {
+      teams.forEach((team) => {
+        expect(getPlayersByTeam(team.id).some((player) => player.role === 'GK')).toBe(true)
+      })
     })
   })
 })

@@ -61,7 +61,7 @@ La web pública puede ser visitada por cualquiera sin iniciar sesión. Las regla
 
 Los equipos, el fixture oficial y la configuración están versionados en el proyecto y funcionan como respaldo cuando Firestore está vacío o no responde. Los resultados y las estadísticas se administran desde el panel.
 
-Los planteles inscriptos están en `src/data/players.ts`. Solo se guarda el nombre: las planillas de inscripción incluyen documento y fecha de nacimiento, y esos datos no se almacenan ni se publican. Los números de camiseta tampoco viven ahí, sino en la convocatoria de cada partido.
+Los planteles inscriptos están en `src/data/players.ts`: 139 jugadores en los once equipos. Se guarda el nombre y el rol declarado (`C` capitán, `A` asistente, `GK` arquero). Algunas planillas de inscripción incluyen documento y fecha de nacimiento, y esos datos no se almacenan ni se publican. Los números de camiseta tampoco viven ahí, sino en la convocatoria de cada partido.
 
 Los IDs de los partidos siguen los códigos de la organización: `h-1` a `h-15` y `d-1` a `d-10` para la fase regular, más `h-rep-a`, `h-rep-b`, `h-final-a`, `h-final-b`, `d-rep`, `d-sf1`, `d-sf2`, `d-3er` y `d-final`.
 

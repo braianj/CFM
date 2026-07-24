@@ -98,11 +98,15 @@ export interface MatchEvent {
   notes?: string
 }
 
+// Squad role declared on the club's registration sheet.
+export type PlayerRole = 'C' | 'A' | 'GK'
+
 export interface Player {
   id: string
   category: Category
   teamId: string
   name: string
+  role?: PlayerRole
   number?: number
   active: boolean
 }

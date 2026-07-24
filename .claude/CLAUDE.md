@@ -245,8 +245,16 @@ Collections:
 
 Club registration sheets carry identity documents and birth dates. Never store
 them, never echo them, and never add fields for them. `src/data/players.ts` keeps
-names only. A player document holds exactly `id`, `category`, `teamId`, `name`
-and `active`, and a test enforces that shape.
+names and the declared squad role only. A player document holds no field beyond
+`id`, `category`, `teamId`, `name`, `role`, `number` and `active`, and a test
+enforces that shape.
+
+`role` is the role declared on the registration sheet: `C`, `A` or `GK`. It is
+permanent, unlike the jersey number, which belongs to the match roster entry.
+
+Firestore is initialised with `ignoreUndefinedProperties`. The panel writes
+optional fields as `undefined` (a goal with no assist, a player with no number)
+and every one of those writes would otherwise throw.
 
 `matchEvents` is the source of truth for player statistics. Supported event
 types are `goal`, `penalty`, and `major-penalty`; goal events may include first

@@ -119,13 +119,14 @@ describe('App', () => {
       expect(screen.queryByRole('heading', { name: 'CAU Kipas' })).toBeNull()
     })
 
-    it('should say so when a club has not submitted its roster', () => {
+    it('should mark the declared goalkeepers and captains', () => {
       render(<App />)
       selectView('Planteles')
 
       selectTeam('men-cau-1')
 
-      expect(screen.getByText('El plantel todavía no fue publicado.')).toBeInTheDocument()
+      expect(screen.getByText('Marcelo Zayas')).toBeInTheDocument()
+      expect(screen.getByTitle('Arquero/a')).toBeInTheDocument()
     })
   })
 

@@ -1,11 +1,17 @@
 import { tournamentConfigs } from '../data/tournamentConfig'
-import type { Player, Team } from '../types/tournament'
+import type { Player, PlayerRole, Team } from '../types/tournament'
 import styles from './TeamRosters.module.css'
 
 interface Props {
   teams: Team[]
   players: Player[]
   showCategory: boolean
+}
+
+const roleLabels: Record<PlayerRole, string> = {
+  C: 'Capitán/a',
+  A: 'Asistente',
+  GK: 'Arquero/a',
 }
 
 export function TeamRosters({ teams, players, showCategory }: Props) {
@@ -30,7 +36,12 @@ export function TeamRosters({ teams, players, showCategory }: Props) {
             </header>
             {squad.length ? (
               <ul className={styles.squad}>
-                {squad.map((player) => <li key={player.id}>{player.name}</li>)}
+                {squad.map((player) => (
+                  <li key={player.id}>
+                    <span>{player.name}</span>
+                    {player.role && <em className={styles.role} title={roleLabels[player.role]}>{player.role}</em>}
+                  </li>
+                ))}
               </ul>
             ) : (
               <p className={styles.pending}>El plantel todavía no fue publicado.</p>
