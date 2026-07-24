@@ -5,46 +5,69 @@ import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { StatisticsTable } from './components/StatisticsTable'
 import { TeamFilter } from './components/TeamFilter'
-import { tournamentConfigs } from './data/tournamentConfig'
+import { TIMEZONE, tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
-import type { Category } from './types/tournament'
+import type { Category, Match, MatchEvent, Team } from './types/tournament'
 import { ALL_TEAMS, filterMatchesByTeam } from './utils/matches'
 import { calculatePlayerStatistics } from './utils/statistics'
 import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
 
 type View = 'matches' | 'standings' | 'statistics'
+type Scope = Category | 'all'
+
+const scopeCategories: Record<Scope, Category[]> = {
+  all: ['men', 'women'],
+  men: ['men'],
+  women: ['women'],
+}
+
+const scopeLabels: Record<Scope, string> = {
+  all: 'Todo el torneo',
+  men: 'Torneo Masculino',
+  women: 'Torneo Femenino',
+}
+
+const viewSubtitles: Record<View, string> = {
+  matches: 'Calendario y resultados',
+  standings: 'Tabla calculada desde los resultados',
+  statistics: 'Goles, asistencias y faltas',
+}
+
 const readStored = <T extends string>(key: string, allowed: T[], fallback: T): T => {
   const value = localStorage.getItem(key)
   return allowed.includes(value as T) ? (value as T) : fallback
 }
 
 export default function App() {
-  const [category, setCategoryState] = useState<Category>(() => readStored('cfm-category', ['men', 'women'], 'men'))
+  const [scope, setScopeState] = useState<Scope>(() => readStored('cfm-category', ['all', 'men', 'women'], 'all'))
   const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'standings', 'statistics'], 'matches'))
   const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
   const { matches, teams, events, usingLiveData } = useTournamentData()
-  const config = tournamentConfigs[category]
-  const categoryTeams = teams.filter((team) => team.category === category)
-  const categoryMatches = useMemo(() => matches.filter((match) => match.category === category), [category, matches])
-  const selectedTeamId = categoryTeams.some((team) => team.id === teamId) ? teamId : ALL_TEAMS
+
+  const categories = scopeCategories[scope]
+  const scopedTeams = useMemo(() => teams.filter((team) => categories.includes(team.category)), [categories, teams])
+  const scopedMatches = useMemo(() => matches.filter((match) => categories.includes(match.category)), [categories, matches])
+  const selectedTeam = scopedTeams.find((team) => team.id === teamId)
+  // Picking a team narrows the listing to its own tournament, never the other one.
   const listedMatches = useMemo(
-    () => filterMatchesByTeam(categoryMatches, selectedTeamId),
-    [categoryMatches, selectedTeamId],
+    () =>
+      selectedTeam
+        ? filterMatchesByTeam(
+            scopedMatches.filter((match) => match.category === selectedTeam.category),
+            selectedTeam.id,
+          )
+        : scopedMatches,
+    [scopedMatches, selectedTeam],
   )
-  const standings = useMemo(
-    () => calculateStandings(category, teams, categoryMatches, config.scoring),
-    [category, teams, categoryMatches, config.scoring],
-  )
-  const statistics = useMemo(() => calculatePlayerStatistics(category, events), [category, events])
 
   const setTeamId = (next: string) => {
     localStorage.setItem('cfm-team', next)
     setTeamIdState(next)
   }
-  const setCategory = (next: Category) => {
+  const setScope = (next: Scope) => {
     localStorage.setItem('cfm-category', next)
-    setCategoryState(next)
+    setScopeState(next)
     setTeamId(ALL_TEAMS)
   }
   const setView = (next: View) => {
@@ -59,8 +82,8 @@ export default function App() {
           <div className={styles.puck} aria-hidden="true">CFM</div>
           <div><span>Ushuaia · 2026</span><h1>CFM Ushuaia Hockey</h1></div>
         </div>
-        <SegmentedControl label="Torneo" value={category} onChange={setCategory} options={[
-          { value: 'men', label: 'Masculino' }, { value: 'women', label: 'Femenino' },
+        <SegmentedControl label="Torneo" value={scope} onChange={setScope} options={[
+          { value: 'all', label: 'Todos' }, { value: 'men', label: 'Masculino' }, { value: 'women', label: 'Femenino' },
         ]} />
         <SegmentedControl label="Vista" value={view} onChange={setView} options={[
           { value: 'matches', label: 'Partidos' }, { value: 'standings', label: 'Posiciones' },
@@ -69,22 +92,80 @@ export default function App() {
       </header>
       <main className={styles.main}>
         <div className={styles.title}>
-          <div><span className={category === 'men' ? styles.men : styles.women} />{config.name}</div>
-          <p>{view === 'matches' ? 'Calendario y resultados' : view === 'standings' ? 'Tabla calculada desde los resultados' : 'Goles, asistencias y faltas'}</p>
+          <div>
+            {categories.map((category) => (
+              <span key={category} className={category === 'men' ? styles.men : styles.women} />
+            ))}
+            {scopeLabels[scope]}
+          </div>
+          <p>{viewSubtitles[view]}</p>
         </div>
         {view === 'matches' ? (
           <>
-            <TeamFilter teams={categoryTeams} value={selectedTeamId} onChange={setTeamId} />
-            <MatchTimeline matches={listedMatches} teams={categoryTeams} timezone={config.timezone} scrollKey={`${category}-${selectedTeamId}`} />
+            <TeamFilter teams={scopedTeams} value={selectedTeam?.id ?? ALL_TEAMS} onChange={setTeamId} />
+            <MatchTimeline
+              matches={listedMatches}
+              teams={scopedTeams}
+              timezone={TIMEZONE}
+              showCategory={categories.length > 1}
+              scrollKey={`${scope}-${selectedTeam?.id ?? ALL_TEAMS}`}
+            />
           </>
         ) : view === 'standings' ? (
-          <>
-            <StandingsTable rows={standings} bands={config.qualification} />
-            <PlayoffBracket category={category} matches={categoryMatches} teams={categoryTeams} />
-          </>
-        ) : <StatisticsTable rows={statistics} teams={categoryTeams} />}
+          categories.map((category) => (
+            <StandingsSection
+              key={category}
+              category={category}
+              teams={teams}
+              matches={matches}
+              showHeading={categories.length > 1}
+            />
+          ))
+        ) : (
+          categories.map((category) => (
+            <StatisticsSection
+              key={category}
+              category={category}
+              teams={teams}
+              events={events}
+              showHeading={categories.length > 1}
+            />
+          ))
+        )}
       </main>
       <footer className={styles.siteFooter}>Horarios de Ushuaia (UTC−3) · {usingLiveData ? 'Datos publicados desde la organización' : 'Datos iniciales del torneo'}</footer>
     </>
+  )
+}
+
+interface SectionProps {
+  category: Category
+  teams: Team[]
+  showHeading: boolean
+}
+
+function StandingsSection({ category, teams, matches, showHeading }: SectionProps & { matches: Match[] }) {
+  const config = tournamentConfigs[category]
+  const categoryTeams = teams.filter((team) => team.category === category)
+  const categoryMatches = matches.filter((match) => match.category === category)
+  const rows = calculateStandings(category, categoryTeams, categoryMatches, config.scoring)
+
+  return (
+    <section className={styles.tournamentSection}>
+      {showHeading && <h2 className={styles.tournamentHeading}>{config.name}</h2>}
+      <StandingsTable rows={rows} bands={config.qualification} />
+      <PlayoffBracket category={category} matches={categoryMatches} teams={categoryTeams} />
+    </section>
+  )
+}
+
+function StatisticsSection({ category, teams, events, showHeading }: SectionProps & { events: MatchEvent[] }) {
+  const categoryTeams = teams.filter((team) => team.category === category)
+
+  return (
+    <section className={styles.tournamentSection}>
+      {showHeading && <h2 className={styles.tournamentHeading}>{tournamentConfigs[category].name}</h2>}
+      <StatisticsTable rows={calculatePlayerStatistics(category, events)} teams={categoryTeams} />
+    </section>
   )
 }

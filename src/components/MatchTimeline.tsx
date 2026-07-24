@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { tournamentConfigs } from '../data/tournamentConfig'
 import type { Match, Team } from '../types/tournament'
 import { formatDay } from '../utils/date'
 import { getInitialMatchId, groupMatchesByDay } from '../utils/matches'
@@ -10,9 +11,10 @@ interface Props {
   teams: Team[]
   timezone: string
   scrollKey: string
+  showCategory?: boolean
 }
 
-export function MatchTimeline({ matches, teams, timezone, scrollKey }: Props) {
+export function MatchTimeline({ matches, teams, timezone, scrollKey, showCategory = false }: Props) {
   const groups = groupMatchesByDay(matches, timezone)
 
   useEffect(() => {
@@ -35,7 +37,15 @@ export function MatchTimeline({ matches, teams, timezone, scrollKey }: Props) {
         <section key={group.date} className={styles.day} aria-labelledby={`day-${group.date}`}>
           <h2 id={`day-${group.date}`}>{formatDay(group.matches[0].startDateTime, timezone)}</h2>
           <div className={styles.line}>
-            {group.matches.map((match) => <MatchCard key={match.id} match={match} teams={teams} timezone={timezone} />)}
+            {group.matches.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                teams={teams}
+                timezone={timezone}
+                categoryLabel={showCategory ? tournamentConfigs[match.category].shortName : undefined}
+              />
+            ))}
           </div>
         </section>
       ))}

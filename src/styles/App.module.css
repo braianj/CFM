@@ -9,8 +9,10 @@
 .title span { border-radius:4px; height:22px; width:5px; }
 .men { background:var(--blue); } .women { background:var(--live); }
 .title p { color:var(--muted); font-size:.72rem; margin:0; text-align:right; }
+.tournamentSection + .tournamentSection { border-top:1px solid var(--border); margin-top:2.5rem; padding-top:2rem; }
+.tournamentHeading { font-size:1.05rem; margin:0 0 .85rem; }
 .siteFooter { color:var(--muted); font-size:.72rem; padding:1.5rem; text-align:center; }
 @media (min-width:700px) {
-  .header { align-items:end; grid-template-columns:1fr 250px 350px; margin:0 auto; padding:1.1rem max(1rem, calc((100% - 1100px)/2)); }
+  .header { align-items:end; grid-template-columns:1fr 300px 330px; margin:0 auto; padding:1.1rem max(1rem, calc((100% - 1100px)/2)); }
   .main { padding-top:2rem; }
 }

@@ -4,7 +4,9 @@ Sitio público para seguir los torneos masculino y femenino de hockey sobre hiel
 
 Incluye el fixture oficial de la Copa Fin del Mundo 2026: seis equipos masculinos y cinco femeninos, del sábado 25 de julio al sábado 1 de agosto.
 
-En la vista de partidos se puede filtrar por equipo para ver solamente su calendario. El listado de un equipo conserva los partidos de definición a los que todavía puede llegar, igual que las hojas por equipo del fixture. El filtro se recuerda entre visitas y se limpia al cambiar de torneo.
+El selector de torneo tiene tres opciones: **Todos**, **Masculino** y **Femenino**. Todos es la vista por defecto y muestra el calendario completo en orden cronológico, con la categoría indicada en cada partido; las posiciones y las estadísticas se muestran en una sección por torneo.
+
+En la vista de partidos se puede filtrar por equipo para ver solamente su calendario. El listado de un equipo conserva los partidos de definición a los que todavía puede llegar, igual que las hojas por equipo del fixture, y nunca mezcla el otro torneo. El filtro se recuerda entre visitas y se limpia al cambiar de torneo.
 
 ## Desarrollo
 

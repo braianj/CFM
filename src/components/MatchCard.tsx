@@ -7,9 +7,10 @@ interface Props {
   match: Match
   teams: Team[]
   timezone: string
+  categoryLabel?: string
 }
 
-export function MatchCard({ match, teams, timezone }: Props) {
+export function MatchCard({ match, teams, timezone, categoryLabel }: Props) {
   const findTeam = (id?: string) => teams.find((team) => team.id === id)
   const home = findTeam(match.homeTeamId)
   const away = findTeam(match.awayTeamId)
@@ -23,7 +24,7 @@ export function MatchCard({ match, teams, timezone }: Props) {
     >
       <div className={styles.meta}>
         <time dateTime={match.startDateTime}>{formatTime(match.startDateTime, timezone)}</time>
-        <span>{stageLabels[match.stage]}</span>
+        <span>{categoryLabel ? `${categoryLabel} · ${stageLabels[match.stage]}` : stageLabels[match.stage]}</span>
         <span className={styles.status}>{statusLabels[match.status]}</span>
       </div>
       <div className={styles.teams}>

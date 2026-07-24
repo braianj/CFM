@@ -164,11 +164,16 @@ labels with team IDs when participants are known.
 ## UI Behavior
 
 - Mobile-first, single-column sports interface.
+- The tournament selector has three scopes: `all`, `men` and `women`. `all` is the
+  default and shows both categories together: one combined chronological match
+  listing, and one standings or statistics section per tournament.
+- Every match card shows its tournament only while both categories are listed.
 - Tournament, view and team-filter selections persist in local storage.
 - The matches view filters by team. A team's listing keeps the playoff matches it
-  could still reach, mirroring the official per-team sheets.
-- Changing tournament clears the team filter, and a stored team that no longer
-  belongs to the selected category falls back to all teams.
+  could still reach, mirroring the official per-team sheets, and never includes
+  the other tournament.
+- Changing tournament clears the team filter, and a stored team outside the
+  selected scope falls back to all teams.
 - Matches are grouped chronologically by day.
 - Initial match scrolling targets live, then upcoming, then the final match.
 - Auto-scroll runs only on initial timeline mount or tournament change.

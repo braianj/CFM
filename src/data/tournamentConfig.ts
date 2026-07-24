@@ -1,11 +1,14 @@
 import type { Category, TournamentConfig } from '../types/tournament'
 
+// Both tournaments run on the same rink, so every date and time is read in Ushuaia.
+export const TIMEZONE = 'America/Argentina/Ushuaia'
+
 export const tournamentConfigs: Record<Category, TournamentConfig> = {
   men: {
     category: 'men',
     name: 'Torneo Masculino',
     shortName: 'Masculino',
-    timezone: 'America/Argentina/Ushuaia',
+    timezone: TIMEZONE,
     scoring: { win: 3, draw: 1, loss: 0 },
     qualification: [
       { from: 1, to: 1, label: 'Final A', tone: 'primary' },
@@ -18,7 +21,7 @@ export const tournamentConfigs: Record<Category, TournamentConfig> = {
     category: 'women',
     name: 'Torneo Femenino',
     shortName: 'Femenino',
-    timezone: 'America/Argentina/Ushuaia',
+    timezone: TIMEZONE,
     scoring: { win: 3, draw: 1, loss: 0 },
     qualification: [
       { from: 1, to: 1, label: 'Semifinal 1', tone: 'primary' },

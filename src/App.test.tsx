@@ -8,17 +8,57 @@ const teamFilter = () => screen.getByLabelText('Equipo') as HTMLSelectElement
 
 const selectTeam = (teamId: string) => fireEvent.change(teamFilter(), { target: { value: teamId } })
 
+const selectScope = (label: string) => fireEvent.click(screen.getByRole('button', { name: label }))
+
+const selectView = (label: string) => fireEvent.click(screen.getByRole('button', { name: label }))
+
 const listedMatches = () => screen.getAllByRole('article').length
 
 describe('App', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())
 
-  describe('when no team is selected', () => {
-    it('should list every match of the tournament', () => {
+  describe('when the whole tournament is selected', () => {
+    it('should list the matches of both categories by default', () => {
       render(<App />)
 
+      expect(listedMatches()).toBe(34)
+    })
+
+    it('should tell each match apart by tournament', () => {
+      render(<App />)
+
+      expect(screen.getAllByText(/Masculino ·/).length).toBe(19)
+      expect(screen.getAllByText(/Femenino ·/).length).toBe(15)
+    })
+
+    it('should show a standings table per tournament', () => {
+      render(<App />)
+
+      selectView('Posiciones')
+
+      expect(screen.getByText('Torneo Masculino')).toBeInTheDocument()
+      expect(screen.getByText('Torneo Femenino')).toBeInTheDocument()
+      expect(screen.getAllByRole('table').length).toBe(2)
+    })
+  })
+
+  describe('when a single tournament is selected', () => {
+    it('should list only its matches', () => {
+      render(<App />)
+
+      selectScope('Masculino')
+
       expect(listedMatches()).toBe(19)
+    })
+
+    it('should drop the tournament label from every match', () => {
+      render(<App />)
+
+      selectScope('Femenino')
+
+      expect(screen.queryByText(/Masculino ·/)).toBeNull()
+      expect(listedMatches()).toBe(15)
     })
   })
 
@@ -29,6 +69,14 @@ describe('App', () => {
       selectTeam('men-cau-1')
 
       expect(listedMatches()).toBe(9)
+    })
+
+    it('should never mix in the other tournament', () => {
+      render(<App />)
+
+      selectTeam('men-cau-1')
+
+      expect(screen.queryByText(/Femenino ·/)).toBeNull()
     })
 
     it('should remember the selected team across visits', () => {
@@ -47,7 +95,7 @@ describe('App', () => {
       render(<App />)
       selectTeam('men-cau-1')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Femenino' }))
+      selectScope('Femenino')
 
       expect(teamFilter().value).toBe('all')
       expect(listedMatches()).toBe(15)
