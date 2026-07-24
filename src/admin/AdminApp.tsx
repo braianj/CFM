@@ -1,13 +1,25 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
+import { stageLabels, statusLabels } from '../data/tournamentConfig'
 import { removeMatchEvent, removePlayer, saveMatch, saveMatchEvent, savePlayer, seedFirestore } from '../data/firestore'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Match, MatchEventType, MatchStatus, Player, Team } from '../types/tournament'
+import { formatDay, formatTime } from '../utils/date'
 import styles from './AdminApp.module.css'
 
 const statuses: MatchStatus[] = ['upcoming', 'live', 'finished', 'postponed', 'tbd']
 const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
+const timezone = 'America/Argentina/Ushuaia'
+
+const getTeamName = (teamId: string | undefined, label: string | undefined, teams: Team[]) =>
+  teams.find((team) => team.id === teamId)?.name ?? label ?? 'A confirmar'
+
+const getMatchName = (match: Match, teams: Team[]) =>
+  `${getTeamName(match.homeTeamId, match.homeLabel, teams)} vs ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`
+
+const getMatchOptionLabel = (match: Match, teams: Team[]) =>
+  `${getMatchName(match, teams)} · ${formatDay(match.startDateTime, timezone)} · ${formatTime(match.startDateTime, timezone)}`
 
 export function AdminApp() {
   const { matches, teams, players, events } = useTournamentData()
@@ -54,7 +66,12 @@ export function AdminApp() {
       <p className={styles.notice}>Sesión: {user.email}. Los cambios se publican inmediatamente.</p>
       <section className={styles.section}>
         <div className={styles.sectionTitle}><h2>Partidos</h2><button type="button" className={styles.secondary} onClick={async () => { await seedFirestore(); setMessage('Datos iniciales cargados.') }}>Cargar datos iniciales</button></div>
-        <div className={styles.matchList}>{matches.map((match) => <MatchEditor key={match.id} match={match} onSaved={() => setMessage('Partido actualizado.')} />)}</div>
+        {(['men', 'women'] as const).map((category) => (
+          <div className={styles.tournamentGroup} key={category}>
+            <h3>{category === 'men' ? 'Masculino' : 'Femenino'}</h3>
+            <div className={styles.matchList}>{matches.filter((match) => match.category === category).map((match) => <MatchEditor key={match.id} match={match} teams={teams} onSaved={() => setMessage('Partido actualizado.')} />)}</div>
+          </div>
+        ))}
       </section>
       <section className={styles.section}>
         <h2>Planteles</h2>
@@ -63,9 +80,12 @@ export function AdminApp() {
       </section>
       <section className={styles.section}>
         <h2>Goles, asistencias y faltas</h2>
-        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar…</option>{matches.map((match) => <option key={match.id} value={match.id}>{match.id} · {match.startDateTime.slice(0, 16).replace('T', ' ')}</option>)}</select></label>
+        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{getMatchOptionLabel(match, teams)}</option>)}</select></label>
         {selectedMatch && <EventForm match={selectedMatch} teams={teams} players={players} onSaved={() => setMessage('Estadística publicada.')} />}
-        <div className={styles.events}>{events.map((event) => <div key={event.id}><span><strong>{event.playerName}</strong> · {event.type} · {event.matchId}</span><button type="button" className={styles.danger} onClick={() => removeMatchEvent(event.id)}>Eliminar</button></div>)}</div>
+        <div className={styles.events}>{events.map((event) => {
+          const match = matches.find((item) => item.id === event.matchId)
+          return <div key={event.id}><span><strong>{event.playerName}</strong> · {event.type === 'goal' ? 'Gol' : event.type === 'penalty' ? 'Falta' : 'Falta grave'}{match ? ` · ${getMatchName(match, teams)}` : ''}</span><button type="button" className={styles.danger} onClick={() => removeMatchEvent(event.id)}>Eliminar</button></div>
+        })}</div>
       </section>
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
@@ -73,7 +93,7 @@ export function AdminApp() {
   )
 }
 
-function MatchEditor({ match, onSaved }: { match: Match; onSaved: () => void }) {
+function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; onSaved: () => void }) {
   const [draft, setDraft] = useState(match)
   useEffect(() => setDraft(match), [match])
   const submit = async (event: FormEvent) => {
@@ -83,11 +103,19 @@ function MatchEditor({ match, onSaved }: { match: Match; onSaved: () => void }) 
   }
   return (
     <form className={styles.match} onSubmit={submit}>
-      <strong>{match.id}</strong>
-      <select aria-label={`Estado ${match.id}`} value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as MatchStatus })}>{statuses.map((status) => <option key={status}>{status}</option>)}</select>
-      <input aria-label={`Goles local ${match.id}`} type="number" min="0" placeholder="Local" value={draft.homeScore ?? ''} onChange={(event) => setDraft({ ...draft, homeScore: event.target.value === '' ? null : Number(event.target.value) })} />
-      <input aria-label={`Goles visita ${match.id}`} type="number" min="0" placeholder="Visita" value={draft.awayScore ?? ''} onChange={(event) => setDraft({ ...draft, awayScore: event.target.value === '' ? null : Number(event.target.value) })} />
-      <button type="submit">Guardar</button>
+      <div className={styles.matchHeader}>
+        <div>
+          <strong>{getMatchName(match, teams)}</strong>
+          <span>{formatDay(match.startDateTime, timezone)} · {formatTime(match.startDateTime, timezone)} · {stageLabels[match.stage]}</span>
+        </div>
+        <select aria-label={`Estado de ${getMatchName(match, teams)}`} value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as MatchStatus })}>{statuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}</select>
+      </div>
+      <div className={styles.scoreEditor}>
+        <label><span>{getTeamName(match.homeTeamId, match.homeLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.homeTeamId, match.homeLabel, teams)}`} type="number" min="0" placeholder="—" value={draft.homeScore ?? ''} onChange={(event) => setDraft({ ...draft, homeScore: event.target.value === '' ? null : Number(event.target.value) })} /></label>
+        <span className={styles.versus}>—</span>
+        <label><span>{getTeamName(match.awayTeamId, match.awayLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`} type="number" min="0" placeholder="—" value={draft.awayScore ?? ''} onChange={(event) => setDraft({ ...draft, awayScore: event.target.value === '' ? null : Number(event.target.value) })} /></label>
+        <button type="submit">Guardar cambios</button>
+      </div>
     </form>
   )
 }
