@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { Match } from '../types/tournament'
-import { ALL_TEAMS, filterMatchesByTeam, getInitialMatchId, groupMatchesByDay } from './matches'
+import {
+  ALL_TEAMS,
+  filterMatchesByTeam,
+  getInitialMatchId,
+  groupMatchesByDay,
+  isOfficialFixturePublished,
+} from './matches'
 
 const match = (id: string, startDateTime: string, status: Match['status']): Match => ({
   id,
@@ -72,6 +78,30 @@ describe('filterMatchesByTeam', () => {
   describe('when the selected team plays no match', () => {
     it('should keep only the undecided playoff matches', () => {
       expect(filterMatchesByTeam(all, 'unknown').map((item) => item.id)).toEqual(['pending'])
+    })
+  })
+})
+
+describe('isOfficialFixturePublished', () => {
+  const official = [match('a', '2026-07-25T10:00:00-03:00', 'upcoming'), match('b', '2026-07-25T12:00:00-03:00', 'upcoming')]
+
+  describe('when the published schedule holds the official matches', () => {
+    it('should report the fixture as published', () => {
+      expect(isOfficialFixturePublished([...official].reverse(), official)).toBe(true)
+    })
+  })
+
+  describe('when the published schedule still holds other matches', () => {
+    it('should report the fixture as pending', () => {
+      expect(isOfficialFixturePublished([match('old', '2026-07-23T10:00:00-03:00', 'finished')], official)).toBe(false)
+    })
+  })
+
+  describe('when the published schedule keeps leftovers alongside the official matches', () => {
+    it('should report the fixture as pending', () => {
+      const leftovers = [...official, match('old', '2026-07-23T10:00:00-03:00', 'finished')]
+
+      expect(isOfficialFixturePublished(leftovers, official)).toBe(false)
     })
   })
 })

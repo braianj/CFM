@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, removePlayer, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
+import { matches as officialMatches } from '../data/matches'
 import { stageLabels, statusLabels } from '../data/tournamentConfig'
 import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
+import { isOfficialFixturePublished } from '../utils/matches'
 import styles from './AdminApp.module.css'
 
 type AdminView = 'matches' | 'teams' | 'statistics'
@@ -65,6 +67,7 @@ export function AdminApp() {
 
   const categoryTeams = teams.filter((team) => team.category === category)
   const categoryMatches = matches.filter((match) => match.category === category)
+  const fixturePublished = isOfficialFixturePublished(matches, officialMatches)
   const notify = (text: string) => setMessage(text)
 
   return (
@@ -73,6 +76,7 @@ export function AdminApp() {
         <div><span>CFM Ushuaia Hockey</span><h1>Administración</h1></div>
         <button type="button" className={styles.secondary} onClick={() => signOut(auth)}>Salir</button>
       </header>
+      {!fixturePublished && <FixturePublisher pending notify={notify} />}
       <nav className={styles.mainTabs} aria-label="Administración">
         <SegmentedControl label="Sección" value={view} onChange={setView} options={[
           { value: 'matches', label: 'Partidos' },
@@ -123,7 +127,7 @@ export function AdminApp() {
         />
       )}
 
-      <FixturePublisher notify={notify} />
+      {fixturePublished && <FixturePublisher notify={notify} />}
 
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
@@ -131,7 +135,7 @@ export function AdminApp() {
   )
 }
 
-function FixturePublisher({ notify }: { notify: (message: string) => void }) {
+function FixturePublisher({ pending = false, notify }: { pending?: boolean; notify: (message: string) => void }) {
   const [publishing, setPublishing] = useState(false)
   const publish = async () => {
     if (!window.confirm('Se borran todos los equipos y partidos publicados y se cargan los del fixture oficial. Las estadísticas ya cargadas quedarían sin partido asociado. ¿Continuar?')) return
@@ -146,13 +150,14 @@ function FixturePublisher({ notify }: { notify: (message: string) => void }) {
     }
   }
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${pending ? styles.callout : ''}`}>
       <h2>Fixture oficial</h2>
       <p className={styles.hint}>
-        Reemplaza equipos y partidos por el fixture oficial cargado en el sitio. Los planteles,
-        convocatorias y estadísticas no se tocan. Usalo una sola vez, antes de cargar resultados.
+        {pending
+          ? 'Los partidos publicados no son los del fixture oficial. El sitio público sigue mostrando los datos anteriores hasta que los reemplaces.'
+          : 'Reemplaza equipos y partidos por el fixture oficial cargado en el sitio. Los planteles, convocatorias y estadísticas no se tocan.'}
       </p>
-      <button type="button" className={styles.danger} disabled={publishing} onClick={publish}>
+      <button type="button" className={pending ? undefined : styles.danger} disabled={publishing} onClick={publish}>
         {publishing ? 'Publicando…' : 'Reemplazar por el fixture oficial'}
       </button>
     </section>

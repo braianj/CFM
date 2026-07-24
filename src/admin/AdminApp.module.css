@@ -10,6 +10,7 @@
 .notice { background:var(--blue-soft); border-radius:8px; padding:.75rem; }
 .section { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-top:1rem; padding:1rem; }.section h2 { font-size:1.1rem; }
 .hint { color:var(--muted); font-size:.8rem; margin-top:-.35rem; }
+.callout { background:var(--gold-faint); border-color:var(--gold); }.callout h2 { margin-top:0; }.callout .hint { color:var(--ink); }
 .createMatch { display:grid; gap:.65rem; grid-template-columns:repeat(2,1fr); }.createMatch button { align-self:end; }
 .teamList { display:grid; gap:.75rem; }.teamEditor { align-items:end; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.75rem; grid-template-columns:32px 1fr auto; padding:.75rem; }.teamEditor > span { align-self:center; background:var(--navy); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:28px; place-items:center; width:28px; }
 .matchList { display:grid; gap:.75rem; }.match { background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.8rem; padding:.85rem; }
