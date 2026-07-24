@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { MatchTimeline } from './components/MatchTimeline'
+import { PlayoffBracket } from './components/PlayoffBracket'
 import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { getMatchesByCategory } from './data/matches'
@@ -57,7 +58,10 @@ export default function App() {
         {view === 'matches' ? (
           <MatchTimeline matches={categoryMatches} teams={categoryTeams} timezone={config.timezone} scrollKey={category} />
         ) : (
-          <StandingsTable rows={standings} bands={config.qualification} />
+          <>
+            <StandingsTable rows={standings} bands={config.qualification} />
+            <PlayoffBracket category={category} matches={categoryMatches} teams={categoryTeams} />
+          </>
         )}
       </main>
       <footer className={styles.siteFooter}>Horarios de Ushuaia (UTC−3) · Datos actualizados manualmente</footer>
