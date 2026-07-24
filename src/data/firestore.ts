@@ -9,6 +9,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore'
 import { matches as seedMatches } from './matches'
+import { players as seedPlayers } from './players'
 import { teams as seedTeams } from './teams'
 import { db } from '../firebase'
 import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types/tournament'
@@ -67,8 +68,9 @@ export const saveMatchRosterEntry = (entry: MatchRosterEntry) =>
 export const removeMatchRosterEntry = (entryId: string) =>
   deleteDoc(doc(db, 'matchRosters', entryId))
 
-// Deletes every published team and match, then republishes the versioned official
-// fixture. Scores, rosters and events are stored in other collections and survive.
+// Replaces every published team and match with the versioned official fixture, and
+// adds the official rosters. Players are upserted by a stable ID, so clubs keep any
+// extra player registered from the panel. Match rosters and events are never touched.
 export async function publishOfficialFixture() {
   const [publishedTeams, publishedMatches] = await Promise.all([
     getDocs(collection(db, 'teams')),
@@ -80,5 +82,6 @@ export async function publishOfficialFixture() {
   publishedMatches.forEach((item) => batch.delete(item.ref))
   seedTeams.forEach((team) => batch.set(doc(db, 'teams', team.id), team))
   seedMatches.forEach((match) => batch.set(doc(db, 'matches', match.id), match))
+  seedPlayers.forEach((player) => batch.set(doc(db, 'players', player.id), player))
   await batch.commit()
 }

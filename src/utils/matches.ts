@@ -14,12 +14,6 @@ export const filterMatchesByTeam = (matches: Match[], teamId: string) =>
           match.homeTeamId === teamId || match.awayTeamId === teamId || hasPendingParticipant(match),
       )
 
-// True once the published schedule holds exactly the matches of the versioned fixture.
-export function isOfficialFixturePublished(published: Match[], official: Match[]) {
-  const publishedIds = new Set(published.map((match) => match.id))
-  return publishedIds.size === official.length && official.every((match) => publishedIds.has(match.id))
-}
-
 export const sortMatches = (matches: Match[]) =>
   [...matches].sort(
     (first, second) =>

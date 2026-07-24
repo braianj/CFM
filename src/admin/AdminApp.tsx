@@ -3,17 +3,17 @@ import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebas
 import { SegmentedControl } from '../components/SegmentedControl'
 import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, removePlayer, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
-import { stageLabels, statusLabels } from '../data/tournamentConfig'
+import { players as officialPlayers } from '../data/players'
+import { TIMEZONE, stageLabels, statusLabels } from '../data/tournamentConfig'
 import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
-import { isOfficialFixturePublished } from '../utils/matches'
+import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
 type AdminView = 'matches' | 'teams' | 'statistics'
 
-const timezone = 'America/Argentina/Ushuaia'
 const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
 const stagesByCategory: Record<Category, MatchStage[]> = {
   men: ['regular', 'repechaje-a', 'repechaje-b', 'final-a', 'final-b'],
@@ -27,7 +27,7 @@ const getMatchName = (match: Match, teams: Team[]) =>
   `${getTeamName(match.homeTeamId, match.homeLabel, teams)} vs ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`
 
 const getMatchOptionLabel = (match: Match, teams: Team[]) =>
-  `${getMatchName(match, teams)} · ${formatDay(match.startDateTime, timezone)} · ${formatTime(match.startDateTime, timezone)}`
+  `${getMatchName(match, teams)} · ${formatDay(match.startDateTime, TIMEZONE)} · ${formatTime(match.startDateTime, TIMEZONE)}`
 
 export function AdminApp() {
   const { matches, teams, players, rosters, events } = useTournamentData()
@@ -67,7 +67,8 @@ export function AdminApp() {
 
   const categoryTeams = teams.filter((team) => team.category === category)
   const categoryMatches = matches.filter((match) => match.category === category)
-  const fixturePublished = isOfficialFixturePublished(matches, officialMatches)
+  const dataPublished =
+    isOfficialFixturePublished(matches, officialMatches) && areOfficialRostersPublished(players, officialPlayers)
   const notify = (text: string) => setMessage(text)
 
   return (
@@ -76,7 +77,7 @@ export function AdminApp() {
         <div><span>CFM Ushuaia Hockey</span><h1>Administración</h1></div>
         <button type="button" className={styles.secondary} onClick={() => signOut(auth)}>Salir</button>
       </header>
-      {!fixturePublished && <FixturePublisher pending notify={notify} />}
+      {!dataPublished && <FixturePublisher pending notify={notify} />}
       <nav className={styles.mainTabs} aria-label="Administración">
         <SegmentedControl label="Sección" value={view} onChange={setView} options={[
           { value: 'matches', label: 'Partidos' },
@@ -97,7 +98,7 @@ export function AdminApp() {
           </section>
           <section className={styles.section}>
             <h2>Partidos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
-            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura 90 minutos.</p>
+            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido ocupa una franja de 60 minutos.</p>
             <div className={styles.matchList}>{categoryMatches.map((match) => (
               <MatchEditor key={match.id} match={match} teams={teams} onSaved={() => notify('Resultado actualizado.')} />
             ))}</div>
@@ -127,7 +128,7 @@ export function AdminApp() {
         />
       )}
 
-      {fixturePublished && <FixturePublisher notify={notify} />}
+      {dataPublished && <FixturePublisher notify={notify} />}
 
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
@@ -138,27 +139,27 @@ export function AdminApp() {
 function FixturePublisher({ pending = false, notify }: { pending?: boolean; notify: (message: string) => void }) {
   const [publishing, setPublishing] = useState(false)
   const publish = async () => {
-    if (!window.confirm('Se borran todos los equipos y partidos publicados y se cargan los del fixture oficial. Las estadísticas ya cargadas quedarían sin partido asociado. ¿Continuar?')) return
+    if (!window.confirm('Se borran todos los equipos y partidos publicados, se cargan los del fixture oficial y se agregan los planteles inscriptos. Las estadísticas ya cargadas quedarían sin partido asociado. ¿Continuar?')) return
     setPublishing(true)
     try {
       await publishOfficialFixture()
-      notify('Fixture oficial publicado.')
+      notify('Fixture y planteles oficiales publicados.')
     } catch {
-      notify('No se pudo publicar el fixture. Volvé a intentarlo.')
+      notify('No se pudieron publicar los datos. Volvé a intentarlo.')
     } finally {
       setPublishing(false)
     }
   }
   return (
     <section className={`${styles.section} ${pending ? styles.callout : ''}`}>
-      <h2>Fixture oficial</h2>
+      <h2>Datos oficiales</h2>
       <p className={styles.hint}>
         {pending
-          ? 'Los partidos publicados no son los del fixture oficial. El sitio público sigue mostrando los datos anteriores hasta que los reemplaces.'
-          : 'Reemplaza equipos y partidos por el fixture oficial cargado en el sitio. Los planteles, convocatorias y estadísticas no se tocan.'}
+          ? 'Los datos publicados no son los oficiales. El sitio público sigue mostrando los anteriores hasta que los reemplaces.'
+          : 'Reemplaza equipos y partidos por el fixture oficial y carga los planteles inscriptos. Las convocatorias y las estadísticas no se tocan.'}
       </p>
       <button type="button" className={pending ? undefined : styles.danger} disabled={publishing} onClick={publish}>
-        {publishing ? 'Publicando…' : 'Reemplazar por el fixture oficial'}
+        {publishing ? 'Publicando…' : 'Publicar fixture y planteles oficiales'}
       </button>
     </section>
   )
@@ -231,7 +232,7 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
   return (
     <form className={styles.match} onSubmit={submit}>
       <div className={styles.matchHeader}>
-        <div><strong>{getMatchName(match, teams)}</strong><span>{formatDay(match.startDateTime, timezone)} · {formatTime(match.startDateTime, timezone)} · {stageLabels[match.stage]}</span></div>
+        <div><strong>{getMatchName(match, teams)}</strong><span>{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)} · {stageLabels[match.stage]}</span></div>
         <span className={`${styles.status} ${styles[match.status]}`}>{statusLabels[match.status]}</span>
       </div>
       <div className={styles.scoreEditor}>

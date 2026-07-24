@@ -47,17 +47,19 @@ Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambi
 - definir los convocados y su número de camiseta para cada partido;
 - registrar primera y segunda asistencia, período y tiempo de juego;
 - registrar faltas, faltas graves y minutos de penalización;
-- reemplazar equipos y partidos publicados por el fixture oficial versionado.
+- publicar el fixture oficial y los planteles inscriptos.
 
 Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 60 minutos y finalizado después. Ese valor acompaña la grilla oficial, que programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
 
-La acción **Reemplazar por el fixture oficial** borra todos los equipos y partidos publicados y vuelve a cargar los del repositorio. No toca planteles, convocatorias ni estadísticas. Usala una sola vez, antes de empezar a cargar resultados.
+La acción **Publicar fixture y planteles oficiales** borra todos los equipos y partidos publicados, vuelve a cargar los del repositorio y agrega los planteles inscriptos. No toca convocatorias ni estadísticas. Usala una sola vez, antes de empezar a cargar resultados. Mientras los datos publicados no coincidan con los del repositorio, el panel lo avisa con un recuadro arriba de todo.
 
 La web pública puede ser visitada por cualquiera sin iniciar sesión. Las reglas de Firestore permiten lectura pública y escritura exclusiva de la cuenta administradora.
 
 ## Datos iniciales y configuración
 
 Los equipos, el fixture oficial y la configuración están versionados en el proyecto y funcionan como respaldo cuando Firestore está vacío o no responde. Los resultados y las estadísticas se administran desde el panel.
+
+Los planteles inscriptos están en `src/data/players.ts`. Solo se guarda el nombre: las planillas de inscripción incluyen documento y fecha de nacimiento, y esos datos no se almacenan ni se publican. Los números de camiseta tampoco viven ahí, sino en la convocatoria de cada partido.
 
 Los IDs de los partidos siguen los códigos de la organización: `h-1` a `h-15` y `d-1` a `d-10` para la fase regular, más `h-rep-a`, `h-rep-b`, `h-final-a`, `h-final-b`, `d-rep`, `d-sf1`, `d-sf2`, `d-3er` y `d-final`.
 

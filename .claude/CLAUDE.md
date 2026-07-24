@@ -222,10 +222,13 @@ five women's team slots, creates scheduled matches, edits scores, manages
 rosters, and publishes or deletes match events. Never expose internal match
 IDs in the interface.
 
-A `Fixture oficial` action replaces every published team and match with the
-versioned seed data. It is destructive for `teams` and `matches` and leaves
-`players`, `matchRosters`, and `matchEvents` untouched. It must stay behind an
-explicit confirmation, and it must not run automatically on load.
+A `Datos oficiales` action replaces every published team and match with the
+versioned seed data and upserts the versioned rosters. It is destructive for
+`teams` and `matches`, additive for `players`, and leaves `matchRosters` and
+`matchEvents` untouched. It must stay behind an explicit confirmation, and it
+must not run automatically on load. The panel shows it as a warning banner while
+the published data differs from the versioned data, and as a discreet
+maintenance section once they match.
 
 Collections:
 
@@ -234,6 +237,11 @@ Collections:
 - `matchRosters`
 - `matches`
 - `matchEvents`
+
+Club registration sheets carry identity documents and birth dates. Never store
+them, never echo them, and never add fields for them. `src/data/players.ts` keeps
+names only. A player document holds exactly `id`, `category`, `teamId`, `name`
+and `active`, and a test enforces that shape.
 
 `matchEvents` is the source of truth for player statistics. Supported event
 types are `goal`, `penalty`, and `major-penalty`; goal events may include first
