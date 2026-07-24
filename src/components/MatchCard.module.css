@@ -1,0 +1,20 @@
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-left: 1.5rem; overflow: hidden; position: relative; scroll-margin-top: 210px; }
+.card::before { background: var(--border-strong); border: 4px solid var(--bg); border-radius: 50%; content: ''; height: 11px; left: -2.05rem; position: absolute; top: 1.1rem; width: 11px; }
+.card.finished { opacity: .72; }
+.card.live { border: 2px solid var(--live); box-shadow: 0 4px 16px rgba(202, 43, 58, .13); }
+.card.live::before { background: var(--live); }
+.card.upcoming::before { background: var(--blue); }
+.meta { align-items: center; border-bottom: 1px solid var(--border); display: flex; font-size: .75rem; font-weight: 750; gap: .65rem; padding: .7rem .9rem; }
+.meta time { color: var(--ink); font-size: .9rem; }
+.meta span:nth-child(2) { color: var(--muted); flex: 1; }
+.status { background: var(--surface-muted); border-radius: 99px; color: var(--muted); padding: .3rem .55rem; }
+.live .status { background: var(--live); color: white; }
+.upcoming .status { background: var(--blue-soft); color: var(--blue-dark); }
+.teams { display: grid; gap: .65rem; padding: 1rem .9rem; }
+.team { align-items: center; display: grid; gap: .65rem; grid-template-columns: 8px 1fr auto; min-width: 0; }
+.marker { border-radius: 99px; height: 28px; width: 5px; }
+.teamName, .placeholder { font-size: 1rem; font-weight: 850; min-width: 0; }
+.placeholder { color: var(--muted); font-style: italic; font-weight: 650; }
+.score { font-size: 1.65rem; font-variant-numeric: tabular-nums; font-weight: 900; min-width: 2ch; text-align: right; }
+.footer { background: var(--surface-muted); color: var(--muted); display: flex; font-size: .75rem; gap: .7rem; justify-content: space-between; padding: .65rem .9rem; }
+.footer strong { color: var(--live); }

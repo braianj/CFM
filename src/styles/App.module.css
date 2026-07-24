@@ -1,0 +1,16 @@
+.header { background:var(--surface); border-bottom:1px solid var(--border); display:grid; gap:1rem; padding:1rem; position:sticky; top:0; z-index:10; }
+.brand { align-items:center; display:flex; gap:.8rem; }
+.puck { align-items:center; background:var(--navy); border:3px solid #ccd5dc; border-radius:50%; color:white; display:flex; font-size:.65rem; font-weight:900; height:44px; justify-content:center; letter-spacing:.08em; width:44px; }
+.brand span { color:var(--blue-dark); font-size:.68rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+.brand h1 { font-size:1.15rem; margin:.1rem 0 0; }
+.main { margin:0 auto; max-width:760px; padding:1.25rem 1rem 3rem; }
+.title { align-items:end; display:flex; justify-content:space-between; margin-bottom:1.25rem; }
+.title > div { align-items:center; display:flex; font-size:1.15rem; font-weight:900; gap:.5rem; }
+.title span { border-radius:4px; height:22px; width:5px; }
+.men { background:var(--blue); } .women { background:var(--live); }
+.title p { color:var(--muted); font-size:.72rem; margin:0; text-align:right; }
+.siteFooter { color:var(--muted); font-size:.72rem; padding:1.5rem; text-align:center; }
+@media (min-width:700px) {
+  .header { align-items:end; grid-template-columns:1fr 250px 250px; margin:0 auto; padding:1.1rem max(1rem, calc((100% - 1000px)/2)); }
+  .main { padding-top:2rem; }
+}
