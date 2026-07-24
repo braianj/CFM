@@ -2,6 +2,11 @@ import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { initializeFirestore } from 'firebase/firestore'
 
+// Google Analytics identifier for the web app. It is public client configuration,
+// like the rest of this object. Firebase hands it out once Google Analytics is
+// enabled for the project; while it is empty, every tracking call is a no-op.
+export const MEASUREMENT_ID = ''
+
 const firebaseConfig = {
   apiKey: 'AIzaSyAUFE81PWVzJGQKqfUZ83ULDMs19B38Rk0',
   authDomain: 'cfm-hockey.firebaseapp.com',
@@ -9,9 +14,10 @@ const firebaseConfig = {
   storageBucket: 'cfm-hockey.firebasestorage.app',
   messagingSenderId: '290741191055',
   appId: '1:290741191055:web:f8550ce7794a3d983b4bfa',
+  measurementId: MEASUREMENT_ID,
 }
 
-const app = initializeApp(firebaseConfig)
+export const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
 // Optional fields are written as `undefined` all over the panel (a goal with no

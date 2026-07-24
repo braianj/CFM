@@ -176,6 +176,32 @@ Final A/B. Never reuse a stage across categories except `regular` and `final`.
 Unknown playoff participants use `homeLabel` and `awayLabel`. Replace those
 labels with team IDs when participants are known.
 
+## Analytics
+
+Usage tracking runs on Google Analytics for Firebase, wrapped by
+`src/analytics.ts`. Components never call the SDK directly; they call `track`.
+
+`MEASUREMENT_ID` in `src/firebase.ts` switches the whole thing on. While it is
+empty, `track` returns immediately and the bundler drops the SDK entirely, so an
+unconfigured build ships no analytics code at all. The SDK is behind a dynamic
+import so it stays in its own chunk.
+
+Never send a person's name, an identity document, or anything that identifies a
+visitor. Events carry team IDs, team names, view names and tournament scope only.
+
+Analytics must never break the page: `initAnalytics` swallows load failures on
+purpose, because an ad blocker or an unsupported browser is a normal outcome.
+
+Events:
+
+- `select_view` — `view`, `tournament`
+- `select_tournament` — `tournament`
+- `select_team` — `team_id`, `team_name`, `category`
+- `admin_action` — `action`, plus `resolution` or `event_type` where they apply
+
+Page views, sessions and first visits are collected automatically once the
+measurement ID is set.
+
 ## Colour
 
 The palette is Club Andino Ushuaia's: green and white. The greens are sampled from

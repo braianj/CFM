@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { track } from './analytics'
 import { MatchTimeline } from './components/MatchTimeline'
 import { PlayoffBracket } from './components/PlayoffBracket'
 import { SegmentedControl } from './components/SegmentedControl'
@@ -69,15 +70,22 @@ export default function App() {
   const setTeamId = (next: string) => {
     localStorage.setItem('cfm-team', next)
     setTeamIdState(next)
+    const team = scopedTeams.find((candidate) => candidate.id === next)
+    void track('select_team', team
+      ? { team_id: team.id, team_name: team.name, category: team.category }
+      : { team_id: ALL_TEAMS })
   }
   const setScope = (next: Scope) => {
     localStorage.setItem('cfm-category', next)
     setScopeState(next)
-    setTeamId(ALL_TEAMS)
+    localStorage.setItem('cfm-team', ALL_TEAMS)
+    setTeamIdState(ALL_TEAMS)
+    void track('select_tournament', { tournament: next })
   }
   const setView = (next: View) => {
     localStorage.setItem('cfm-view', next)
     setViewState(next)
+    void track('select_view', { view: next, tournament: scope })
   }
 
   return (

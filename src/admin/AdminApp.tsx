@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
+import { track } from '../analytics'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { publishOfficialFixture, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
@@ -50,9 +51,11 @@ export function AdminApp() {
     setMessage('')
     try {
       const result = await signInWithPopup(auth, googleProvider)
-      if (result.user.email !== ADMIN_EMAIL) {
+      if (result.user.email === ADMIN_EMAIL) void track('admin_action', { action: 'sign_in' })
+    if (result.user.email !== ADMIN_EMAIL) {
         await signOut(auth)
         setMessage('Esta cuenta no tiene permisos de administración.')
+        void track('admin_action', { action: 'sign_in_rejected' })
       }
     } catch {
       setMessage('No se pudo iniciar sesión. Volvé a intentarlo.')
@@ -150,6 +153,7 @@ function FixturePublisher({ pending = false, notify }: { pending?: boolean; noti
     setPublishing(true)
     try {
       await publishOfficialFixture()
+      void track('admin_action', { action: 'publish_official_data' })
       notify('Fixture y planteles oficiales publicados.')
     } catch {
       notify('No se pudieron publicar los datos. Volvé a intentarlo.')
@@ -237,6 +241,7 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     await saveMatch({ ...match, homeScore, awayScore, resolution: isTied ? 'regulation' : resolution })
+    void track('admin_action', { action: 'save_result', resolution: isTied ? 'regulation' : resolution })
     onSaved()
   }
   return (
@@ -362,6 +367,7 @@ function MatchRosterForm({ match, teams, players, entries, onSaved }: {
       playerName: player.name,
       jerseyNumber: Number(jerseyNumber),
     })
+    void track('admin_action', { action: 'save_roster_entry' })
     setPlayerId(''); setJerseyNumber(''); onSaved()
   }
   return (
@@ -415,6 +421,7 @@ function EventForm({ match, teams, players, entries, onSaved }: {
       secondAssistId: type === 'goal' ? secondAssist?.id : undefined, secondAssistName: type === 'goal' ? secondAssist?.name : undefined,
       period, gameTime: gameTime.trim() || undefined, penaltyMinutes: type === 'goal' ? undefined : penaltyMinutes,
     })
+    void track('admin_action', { action: 'publish_event', event_type: type })
     setPlayerId(''); setAssistId(''); setSecondAssistId(''); setGameTime(''); onSaved()
   }
   return (

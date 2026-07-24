@@ -156,6 +156,27 @@ El tiempo extra y los penales pagan lo mismo, pero se guardan por separado y tie
 
 `qualification` controla las zonas visuales de la tabla. Se pueden cambiar sus posiciones y etiquetas sin tocar componentes.
 
+## Analítica de uso
+
+El sitio usa Google Analytics para Firebase. Está implementado pero **apagado** hasta que se complete un paso manual:
+
+1. En la consola de Firebase, proyecto `cfm-hockey`, entrá a **Configuración del proyecto → Integraciones → Google Analytics** y habilitalo.
+2. Firebase devuelve un identificador con formato `G-XXXXXXXXXX`.
+3. Pegalo en `MEASUREMENT_ID`, en `src/firebase.ts`, y subí el cambio.
+
+Mientras ese valor esté vacío, `track()` no hace nada y el compilador elimina el SDK del bundle, así que la web no carga ni un byte de analítica.
+
+Se registran automáticamente las visitas, las sesiones y los visitantes nuevos. Además se registran estos eventos propios:
+
+| Evento | Cuándo | Datos |
+|---|---|---|
+| `select_view` | cambio de vista | vista y torneo |
+| `select_tournament` | cambio de torneo | torneo |
+| `select_team` | filtro por equipo | ID, nombre y categoría del equipo |
+| `admin_action` | acciones del panel | acción, y resultado o tipo de evento |
+
+Nunca se envía el nombre de una persona ni ningún dato de las planillas de inscripción.
+
 ## GitHub Pages
 
 El build usa la ruta base `/CFM/`, por lo que los assets y el panel funcionan en GitHub Pages.
