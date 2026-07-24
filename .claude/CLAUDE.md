@@ -192,6 +192,7 @@ Collections:
 
 - `teams`
 - `players`
+- `matchRosters`
 - `matches`
 - `matchEvents`
 
@@ -200,6 +201,10 @@ types are `goal`, `penalty`, and `major-penalty`; goal events may include first
 and second assists, and penalty events may include penalty minutes. Events may
 record a period and game clock. Never maintain
 aggregate player totals manually.
+
+Jersey numbers belong to a player's match roster entry, not permanently to the
+player. A player may be absent or use a different number in every match.
+Statistics entry must only offer players included in that match's roster.
 
 The Firebase web configuration is public client configuration, not a secret.
 Security is enforced by Authentication and `firestore.rules`.

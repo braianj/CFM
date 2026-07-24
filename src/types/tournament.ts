@@ -81,6 +81,7 @@ export interface MatchEvent {
   type: MatchEventType
   playerId?: string
   playerName: string
+  jerseyNumber?: number
   assistId?: string
   assistName?: string
   secondAssistId?: string
@@ -100,6 +101,16 @@ export interface Player {
   name: string
   number?: number
   active: boolean
+}
+
+export interface MatchRosterEntry {
+  id: string
+  matchId: string
+  category: Category
+  teamId: string
+  playerId: string
+  playerName: string
+  jerseyNumber: number
 }
 
 export interface PlayerStatistic {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { matches as staticMatches } from '../data/matches'
 import { teams as staticTeams } from '../data/teams'
 import { subscribeToTournamentData } from '../data/firestore'
-import type { Match, MatchEvent, Player, Team } from '../types/tournament'
+import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types/tournament'
 import { applyAutomaticMatchStatuses } from '../utils/matchStatus'
 
 export function useTournamentData() {
@@ -10,6 +10,7 @@ export function useTournamentData() {
   const [now, setNow] = useState(() => new Date())
   const [teams, setTeams] = useState<Team[]>(staticTeams)
   const [players, setPlayers] = useState<Player[]>([])
+  const [rosters, setRosters] = useState<MatchRosterEntry[]>([])
   const [events, setEvents] = useState<MatchEvent[]>([])
   const [usingLiveData, setUsingLiveData] = useState(false)
 
@@ -20,6 +21,7 @@ export function useTournamentData() {
     },
     setTeams,
     setPlayers,
+    setRosters,
     setEvents,
     () => setUsingLiveData(false),
   ), [])
@@ -30,5 +32,5 @@ export function useTournamentData() {
   }, [])
 
   const matches = applyAutomaticMatchStatuses(storedMatches, now)
-  return { matches, teams, players, events, usingLiveData }
+  return { matches, teams, players, rosters, events, usingLiveData }
 }
