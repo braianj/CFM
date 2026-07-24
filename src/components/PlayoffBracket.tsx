@@ -54,9 +54,6 @@ export function PlayoffBracket({ category, matches, teams }: Props) {
           </div>
         ))}
       </div>
-      <p className={styles.note}>
-        Los participantes pendientes se reemplazan en <code>src/data/matches.ts</code>.
-      </p>
     </section>
   )
 }

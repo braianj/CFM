@@ -13,8 +13,6 @@
 .participant:first-of-type { border-top: 0; }
 .participant span { font-size: .82rem; font-weight: 750; }
 .participant strong { font-size: 1.15rem; }
-.note { color: var(--muted); font-size: .72rem; margin: .75rem 0 0; }
-.note code { color: var(--ink); }
 @media (min-width: 600px) {
   .bracket { align-items: center; grid-template-columns: repeat(2, 1fr); }
   .single { grid-template-columns: 1fr; }
