@@ -12,6 +12,19 @@ interface MiniTableRow {
   goalDifference: number
 }
 
+// Single source of truth for how a finished match pays out, so the table and every
+// tie-breaking mini-table always agree.
+function awardPoints(match: ResultMatch, scoring: ScoringRules) {
+  if (match.homeScore === match.awayScore) return { home: scoring.draw, away: scoring.draw }
+
+  const winner = match.decidedInOvertime ? scoring.overtimeWin : scoring.win
+  const loser = match.decidedInOvertime ? scoring.overtimeLoss : scoring.loss
+
+  return match.homeScore > match.awayScore
+    ? { home: winner, away: loser }
+    : { home: loser, away: winner }
+}
+
 const compareOverall = (a: StandingRow, b: StandingRow) =>
   b.goalDifference - a.goalDifference ||
   b.goalsFor - a.goalsFor ||
@@ -40,21 +53,13 @@ function createMiniTable(
     .forEach((match) => {
       const home = miniTable.get(match.homeTeamId)!
       const away = miniTable.get(match.awayTeamId)!
+      const points = awardPoints(match, scoring)
       home.goalsFor += match.homeScore
       home.goalsAgainst += match.awayScore
       away.goalsFor += match.awayScore
       away.goalsAgainst += match.homeScore
-
-      if (match.homeScore > match.awayScore) {
-        home.points += scoring.win
-        away.points += scoring.loss
-      } else if (match.homeScore < match.awayScore) {
-        away.points += scoring.win
-        home.points += scoring.loss
-      } else {
-        home.points += scoring.draw
-        away.points += scoring.draw
-      }
+      home.points += points.home
+      away.points += points.away
     })
 
   return new Map(
@@ -103,6 +108,8 @@ export function calculateStandings(
         team,
         played: 0,
         won: 0,
+        overtimeWon: 0,
+        overtimeLost: 0,
         drawn: 0,
         lost: 0,
         goalsFor: 0,
@@ -119,29 +126,30 @@ export function calculateStandings(
 
       const homeScore = match.homeScore
       const awayScore = match.awayScore
+      const points = awardPoints(match, scoring)
       home.played += 1
       away.played += 1
       home.goalsFor += homeScore
       home.goalsAgainst += awayScore
       away.goalsFor += awayScore
       away.goalsAgainst += homeScore
+      home.points += points.home
+      away.points += points.away
 
-      if (homeScore > awayScore) {
-        home.won += 1
-        away.lost += 1
-        home.points += scoring.win
-        away.points += scoring.loss
-      } else if (homeScore < awayScore) {
-        away.won += 1
-        home.lost += 1
-        away.points += scoring.win
-        home.points += scoring.loss
-      } else {
+      if (homeScore === awayScore) {
         home.drawn += 1
         away.drawn += 1
-        home.points += scoring.draw
-        away.points += scoring.draw
+        return
       }
+
+      const [winner, loser] = homeScore > awayScore ? [home, away] : [away, home]
+      if (match.decidedInOvertime) {
+        winner.overtimeWon += 1
+        loser.overtimeLost += 1
+        return
+      }
+      winner.won += 1
+      loser.lost += 1
     })
 
   const completedRows = [...rows.values()].map((row) => ({

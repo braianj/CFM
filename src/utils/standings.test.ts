@@ -21,7 +21,7 @@ describe('calculateStandings', () => {
   let teams: Team[]
 
   beforeEach(() => {
-    scoring = { win: 3, draw: 1, loss: 0 }
+    scoring = { win: 3, overtimeWin: 2, overtimeLoss: 1, loss: 0, draw: 1 }
     teams = [
       { id: 'a', name: 'A', shortName: 'A', category: 'men' },
       { id: 'b', name: 'B', shortName: 'B', category: 'men' },
@@ -44,6 +44,66 @@ describe('calculateStandings', () => {
 
     it('should record one loss for the defeated team', () => {
       expect(standings.find((row) => row.team.id === 'b')).toMatchObject({ lost: 1, points: 0 })
+    })
+  })
+
+  describe('when a match is decided in overtime', () => {
+    let standings: StandingRow[]
+
+    beforeEach(() => {
+      standings = calculateStandings('men', teams, [createMatch({ decidedInOvertime: true })], scoring)
+    })
+
+    it('should award two points to the overtime winner', () => {
+      expect(standings.find((row) => row.team.id === 'a')).toMatchObject({ overtimeWon: 1, won: 0, points: 2 })
+    })
+
+    it('should award one point to the overtime loser', () => {
+      expect(standings.find((row) => row.team.id === 'b')).toMatchObject({ overtimeLost: 1, lost: 0, points: 1 })
+    })
+
+    it('should rank a regulation win above two overtime wins on points', () => {
+      const rows = calculateStandings('men', teams, [
+        createMatch({ id: 'ot-1', homeTeamId: 'a', awayTeamId: 'c', decidedInOvertime: true }),
+        createMatch({ id: 'ot-2', homeTeamId: 'a', awayTeamId: 'd', decidedInOvertime: true }),
+        createMatch({ id: 'reg', homeTeamId: 'b', awayTeamId: 'c' }),
+      ], scoring)
+
+      expect(rows.find((row) => row.team.id === 'a')?.points).toBe(4)
+      expect(rows.find((row) => row.team.id === 'b')?.points).toBe(3)
+    })
+  })
+
+  describe('when the direct match between two tied teams went to overtime', () => {
+    it('should rank the overtime winner first', () => {
+      const rows = calculateStandings('men', teams, [
+        // A beats B in overtime: 2 vs 1 between them.
+        createMatch({ id: 'h2h', homeTeamId: 'a', awayTeamId: 'b', homeScore: 3, awayScore: 2, decidedInOvertime: true }),
+        // B outscores C heavily so its overall goal difference beats A's.
+        createMatch({ id: 'b-c', homeTeamId: 'b', awayTeamId: 'c', homeScore: 9, awayScore: 0 }),
+        // A only edges D in overtime, which keeps both teams level on 4 points.
+        createMatch({ id: 'a-d', homeTeamId: 'a', awayTeamId: 'd', homeScore: 1, awayScore: 0, decidedInOvertime: true }),
+      ], scoring)
+
+      const [first, second] = rows.filter((row) => ['a', 'b'].includes(row.team.id))
+
+      expect(first.team.id).toBe('a')
+      expect(second.team.id).toBe('b')
+      expect(first.points).toBe(second.points)
+      expect(first.goalDifference).toBeLessThan(second.goalDifference)
+    })
+  })
+
+  describe('when a draw is flagged as decided in overtime', () => {
+    it('should ignore the flag and award the draw points', () => {
+      const standings = calculateStandings(
+        'men',
+        teams,
+        [createMatch({ homeScore: 2, awayScore: 2, decidedInOvertime: true })],
+        scoring,
+      )
+
+      expect(standings.find((row) => row.team.id === 'a')).toMatchObject({ drawn: 1, overtimeWon: 0, points: 1 })
     })
   })
 

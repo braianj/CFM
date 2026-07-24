@@ -44,6 +44,7 @@ Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambi
 - editar los seis equipos masculinos y cinco femeninos;
 - crear partidos seleccionando equipos, fecha, hora y etapa;
 - cargar o quitar resultados, incluso parciales en vivo;
+- marcar que un partido se definió en tiempo extra;
 - registrar goles y asistencias;
 - administrar los planteles y números de camiseta;
 - definir los convocados y su número de camiseta para cada partido;
@@ -144,8 +145,10 @@ Cuando se conozcan los participantes, reemplazá `homeLabel` / `awayLabel` por `
 Cada torneo tiene reglas independientes:
 
 ```ts
-scoring: { win: 3, draw: 1, loss: 0 }
+scoring: { win: 3, overtimeWin: 2, overtimeLoss: 1, loss: 0, draw: 1 }
 ```
+
+Ganar en tiempo reglamentario suma 3 y perder 0. Si el partido se define en tiempo extra, el ganador suma 2 y el perdedor 1. En el panel, cada partido tiene la opción **Se definió en tiempo extra** junto al resultado; la tabla lo refleja en las columnas GOT y POT.
 
 `qualification` controla las zonas visuales de la tabla. Se pueden cambiar sus posiciones y etiquetas sin tocar componentes.
 

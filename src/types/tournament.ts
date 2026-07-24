@@ -36,14 +36,19 @@ export interface Match {
   awayScore: number | null
   status: MatchStatus
   countsForStandings: boolean
+  // A match tied at the end of regulation is decided in overtime, which is worth
+  // fewer points than winning outright.
+  decidedInOvertime?: boolean
   venue?: string
   notes?: string
 }
 
 export interface ScoringRules {
   win: number
-  draw: number
+  overtimeWin: number
+  overtimeLoss: number
   loss: number
+  draw: number
 }
 
 export interface QualificationBand {
@@ -66,7 +71,10 @@ export interface StandingRow {
   position: number
   team: Team
   played: number
+  // Regulation results only. Overtime results are counted separately.
   won: number
+  overtimeWon: number
+  overtimeLost: number
   drawn: number
   lost: number
   goalsFor: number

@@ -118,12 +118,23 @@ Playoff matches use `countsForStandings: false`.
 
 Default scoring:
 
-- Win: 3 points
+- Win in regulation: 3 points
+- Win in overtime: 2 points
+- Loss in overtime: 1 point
+- Loss in regulation: 0 points
 - Draw: 1 point
-- Loss: 0 points
 
-Tournament matches are expected not to end in a draw, but the calculation
-continues to handle historical draw data safely.
+A match tied at the end of regulation goes to overtime, so `decidedInOvertime`
+marks which side of the scoring table applies. Tournament matches therefore never
+end in a draw, but the calculation still handles historical draw data safely and
+ignores `decidedInOvertime` when the scores are equal.
+
+`awardPoints` in `src/utils/standings.ts` is the only place that turns a result
+into points. The overall table and every tie-breaking mini-table must use it, or
+an overtime result would be worth three points inside a tiebreaker.
+
+`StandingRow.won` and `StandingRow.lost` count regulation results only.
+Overtime results live in `overtimeWon` and `overtimeLost`.
 
 Ordering:
 
@@ -191,6 +202,9 @@ labels with team IDs when participants are known.
 Standings tests must cover:
 
 - win/loss;
+- overtime win and overtime loss;
+- an overtime result inside a head-to-head tiebreaker;
+- a draw flagged as overtime, which must fall back to draw points;
 - zero score handling;
 - missing results;
 - ignored playoff matches;

@@ -223,10 +223,13 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
 function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; onSaved: () => void }) {
   const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
   const [awayScore, setAwayScore] = useState<number | null>(match.awayScore)
+  const [overtime, setOvertime] = useState(match.decidedInOvertime ?? false)
   useEffect(() => { setHomeScore(match.homeScore); setAwayScore(match.awayScore) }, [match.homeScore, match.awayScore])
+  useEffect(() => setOvertime(match.decidedInOvertime ?? false), [match.decidedInOvertime])
+  const isDraw = homeScore !== null && awayScore !== null && homeScore === awayScore
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    await saveMatch({ ...match, homeScore, awayScore })
+    await saveMatch({ ...match, homeScore, awayScore, decidedInOvertime: overtime && !isDraw })
     onSaved()
   }
   return (
@@ -241,6 +244,10 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
         <label><span>{getTeamName(match.awayTeamId, match.awayLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`} type="number" min="0" placeholder="—" value={awayScore ?? ''} onChange={(event) => setAwayScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <button type="submit">Guardar resultado</button>
       </div>
+      <label className={styles.overtime}>
+        <input type="checkbox" checked={overtime} disabled={isDraw} onChange={(event) => setOvertime(event.target.checked)} />
+        <span>Se definió en tiempo extra: el ganador suma 2 y el perdedor 1.</span>
+      </label>
     </form>
   )
 }

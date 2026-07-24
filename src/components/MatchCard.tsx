@@ -31,8 +31,9 @@ export function MatchCard({ match, teams, timezone, categoryLabel }: Props) {
         <TeamRow team={home} label={match.homeLabel} score={hasScore ? match.homeScore : null} />
         <TeamRow team={away} label={match.awayLabel} score={hasScore ? match.awayScore : null} />
       </div>
-      {(match.venue || match.notes) && (
+      {(match.venue || match.notes || match.decidedInOvertime) && (
         <footer className={styles.footer}>
+          {match.decidedInOvertime && <span>Definido en tiempo extra</span>}
           {match.venue && <span>{match.venue}</span>}
           {match.notes && <strong>{match.notes}</strong>}
         </footer>
