@@ -1,21 +1,21 @@
 .login { align-items:center; display:flex; justify-content:center; min-height:100vh; padding:1rem; }
 .panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-width:420px; padding:2rem; text-align:center; width:100%; }
-.logo { background:var(--navy); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:52px; margin:auto; place-items:center; width:52px; }
-.panel h1 { margin-bottom:.5rem; }.panel p { color:var(--muted); }.panel a,.publicLink { color:var(--blue-dark); display:block; margin-top:1.25rem; }
-.panel button,.admin button { background:var(--blue-dark); border:0; border-radius:8px; color:white; cursor:pointer; font-weight:800; min-height:42px; padding:.65rem 1rem; }
+.logo { background:var(--deep); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:52px; margin:auto; place-items:center; width:52px; }
+.panel h1 { margin-bottom:.5rem; }.panel p { color:var(--muted); }.panel a,.publicLink { color:var(--accent-dark); display:block; margin-top:1.25rem; }
+.panel button,.admin button { background:var(--accent-dark); border:0; border-radius:8px; color:white; cursor:pointer; font-weight:800; min-height:42px; padding:.65rem 1rem; }
 .error { color:var(--live)!important; }
 .admin { margin:auto; max-width:980px; padding:1rem 1rem 4rem; }
-.admin header,.sectionTitle { align-items:center; display:flex; justify-content:space-between; }.admin header span { color:var(--blue-dark); font-size:.75rem; font-weight:900; text-transform:uppercase; }.admin header h1 { margin:.25rem 0; }
+.admin header,.sectionTitle { align-items:center; display:flex; justify-content:space-between; }.admin header span { color:var(--accent-dark); font-size:.75rem; font-weight:900; text-transform:uppercase; }.admin header h1 { margin:.25rem 0; }
 .mainTabs { margin:1.25rem 0 1rem; }
-.notice { background:var(--blue-soft); border-radius:8px; padding:.75rem; }
+.notice { background:var(--accent-soft); border-radius:8px; padding:.75rem; }
 .section { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-top:1rem; padding:1rem; }.section h2 { font-size:1.1rem; }
 .hint { color:var(--muted); font-size:.8rem; margin-top:-.35rem; }
 .callout { background:var(--gold-faint); border-color:var(--gold); }.callout h2 { margin-top:0; }.callout .hint { color:var(--ink); }
 .createMatch { display:grid; gap:.65rem; grid-template-columns:repeat(2,1fr); }.createMatch button { align-self:end; }
-.teamList { display:grid; gap:.75rem; }.teamEditor { align-items:end; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.75rem; grid-template-columns:32px 1fr auto; padding:.75rem; }.teamEditor > span { align-self:center; background:var(--navy); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:28px; place-items:center; width:28px; }
+.teamList { display:grid; gap:.75rem; }.teamEditor { align-items:end; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.75rem; grid-template-columns:32px 1fr auto; padding:.75rem; }.teamEditor > span { align-self:center; background:var(--deep); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:28px; place-items:center; width:28px; }
 .matchList { display:grid; gap:.75rem; }.match { background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.8rem; padding:.85rem; }
 .matchHeader { align-items:center; display:flex; gap:1rem; justify-content:space-between; }.matchHeader > div { display:grid; gap:.2rem; }.matchHeader strong { font-size:.95rem; }.matchHeader div span { color:var(--muted); font-size:.72rem; }
-.status { background:var(--surface-muted); border-radius:999px; font-size:.7rem; font-weight:900; padding:.4rem .65rem; white-space:nowrap; }.live { background:#ffe2e5; color:var(--live); }.upcoming { background:var(--blue-soft); color:var(--blue-dark); }.finished { color:var(--muted); }
+.status { background:var(--surface-muted); border-radius:999px; font-size:.7rem; font-weight:900; padding:.4rem .65rem; white-space:nowrap; }.live { background:#ffe2e5; color:var(--live); }.upcoming { background:var(--accent-soft); color:var(--accent-dark); }.finished { color:var(--muted); }
 .scoreEditor { align-items:end; display:grid; gap:.6rem; grid-template-columns:1fr 18px 1fr auto; }.scoreEditor label { margin:0; }.scoreEditor label span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.scoreEditor input { font-size:1.15rem; font-weight:900; text-align:center; }.versus { align-self:center; color:var(--muted); font-weight:900; text-align:center; }
 .admin input,.admin select { background:white; border:1px solid var(--border-strong); border-radius:7px; font:inherit; min-height:40px; padding:.45rem; width:100%; }
 .admin label { display:grid; font-size:.75rem; font-weight:800; gap:.25rem; margin:.5rem 0; }
@@ -24,5 +24,5 @@
 .roster { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin:1rem 0; padding:1rem; }.roster h3 { margin:0 0 .5rem; }.rosterForm { align-items:end; display:grid; gap:.5rem; grid-template-columns:2fr 1fr auto; }.rosterEntries > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
 .events > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
 .resolution { margin:0!important; }.inactive { opacity:.55; }.match .hint { margin:0; }
-.toast { background:var(--navy); border-radius:8px; bottom:1rem; color:white; padding:.8rem 1rem; position:fixed; right:1rem; }
+.toast { background:var(--deep); border-radius:8px; bottom:1rem; color:white; padding:.8rem 1rem; position:fixed; right:1rem; }
 @media(max-width:650px){.createMatch,.eventForm,.rosterForm{grid-template-columns:1fr}.teamEditor{grid-template-columns:32px 1fr}.teamEditor button{grid-column:1/-1}.matchHeader{align-items:flex-start;flex-direction:column}.scoreEditor{grid-template-columns:1fr 18px 1fr}.scoreEditor button{grid-column:1/-1}.sectionTitle{align-items:flex-start;gap:.5rem}.admin header h1{font-size:1.35rem}}

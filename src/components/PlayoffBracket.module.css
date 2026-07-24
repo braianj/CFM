@@ -1,14 +1,14 @@
 .section { margin-top: 2.5rem; }
 .heading { margin-bottom: 1rem; }
-.heading p { color: var(--blue-dark); font-size: .72rem; font-weight: 850; letter-spacing: .08em; margin: 0 0 .2rem; text-transform: uppercase; }
+.heading p { color: var(--accent-dark); font-size: .72rem; font-weight: 850; letter-spacing: .08em; margin: 0 0 .2rem; text-transform: uppercase; }
 .heading h2 { font-size: 1.4rem; margin: 0; }
 .bracket { display: grid; gap: 1rem; }
 .round { display: grid; gap: .55rem; }
 .roundLabel { color: var(--muted); font-size: .72rem; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .games { display: grid; gap: .75rem; }
 .game { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
-.game header { align-items: center; background: var(--navy); color: white; display: flex; font-size: .72rem; justify-content: space-between; padding: .6rem .75rem; }
-.game header span { color: #c5d2dc; font-weight: 700; }
+.game header { align-items: center; background: var(--deep); color: white; display: flex; font-size: .72rem; justify-content: space-between; padding: .6rem .75rem; }
+.game header span { color: #c3d6c9; font-weight: 700; }
 .participant { align-items: center; border-top: 1px solid var(--border); display: grid; gap: .75rem; grid-template-columns: 1fr auto; min-height: 45px; padding: .6rem .75rem; }
 .participant:first-of-type { border-top: 0; }
 .participant span { font-size: .82rem; font-weight: 750; }

@@ -176,6 +176,21 @@ Final A/B. Never reuse a stage across categories except `regular` and `final`.
 Unknown playoff participants use `homeLabel` and `awayLabel`. Replace those
 labels with team IDs when participants are known.
 
+## Colour
+
+The palette is Club Andino Ushuaia's: green and white. The greens are sampled from
+the club's own material, `#44924f` and `#1b3e2f`, darkened where contrast required
+it. Every colour lives in `src/styles/global.css` as a custom property; no component
+may hardcode a brand colour.
+
+Tokens: `--deep` is the dark green used for headers, active tabs and table heads.
+`--accent` is the mid green for badges and markers. `--accent-dark` is the readable
+green for link text and buttons. `--accent-soft` and `--accent-faint` are its tints.
+
+`src/styles/palette.test.ts` parses those tokens and enforces 4.5:1 for text pairs
+and 3:1 for focus rings and strong borders. Adjust a colour only if that test
+still passes.
+
 ## UI Behavior
 
 - Mobile-first, single-column sports interface.

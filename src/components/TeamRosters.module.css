@@ -7,7 +7,7 @@
 .count { background: var(--surface-muted); border-radius: 99px; color: var(--muted); font-size: .75rem; font-weight: 850; padding: .3rem .6rem; }
 .squad { display: grid; gap: .1rem; list-style: none; margin: 0; padding: .5rem 0; }
 .squad li { align-items: center; border-top: 1px solid var(--border); display: flex; font-size: .88rem; font-weight: 700; gap: .6rem; justify-content: space-between; padding: .55rem .9rem; }
-.role { background: var(--blue-soft); border-radius: 99px; color: var(--blue-dark); font-size: .68rem; font-style: normal; font-weight: 900; letter-spacing: .04em; padding: .2rem .45rem; }
+.role { background: var(--accent-soft); border-radius: 99px; color: var(--accent-dark); font-size: .68rem; font-style: normal; font-weight: 900; letter-spacing: .04em; padding: .2rem .45rem; }
 .squad li:first-child { border-top: 0; }
 .pending { color: var(--muted); font-size: .8rem; font-style: italic; margin: 0; padding: 1rem .9rem; }
 .empty { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); padding: 2rem 1rem; text-align: center; }

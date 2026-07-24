@@ -3,13 +3,13 @@
 .card.finished { opacity: .72; }
 .card.live { border: 2px solid var(--live); box-shadow: 0 4px 16px rgba(202, 43, 58, .13); }
 .card.live::before { background: var(--live); }
-.card.upcoming::before { background: var(--blue); }
+.card.upcoming::before { background: var(--accent); }
 .meta { align-items: center; border-bottom: 1px solid var(--border); display: flex; font-size: .75rem; font-weight: 750; gap: .65rem; padding: .7rem .9rem; }
 .meta time { color: var(--ink); font-size: .9rem; }
 .meta span:nth-child(2) { color: var(--muted); flex: 1; }
 .status { background: var(--surface-muted); border-radius: 99px; color: var(--muted); padding: .3rem .55rem; }
 .live .status { background: var(--live); color: white; }
-.upcoming .status { background: var(--blue-soft); color: var(--blue-dark); }
+.upcoming .status { background: var(--accent-soft); color: var(--accent-dark); }
 .teams { display: grid; gap: .65rem; padding: 1rem .9rem; }
 .team { align-items: center; display: grid; gap: .65rem; grid-template-columns: 8px 1fr auto; min-width: 0; }
 .marker { border-radius: 99px; height: 28px; width: 5px; }

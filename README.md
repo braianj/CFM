@@ -10,6 +10,8 @@ La vista **Planteles** muestra los jugadores inscriptos de cada equipo, y de uno
 
 En la vista de partidos se puede filtrar por equipo para ver solamente su calendario. El listado de un equipo conserva los partidos de definición a los que todavía puede llegar, igual que las hojas por equipo del fixture, y nunca mezcla el otro torneo. El filtro se recuerda entre visitas y se limpia al cambiar de torneo.
 
+La paleta es la del Club Andino Ushuaia, verde y blanco. Los verdes están tomados del material del club y todos los colores viven como variables CSS en `src/styles/global.css`. Un test verifica que cada combinación de texto llegue a 4.5:1 de contraste.
+
 ## Desarrollo
 
 Requiere Node.js 22 o posterior.

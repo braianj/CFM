@@ -1,4 +1,7 @@
-:root { --bg:#f3f6f8; --surface:#fff; --surface-muted:#edf1f4; --border:#d8e0e6; --border-strong:#8898a7; --ink:#102234; --muted:#607182; --navy:#081b2c; --blue:#1475c9; --blue-dark:#075b9f; --blue-soft:#dceeff; --blue-faint:#f0f7fd; --gold:#e5ae20; --gold-faint:#fff9e9; --live:#c52b3d; --focus:#41a4fa; color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-synthesis:none; }
+/* Club Andino Ushuaia: verde y blanco. Los verdes salen de la marca del club
+   (#44924f y #1b3e2f), oscurecidos donde hacía falta para que el texto blanco y el
+   texto sobre blanco pasen 4.5:1. */
+:root { --bg:#f2f7f3; --surface:#fff; --surface-muted:#eaf1ec; --border:#d6e3d9; --border-strong:#6f8677; --ink:#12281c; --muted:#5d7266; --deep:#1b3e2f; --accent:#3d8447; --accent-dark:#2b6b37; --accent-soft:#d9eede; --accent-faint:#eff8f1; --gold:#e5ae20; --gold-faint:#fff9e9; --live:#c52b3d; --focus:#1f9c4a; color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-synthesis:none; }
 * { box-sizing:border-box; }
 html { background:var(--bg); scroll-behavior:smooth; }
 body { margin:0; min-width:320px; }
