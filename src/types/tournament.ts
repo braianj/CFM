@@ -70,3 +70,28 @@ export interface StandingRow {
   goalDifference: number
   points: number
 }
+
+export type MatchEventType = 'goal' | 'penalty' | 'major-penalty'
+
+export interface MatchEvent {
+  id: string
+  matchId: string
+  category: Category
+  teamId: string
+  type: MatchEventType
+  playerName: string
+  assistName?: string
+  minute?: number
+  penaltyMinutes?: number
+  notes?: string
+}
+
+export interface PlayerStatistic {
+  playerName: string
+  teamId: string
+  goals: number
+  assists: number
+  penalties: number
+  majorPenalties: number
+  penaltyMinutes: number
+}

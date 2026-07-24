@@ -11,6 +11,6 @@
 .title p { color:var(--muted); font-size:.72rem; margin:0; text-align:right; }
 .siteFooter { color:var(--muted); font-size:.72rem; padding:1.5rem; text-align:center; }
 @media (min-width:700px) {
-  .header { align-items:end; grid-template-columns:1fr 250px 250px; margin:0 auto; padding:1.1rem max(1rem, calc((100% - 1000px)/2)); }
+  .header { align-items:end; grid-template-columns:1fr 250px 350px; margin:0 auto; padding:1.1rem max(1rem, calc((100% - 1100px)/2)); }
   .main { padding-top:2rem; }
 }

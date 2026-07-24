@@ -1,6 +1,6 @@
-# CFM Hockey
+# CFM Ushuaia Hockey
 
-Aplicación estática para seguir los torneos masculino y femenino de hockey sobre hielo. No usa backend: equipos, calendario, resultados, estados y configuración se editan en archivos TypeScript.
+Sitio público para seguir los torneos masculino y femenino de hockey sobre hielo, con un panel privado gratuito para publicar resultados y estadísticas.
 
 > Los partidos y resultados incluidos son datos de muestra. Reemplazalos por la programación oficial antes del torneo.
 
@@ -25,17 +25,35 @@ npm run preview
 
 El build estático se genera en `dist/`.
 
-## Dónde editar los datos
+## Administración
 
-- `src/data/teams.ts`: equipos, nombres cortos y colores.
-- `src/data/matches.ts`: calendario, participantes, resultados, estado, sede y notas.
-- `src/data/tournamentConfig.ts`: puntos, nombres, zona horaria y zonas de clasificación.
+El panel está disponible en:
+
+```text
+https://braianj.github.io/CFM/admin/
+```
+
+Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambios se publican inmediatamente. Desde el panel se puede:
+
+- cambiar el estado de un partido;
+- cargar o quitar resultados, incluso parciales en vivo;
+- registrar goles y asistencias;
+- registrar faltas, faltas graves y minutos de penalización;
+- cargar los datos iniciales la primera vez.
+
+Un partido en vivo puede conservar ambos resultados vacíos. También puede tener un resultado parcial; no contará para posiciones hasta que su estado sea `finished`.
+
+La web pública puede ser visitada por cualquiera sin iniciar sesión. Las reglas de Firestore permiten lectura pública y escritura exclusiva de la cuenta administradora.
+
+## Datos iniciales y configuración
+
+Los equipos, el calendario de muestra y la configuración siguen versionados en el proyecto como respaldo. El botón **Cargar datos iniciales** del panel los copia a Firebase. Después de eso, los resultados y estadísticas se actualizan desde el panel.
 
 Los datos masculino y femenino usan `category: 'men'` y `category: 'women'` respectivamente. Los IDs también llevan la categoría como prefijo para impedir cruces accidentales.
 
 ### Agregar un equipo
 
-Agregá un objeto a `teams` en `src/data/teams.ts`:
+Para agregar un equipo a los datos iniciales, agregá un objeto a la lista `teams`:
 
 ```ts
 {
@@ -51,7 +69,7 @@ El equipo aparecerá automáticamente en la tabla de su torneo.
 
 ### Agregar un partido
 
-Agregá un objeto a `matches` en `src/data/matches.ts`:
+Para agregar un partido a los datos iniciales, agregá un objeto a la lista `matches`:
 
 ```ts
 {
@@ -104,7 +122,7 @@ Cuando se conozcan los participantes, reemplazá `homeLabel` / `awayLabel` por `
 
 ### Cambiar puntos o clasificación
 
-En `src/data/tournamentConfig.ts`, cada torneo tiene reglas independientes:
+Cada torneo tiene reglas independientes:
 
 ```ts
 scoring: { win: 3, draw: 1, loss: 0 }
@@ -114,7 +132,7 @@ scoring: { win: 3, draw: 1, loss: 0 }
 
 ## GitHub Pages
 
-`vite.config.ts` usa `base: './'`, por lo que los assets funcionan bajo cualquier ruta `https://<usuario>.github.io/<repositorio>/`.
+El build usa la ruta base `/CFM/`, por lo que los assets y el panel funcionan en GitHub Pages.
 
 1. En GitHub, abrí **Settings → Pages**.
 2. En **Build and deployment**, elegí **GitHub Actions**.

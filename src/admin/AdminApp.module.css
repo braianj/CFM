@@ -1,0 +1,18 @@
+.login { align-items:center; display:flex; justify-content:center; min-height:100vh; padding:1rem; }
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-width:420px; padding:2rem; text-align:center; width:100%; }
+.logo { background:var(--navy); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:52px; margin:auto; place-items:center; width:52px; }
+.panel h1 { margin-bottom:.5rem; }.panel p { color:var(--muted); }.panel a,.publicLink { color:var(--blue-dark); display:block; margin-top:1.25rem; }
+.panel button,.admin button { background:var(--blue-dark); border:0; border-radius:8px; color:white; cursor:pointer; font-weight:800; min-height:42px; padding:.65rem 1rem; }
+.error { color:var(--live)!important; }
+.admin { margin:auto; max-width:980px; padding:1rem 1rem 4rem; }
+.admin header,.sectionTitle { align-items:center; display:flex; justify-content:space-between; }.admin header span { color:var(--blue-dark); font-size:.75rem; font-weight:900; text-transform:uppercase; }.admin header h1 { margin:.25rem 0; }
+.notice { background:var(--blue-soft); border-radius:8px; padding:.75rem; }
+.section { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-top:1rem; padding:1rem; }.section h2 { font-size:1.1rem; }
+.matchList { display:grid; gap:.5rem; }.match { align-items:center; border-top:1px solid var(--border); display:grid; gap:.5rem; grid-template-columns:70px 1fr 80px 80px auto; padding-top:.5rem; }
+.admin input,.admin select { background:white; border:1px solid var(--border-strong); border-radius:7px; font:inherit; min-height:40px; padding:.45rem; width:100%; }
+.admin label { display:grid; font-size:.75rem; font-weight:800; gap:.25rem; margin:.5rem 0; }
+.admin .secondary { background:var(--surface-muted); color:var(--ink); }.admin .danger { background:transparent; color:var(--live); min-height:34px; padding:.3rem; }
+.eventForm { display:grid; gap:.5rem; grid-template-columns:repeat(2,1fr); }.eventForm button { align-self:end; }
+.events > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
+.toast { background:var(--navy); border-radius:8px; bottom:1rem; color:white; padding:.8rem 1rem; position:fixed; right:1rem; }
+@media(max-width:650px){.match{grid-template-columns:60px 1fr 1fr}.match button{grid-column:1/-1}.eventForm{grid-template-columns:1fr}.sectionTitle{align-items:flex-start;gap:.5rem}.admin header h1{font-size:1.35rem}}

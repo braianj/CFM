@@ -165,21 +165,31 @@ Standings tests must cover:
 
 Team tests must protect exact public names and the three independent CAU IDs.
 
-## Future Firebase Administration
+## Firebase Administration
 
-The current source of truth is static TypeScript. A planned later phase may add
-Firebase Authentication and Firestore for an authenticated admin interface.
-Until that migration is implemented and deployed, do not assume Firebase is
-available and do not remove the static data.
+Firebase is configured in project `cfm-hockey` on the free Spark plan:
 
-Potential future collections:
+- project display name: CFM Ushuaia Hockey
+- Firestore region: `southamerica-west1`
+- authentication: Google
+- authorized administrator: `braianj@gmail.com`
+- public reads; writes restricted to the administrator email by Firestore rules
+
+The public app subscribes to Firestore and falls back to versioned seed data
+when the remote database is empty or unavailable. The administration page is
+available at `/admin/` and can seed the remote database, edit match status and
+scores, and publish or delete match events.
+
+Collections:
 
 - `teams`
-- `players`
 - `matches`
 - `matchEvents`
-- `admins`
-- `tournamentConfig`
 
-Player statistics should be derived from match events such as goals, assists
-and penalties rather than manually maintained totals.
+`matchEvents` is the source of truth for player statistics. Supported event
+types are `goal`, `penalty`, and `major-penalty`; goal events may include an
+assist, and penalty events may include penalty minutes. Never maintain
+aggregate player totals manually.
+
+The Firebase web configuration is public client configuration, not a secret.
+Security is enforced by Authentication and `firestore.rules`.
