@@ -5,33 +5,66 @@ service cloud.firestore {
       return request.auth != null ? request.auth.token.email.lower() : '';
     }
 
-    // The owner is hardcoded so the tournament can never be locked out of its own
-    // panel, and so the very first administrator can be added to an empty list.
+    function adminPath() {
+      return /databases/$(database)/documents/admins/$(signedInEmail());
+    }
+
+    function isListed() {
+      return request.auth != null && exists(adminPath());
+    }
+
+    // Two levels. An owner runs the tournament: fixture, teams, squads and the
+    // administrator list. An editor only reports what happens on the ice.
+    // The founding owner is hardcoded so the tournament can never be locked out and
+    // so the first administrator can be added to an empty list.
     function isOwner() {
-      return signedInEmail() == 'braianj@gmail.com';
+      return signedInEmail() == 'braianj@gmail.com'
+        || (isListed() && get(adminPath()).data.role == 'owner');
     }
 
     function isAdmin() {
-      return isOwner()
-        || (request.auth != null
-            && exists(/databases/$(database)/documents/admins/$(signedInEmail())));
+      return isOwner() || isListed();
     }
 
-    // Tournament data is public to read and administrator-only to write. Every
-    // collection is listed on purpose: a new one must be granted access explicitly
-    // instead of inheriting a blanket rule.
-    match /teams/{document}        { allow read: if true; allow write: if isAdmin(); }
-    match /players/{document}      { allow read: if true; allow write: if isAdmin(); }
-    match /matches/{document}      { allow read: if true; allow write: if isAdmin(); }
-    match /matchRosters/{document} { allow read: if true; allow write: if isAdmin(); }
-    match /matchEvents/{document}  { allow read: if true; allow write: if isAdmin(); }
+    // An editor may correct a scoreline, never who plays or when.
+    function onlyResultChanged() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['homeScore', 'awayScore', 'resolution', 'status', 'notes']);
+    }
 
-    // The administrator list holds personal addresses, so it is never public. A
-    // signed-in person may check their own entry; only an administrator sees the
-    // whole list or changes it.
+    match /teams/{document} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /players/{document} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /matches/{document} {
+      allow read: if true;
+      allow create, delete: if isOwner();
+      allow update: if isOwner() || (isAdmin() && onlyResultChanged());
+    }
+
+    // Reporting the game: who dressed for this match and what happened in it.
+    match /matchRosters/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /matchEvents/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // The list holds personal addresses, so it is never public. A signed-in person
+    // may check their own entry; administrators see the list; only an owner changes
+    // it, and only an owner can hand out the owner role.
     match /admins/{email} {
       allow read: if isAdmin() || signedInEmail() == email;
-      allow write: if isAdmin();
+      allow write: if isOwner();
     }
   }
 }

@@ -14,27 +14,39 @@ import { players as seedPlayers } from './players'
 import { teams as seedTeams } from './teams'
 import { OWNER_EMAIL, db } from '../firebase'
 import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types/tournament'
-import { adminDocId, sortAdminEmails } from '../utils/admins'
+import { adminDocId, sortAdminEmails, type AdminRole } from '../utils/admins'
 
-// The owner is always an administrator, which is also what firestore.rules says.
-export async function isAdministrator(email: string | null | undefined) {
-  if (!email) return false
+export interface AdminEntry {
+  email: string
+  role: AdminRole
+}
+
+// The founding owner outranks the list, which is also what firestore.rules says.
+export async function getAdminRole(email: string | null | undefined): Promise<AdminRole | null> {
+  if (!email) return null
   const id = adminDocId(email)
-  if (id === adminDocId(OWNER_EMAIL)) return true
+  if (id === adminDocId(OWNER_EMAIL)) return 'owner'
   const entry = await getDoc(doc(db, 'admins', id))
-  return entry.exists()
+  if (!entry.exists()) return null
+  return entry.data().role === 'owner' ? 'owner' : 'editor'
 }
 
 // Only an administrator may list the collection, so a denied read means "not one".
-export const subscribeToAdmins = (onAdmins: (emails: string[]) => void, onError: () => void) =>
+export const subscribeToAdmins = (onAdmins: (entries: AdminEntry[]) => void, onError: () => void) =>
   onSnapshot(
     collection(db, 'admins'),
-    (snapshot) => onAdmins(sortAdminEmails(snapshot.docs.map((item) => item.id))),
+    (snapshot) => {
+      const byEmail = new Map(snapshot.docs.map((item) => [item.id, item.data().role as AdminRole]))
+      onAdmins(sortAdminEmails([...byEmail.keys()]).map((email) => ({
+        email,
+        role: byEmail.get(email) === 'owner' ? 'owner' : 'editor',
+      })))
+    },
     onError,
   )
 
-export const saveAdmin = (email: string) =>
-  setDoc(doc(db, 'admins', adminDocId(email)), { email: adminDocId(email) })
+export const saveAdmin = (email: string, role: AdminRole) =>
+  setDoc(doc(db, 'admins', adminDocId(email)), { email: adminDocId(email), role })
 
 export const removeAdmin = (email: string) => deleteDoc(doc(db, 'admins', adminDocId(email)))
 

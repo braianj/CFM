@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { track } from '../analytics'
 import { SegmentedControl } from '../components/SegmentedControl'
-import { isAdministrator, publishOfficialFixture, removeAdmin, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam, saveAdmin, subscribeToAdmins } from '../data/firestore'
+import { getAdminRole, publishOfficialFixture, removeAdmin, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam, saveAdmin, subscribeToAdmins } from '../data/firestore'
+import type { AdminEntry } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
 import { players as officialPlayers } from '../data/players'
 import { TIMEZONE, stageLabels, statusLabels } from '../data/tournamentConfig'
@@ -11,7 +12,7 @@ import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
-import { adminDocId, isValidAdminEmail } from '../utils/admins'
+import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
@@ -41,7 +42,7 @@ const getMatchOptionLabel = (match: Match, teams: Team[]) =>
 export function AdminApp() {
   const { matches, teams, players, rosters, events } = useTournamentData()
   const [user, setUser] = useState<User | null>(null)
-  const [access, setAccess] = useState<'checking' | 'granted' | 'denied'>('denied')
+  const [access, setAccess] = useState<'checking' | AdminRole | 'denied'>('denied')
   const [message, setMessage] = useState('')
   const [view, setView] = useState<AdminView>('matches')
   const [category, setCategory] = useState<Category>('men')
@@ -56,8 +57,8 @@ export function AdminApp() {
     }
     let current = true
     setAccess('checking')
-    isAdministrator(user.email)
-      .then((allowed) => current && setAccess(allowed ? 'granted' : 'denied'))
+    getAdminRole(user.email)
+      .then((role) => current && setAccess(role ?? 'denied'))
       .catch(() => current && setAccess('denied'))
     return () => { current = false }
   }, [user])
@@ -66,7 +67,7 @@ export function AdminApp() {
     setMessage('')
     try {
       const result = await signInWithPopup(auth, googleProvider)
-      if (await isAdministrator(result.user.email)) {
+      if (await getAdminRole(result.user.email)) {
         void track('admin_action', { action: 'sign_in' })
         return
       }
@@ -87,7 +88,7 @@ export function AdminApp() {
     </main>
   )
 
-  if (access !== 'granted') return (
+  if (access === 'denied') return (
     <main className={styles.login}>
       <div className={styles.panel}>
         <div className={styles.logo}>CFM</div>
@@ -100,6 +101,7 @@ export function AdminApp() {
     </main>
   )
 
+  const isOwner = access === 'owner'
   const categoryTeams = teams.filter((team) => team.category === category)
   const categoryMatches = matches.filter((match) => match.category === category)
   const dataPublished =
@@ -112,12 +114,12 @@ export function AdminApp() {
         <div><span>CFM Ushuaia Hockey</span><h1>Administración</h1></div>
         <button type="button" className={styles.secondary} onClick={() => signOut(auth)}>Salir</button>
       </header>
-      {!dataPublished && <FixturePublisher pending notify={notify} />}
+      {isOwner && !dataPublished && <FixturePublisher pending notify={notify} />}
       <nav className={styles.mainTabs} aria-label="Administración">
         <SegmentedControl label="Sección" value={view} onChange={setView} options={[
-          { value: 'matches', label: 'Partidos' },
-          { value: 'teams', label: 'Equipos' },
-          { value: 'statistics', label: 'Estadísticas' },
+          { value: 'matches' as AdminView, label: 'Partidos' },
+          ...(isOwner ? [{ value: 'teams' as AdminView, label: 'Equipos' }] : []),
+          { value: 'statistics' as AdminView, label: 'Estadísticas' },
         ]} />
       </nav>
       <SegmentedControl label="Torneo" value={category} onChange={setCategory} options={[
@@ -127,10 +129,12 @@ export function AdminApp() {
 
       {view === 'matches' && (
         <>
-          <section className={styles.section}>
-            <h2>Crear partido</h2>
-            <MatchForm category={category} teams={categoryTeams} onSaved={() => notify('Partido creado.')} />
-          </section>
+          {isOwner && (
+            <section className={styles.section}>
+              <h2>Crear partido</h2>
+              <MatchForm category={category} teams={categoryTeams} onSaved={() => notify('Partido creado.')} />
+            </section>
+          )}
           <section className={styles.section}>
             <h2>Partidos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
             <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura dos tiempos de 20 minutos.</p>
@@ -141,7 +145,7 @@ export function AdminApp() {
         </>
       )}
 
-      {view === 'teams' && (
+      {view === 'teams' && isOwner && (
         <section className={styles.section}>
           <h2>Equipos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
           <p className={styles.hint}>{category === 'men' ? 'Se mantienen seis equipos.' : 'Se mantienen cinco equipos.'} Editá sus nombres antes de armar el calendario.</p>
@@ -160,11 +164,12 @@ export function AdminApp() {
           rosters={rosters.filter((entry) => entry.category === category)}
           events={events.filter((event) => event.category === category)}
           notify={notify}
+          canManageSquads={isOwner}
         />
       )}
 
-      {dataPublished && <FixturePublisher notify={notify} />}
-      <AdminManager currentEmail={user?.email ?? ''} notify={notify} />
+      {isOwner && dataPublished && <FixturePublisher notify={notify} />}
+      {isOwner && <AdminManager currentEmail={user?.email ?? ''} notify={notify} />}
 
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
@@ -173,14 +178,17 @@ export function AdminApp() {
 }
 
 function AdminManager({ currentEmail, notify }: { currentEmail: string; notify: (message: string) => void }) {
-  const [admins, setAdmins] = useState<string[]>([])
+  const [admins, setAdmins] = useState<AdminEntry[]>([])
   const [email, setEmail] = useState('')
+  const [role, setRole] = useState<AdminRole>('editor')
   const [failed, setFailed] = useState(false)
   useEffect(() => subscribeToAdmins(setAdmins, () => setFailed(true)), [])
 
   const owner = adminDocId(OWNER_EMAIL)
   const me = adminDocId(currentEmail)
-  const listed = admins.includes(owner) ? admins : [owner, ...admins]
+  const listed = admins.some((entry) => entry.email === owner)
+    ? admins
+    : [{ email: owner, role: 'owner' as AdminRole }, ...admins]
 
   const add = async (event: FormEvent) => {
     event.preventDefault()
@@ -189,10 +197,10 @@ function AdminManager({ currentEmail, notify }: { currentEmail: string; notify: 
       return
     }
     try {
-      await saveAdmin(email)
+      await saveAdmin(email, role)
       setEmail('')
       notify('Administrador agregado.')
-      void track('admin_action', { action: 'add_admin' })
+      void track('admin_action', { action: 'add_admin', role })
     } catch {
       notify('No se pudo agregar. Revisá que las reglas de Firestore estén publicadas.')
     }
@@ -213,20 +221,31 @@ function AdminManager({ currentEmail, notify }: { currentEmail: string; notify: 
     <section className={styles.section}>
       <h2>Administradores</h2>
       <p className={styles.hint}>
-        Quien esté en esta lista puede entrar al panel con su cuenta de Google y editar el torneo.
+        <strong>Planilla</strong> carga resultados, convocatorias y estadísticas.{' '}
+        <strong>Organización</strong> además crea partidos, edita equipos y planteles, y maneja esta lista.
         {failed && ' No se pudo leer la lista: puede que falte publicar las reglas de Firestore.'}
       </p>
       <form className={styles.adminForm} onSubmit={add}>
         <label>Correo de Google
           <input type="email" placeholder="nombre@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
         </label>
+        <label>Permisos
+          <select value={role} onChange={(event) => setRole(event.target.value as AdminRole)}>
+            <option value="editor">{roleLabels.editor}</option>
+            <option value="owner">{roleLabels.owner}</option>
+          </select>
+        </label>
         <button type="submit">Agregar</button>
       </form>
       <div className={styles.events}>{listed.map((entry) => (
-        <div key={entry}>
-          <span>{entry}{entry === owner ? ' · dueño' : ''}{entry === me && entry !== owner ? ' · vos' : ''}</span>
-          {entry !== owner && entry !== me && (
-            <button type="button" className={styles.danger} onClick={() => remove(entry)}>Quitar</button>
+        <div key={entry.email}>
+          <span>
+            <strong>{entry.email}</strong> · {roleLabels[entry.role]}
+            {entry.email === owner ? ' · fundador' : ''}
+            {entry.email === me && entry.email !== owner ? ' · vos' : ''}
+          </span>
+          {entry.email !== owner && entry.email !== me && (
+            <button type="button" className={styles.danger} onClick={() => remove(entry.email)}>Quitar</button>
           )}
         </div>
       ))}</div>
@@ -361,15 +380,16 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
   )
 }
 
-function StatisticsAdmin({ category, matches, teams, players, rosters, events, notify }: {
+function StatisticsAdmin({ category, matches, teams, players, rosters, events, notify, canManageSquads }: {
   category: Category; matches: Match[]; teams: Team[]; players: Player[]
-  rosters: MatchRosterEntry[]; events: ReturnType<typeof useTournamentData>['events']; notify: (message: string) => void
+  rosters: MatchRosterEntry[]; events: ReturnType<typeof useTournamentData>['events']
+  notify: (message: string) => void; canManageSquads: boolean
 }) {
   const [selectedMatchId, setSelectedMatchId] = useState('')
   const selectedMatch = matches.find((match) => match.id === selectedMatchId)
   return (
     <>
-      <section className={styles.section}>
+      {canManageSquads && <section className={styles.section}>
         <h2>Planteles</h2>
         <PlayerForm category={category} teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
         <p className={styles.hint}>Dar de baja oculta al jugador del sitio y de las convocatorias, sin perder las estadísticas que ya tenga cargadas.</p>
@@ -385,7 +405,7 @@ function StatisticsAdmin({ category, matches, teams, players, rosters, events, n
             </button>
           </div>
         ))}</div>
-      </section>
+      </section>}
       <section className={styles.section}>
         <h2>Cargar gol, asistencia o falta</h2>
         <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{getMatchOptionLabel(match, teams)}</option>)}</select></label>

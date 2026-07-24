@@ -14,9 +14,9 @@ vi.mock('firebase/firestore', () => ({
   writeBatch: vi.fn(),
 }))
 
-const { isAdministrator } = await import('./firestore')
+const { getAdminRole } = await import('./firestore')
 
-describe('isAdministrator', () => {
+describe('getAdminRole', () => {
   beforeEach(() => {
     getDoc.mockReset()
     getDoc.mockResolvedValue({ exists: () => false })
@@ -24,35 +24,47 @@ describe('isAdministrator', () => {
 
   describe('when nobody is signed in', () => {
     it.each([null, undefined, ''])('should deny access for %s', async (email) => {
-      expect(await isAdministrator(email)).toBe(false)
+      expect(await getAdminRole(email)).toBeNull()
       expect(getDoc).not.toHaveBeenCalled()
     })
   })
 
   describe('when the owner signs in', () => {
     it('should grant access without reading the collection', async () => {
-      expect(await isAdministrator('owner@example.com')).toBe(true)
+      expect(await getAdminRole('owner@example.com')).toBe('owner')
       expect(getDoc).not.toHaveBeenCalled()
     })
 
     it('should ignore capitals and spaces in the address', async () => {
-      expect(await isAdministrator('  Owner@Example.com ')).toBe(true)
+      expect(await getAdminRole('  Owner@Example.com ')).toBe('owner')
     })
   })
 
   describe('when somebody else signs in', () => {
     it('should grant access when they are on the list', async () => {
-      getDoc.mockResolvedValue({ exists: () => true })
+      getDoc.mockResolvedValue({ exists: () => true, data: () => ({ role: 'editor' }) })
 
-      expect(await isAdministrator('jane.doe@example.com')).toBe(true)
+      expect(await getAdminRole('jane.doe@example.com')).toBe('editor')
+    })
+
+    it('should recognise a promoted owner', async () => {
+      getDoc.mockResolvedValue({ exists: () => true, data: () => ({ role: 'owner' }) })
+
+      expect(await getAdminRole('jane.doe@example.com')).toBe('owner')
+    })
+
+    it('should default a listed person without a role to editor', async () => {
+      getDoc.mockResolvedValue({ exists: () => true, data: () => ({}) })
+
+      expect(await getAdminRole('jane.doe@example.com')).toBe('editor')
     })
 
     it('should deny access when they are not', async () => {
-      expect(await isAdministrator('jane.doe@example.com')).toBe(false)
+      expect(await getAdminRole('jane.doe@example.com')).toBeNull()
     })
 
     it('should look the address up in lower case', async () => {
-      await isAdministrator('Jane.Doe@Example.com')
+      await getAdminRole('Jane.Doe@Example.com')
 
       expect(getDoc).toHaveBeenCalledWith({ id: 'jane.doe@example.com' })
     })

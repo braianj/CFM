@@ -158,7 +158,21 @@ El tiempo extra y los penales pagan lo mismo, pero se guardan por separado y tie
 
 ## Administradores
 
-El panel tiene una sección **Administradores**. Para dar acceso a alguien, escribí su correo de Google y listo: entra con ese correo y puede editar el torneo. No hace falta tocar código ni volver a deployar.
+El panel tiene una sección **Administradores** con dos niveles de permiso:
+
+| | Planilla | Organización |
+|---|---|---|
+| Cargar resultados y definir cómo se resolvió el partido | si | si |
+| Convocatorias, goles, asistencias y faltas | si | si |
+| Crear o borrar partidos, cambiar día, hora o equipos | no | si |
+| Editar nombres de equipos | no | si |
+| Agregar jugadores, darlos de baja o reactivarlos | no | si |
+| Publicar el fixture oficial | no | si |
+| Administrar esta lista | no | si |
+
+Para dar acceso, escribí el correo de Google de la persona, elegí el nivel y listo. No hace falta tocar código ni volver a deployar.
+
+La separación se aplica en las reglas de Firestore, no solo escondiendo botones: alguien con permiso de Planilla que intente cambiar la fecha de un partido recibe un rechazo del servidor.
 
 La cuenta `braianj@gmail.com` es la dueña, está fija en el código y en las reglas, y no se puede quitar. Eso evita quedarse sin acceso al panel y permite crear el primer administrador cuando la lista está vacía.
 

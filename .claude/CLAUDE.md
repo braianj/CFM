@@ -303,18 +303,34 @@ must not run automatically on load. The panel shows it as a warning banner while
 the published data differs from the versioned data, and as a discreet
 maintenance section once they match.
 
-Administrators are data, not code. `isAdmin()` in `firestore.rules` grants access to
-the owner or to anyone with a document in `admins`. The owner stays hardcoded on
-both sides so the tournament can never be locked out and so the first
-administrator can be added to an empty list.
+Administrators are data, not code, and come in two levels stored as `role` on the
+`admins` document:
+
+- `owner` runs the tournament: creates and deletes matches, edits teams and squads,
+  publishes the official data, and manages the administrator list.
+- `editor` only reports what happens on the ice: results, match rosters and events.
+
+An editor may update a match, but only the keys in `onlyResultChanged()`. Moving a
+match to another day or swapping a team is an owner action, enforced in the rules
+and not merely hidden in the panel.
+
+The founding owner stays hardcoded in `firestore.rules` and `src/firebase.ts` so the
+tournament can never be locked out and so the first administrator can be added to
+an empty list. Any other owner is granted with `role: 'owner'`.
 
 `firestore.rules` grants read access per collection instead of with a catch-all: a
 new collection is private until it is listed. The `admins` collection is never
 public, because it holds personal addresses. A signed-in person may read only
 their own entry; administrators may read and change the whole list.
 
-The rules are NOT deployed by CI. After changing `firestore.rules`, publish them in
-the Firebase console, and publish them before shipping code that depends on them.
+The rules are NOT deployed by CI. After changing `firestore.rules`, run
+`firebase deploy --only firestore:rules --project cfm-hockey`, and deploy them
+before shipping code that depends on them.
+
+`firestore.rules.test.ts` exercises the rules against the Firestore emulator with
+`npm run test:rules`. It is excluded from `npm test` because it needs the emulator.
+Every permission change must be covered there: the panel hiding a button is not
+enforcement.
 
 Collections:
 
