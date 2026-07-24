@@ -9,6 +9,7 @@ import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
+import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
@@ -104,7 +105,7 @@ export function AdminApp() {
           </section>
           <section className={styles.section}>
             <h2>Partidos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
-            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido ocupa una franja de 60 minutos.</p>
+            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura dos tiempos de 20 minutos.</p>
             <div className={styles.matchList}>{categoryMatches.map((match) => (
               <MatchEditor key={match.id} match={match} teams={teams} onSaved={() => notify('Resultado actualizado.')} />
             ))}</div>
@@ -425,7 +426,7 @@ function EventForm({ match, teams, players, entries, onSaved }: {
         <label>1.ª asistencia<select value={assistId} onChange={(event) => setAssistId(event.target.value)}><option value="">Sin asistencia</option>{eligiblePlayers.filter((player) => player.id !== playerId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select></label>
         <label>2.ª asistencia<select value={secondAssistId} onChange={(event) => setSecondAssistId(event.target.value)}><option value="">Sin asistencia</option>{eligiblePlayers.filter((player) => player.id !== playerId && player.id !== assistId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select></label>
       </> : <label>Minutos de penalización<input type="number" min="0" value={penaltyMinutes} onChange={(event) => setPenaltyMinutes(Number(event.target.value))} /></label>}
-      <label>Período<input type="number" min="1" max="9" value={period} onChange={(event) => setPeriod(Number(event.target.value))} /></label>
+      <label>Período<input type="number" min="1" max={REGULATION_PERIODS + 1} value={period} onChange={(event) => setPeriod(Number(event.target.value))} /></label>
       <label>Tiempo de juego<input placeholder="Ej. 12:34" pattern="[0-9]{1,2}:[0-9]{2}" value={gameTime} onChange={(event) => setGameTime(event.target.value)} /></label>
       <button type="submit">Publicar evento</button>
     </form>

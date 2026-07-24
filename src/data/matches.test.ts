@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Category, Match } from '../types/tournament'
 import { getMatchesByCategory, matches } from './matches'
 import { getTeamsByCategory, teams } from './teams'
+import { MATCH_DURATION_MINUTES } from '../utils/matchStatus'
 
 const regularMatches = (category: Category) =>
   getMatchesByCategory(category).filter((match) => match.stage === 'regular')
@@ -106,6 +107,17 @@ describe('official fixture data', () => {
       const starts = matches.map((match) => match.startDateTime)
 
       expect(new Set(starts).size).toBe(starts.length)
+    })
+
+    it('should fit a whole match inside the gap before the next one', () => {
+      const starts = matches
+        .map((match) => new Date(match.startDateTime).getTime())
+        .sort((first, second) => first - second)
+      const smallestGap = Math.min(
+        ...starts.slice(1).map((start, index) => (start - starts[index]) / 60_000),
+      )
+
+      expect(MATCH_DURATION_MINUTES).toBeLessThanOrEqual(smallestGap)
     })
   })
 

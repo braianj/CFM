@@ -96,9 +96,10 @@ application recalculates statuses every 30 seconds. `tbd` remains for
 placeholder participants and `postponed` is preserved as an exceptional
 override.
 
-`MATCH_DURATION_MINUTES` must never exceed the smallest gap between consecutive
-slots in the fixture, or two matches show as live at once. The official 2026
-fixture uses 60-minute slots.
+A match is two periods of 20 minutes, so `MATCH_DURATION_MINUTES` is derived from
+`REGULATION_PERIODS * PERIOD_MINUTES`. It must never exceed the smallest gap
+between consecutive slots in the fixture, or two matches show as live at once; a
+test in `src/data/matches.test.ts` enforces that against the real schedule.
 
 A live match may have:
 

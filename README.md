@@ -52,7 +52,7 @@ Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambi
 - registrar faltas, faltas graves y minutos de penalización;
 - publicar el fixture oficial y los planteles inscriptos.
 
-Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 60 minutos y finalizado después. Ese valor acompaña la grilla oficial, que programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
+Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 40 minutos y finalizado después. Un partido son dos tiempos de 20 minutos, y la grilla oficial programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
 
 La acción **Publicar fixture y planteles oficiales** borra todos los equipos y partidos publicados, vuelve a cargar los del repositorio y agrega los planteles inscriptos. No toca convocatorias ni estadísticas. Usala una sola vez, antes de empezar a cargar resultados. Mientras los datos publicados no coincidan con los del repositorio, el panel lo avisa con un recuadro arriba de todo.
 

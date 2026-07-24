@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Match } from '../types/tournament'
-import { getAutomaticMatchStatus } from './matchStatus'
+import { MATCH_DURATION_MINUTES, PERIOD_MINUTES, REGULATION_PERIODS, getAutomaticMatchStatus } from './matchStatus'
+
+describe('match duration', () => {
+  it('should last two periods of twenty minutes', () => {
+    expect(REGULATION_PERIODS).toBe(2)
+    expect(PERIOD_MINUTES).toBe(20)
+    expect(MATCH_DURATION_MINUTES).toBe(40)
+  })
+})
 
 describe('getAutomaticMatchStatus', () => {
   let match: Match
@@ -30,15 +38,15 @@ describe('getAutomaticMatchStatus', () => {
     })
   })
 
-  describe('when the match is inside its duration window', () => {
+  describe('when the match is inside its two periods', () => {
     it('should mark the match as live', () => {
-      expect(getAutomaticMatchStatus(match, new Date('2026-07-24T10:45:00-03:00'))).toBe('live')
+      expect(getAutomaticMatchStatus(match, new Date('2026-07-24T10:39:00-03:00'))).toBe('live')
     })
   })
 
-  describe('when the next scheduled slot has started', () => {
+  describe('when both periods have elapsed', () => {
     it('should mark the match as finished even without a score', () => {
-      expect(getAutomaticMatchStatus(match, new Date('2026-07-24T11:00:00-03:00'))).toBe('finished')
+      expect(getAutomaticMatchStatus(match, new Date('2026-07-24T10:41:00-03:00'))).toBe('finished')
     })
   })
 
