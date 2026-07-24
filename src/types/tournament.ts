@@ -36,18 +36,24 @@ export interface Match {
   awayScore: number | null
   status: MatchStatus
   countsForStandings: boolean
-  // A match tied at the end of regulation is decided in overtime, which is worth
-  // fewer points than winning outright.
-  decidedInOvertime?: boolean
+  // How the match was settled. Absent means it ended inside regulation time.
+  resolution?: MatchResolution
   venue?: string
   notes?: string
 }
+
+// A match tied at the end of regulation goes to overtime, and to a shootout if it
+// is still tied. Both are worth fewer points than winning outright.
+export type MatchResolution = 'regulation' | 'overtime' | 'shootout'
 
 export interface ScoringRules {
   win: number
   overtimeWin: number
   overtimeLoss: number
+  shootoutWin: number
+  shootoutLoss: number
   loss: number
+  // Only a safety net for malformed data: these tournaments have no draws.
   draw: number
 }
 

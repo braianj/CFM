@@ -1,5 +1,5 @@
 import { stageLabels, statusLabels } from '../data/tournamentConfig'
-import type { Match, Team } from '../types/tournament'
+import type { Match, MatchResolution, Team } from '../types/tournament'
 import { formatTime } from '../utils/date'
 import styles from './MatchCard.module.css'
 
@@ -10,11 +10,18 @@ interface Props {
   categoryLabel?: string
 }
 
+const resolutionLabels: Record<MatchResolution, string> = {
+  regulation: '',
+  overtime: 'Definido en tiempo extra',
+  shootout: 'Definido por penales',
+}
+
 export function MatchCard({ match, teams, timezone, categoryLabel }: Props) {
   const findTeam = (id?: string) => teams.find((team) => team.id === id)
   const home = findTeam(match.homeTeamId)
   const away = findTeam(match.awayTeamId)
   const hasScore = match.homeScore !== null && match.awayScore !== null
+  const resolutionLabel = match.resolution ? resolutionLabels[match.resolution] : undefined
 
   return (
     <article
@@ -31,9 +38,9 @@ export function MatchCard({ match, teams, timezone, categoryLabel }: Props) {
         <TeamRow team={home} label={match.homeLabel} score={hasScore ? match.homeScore : null} />
         <TeamRow team={away} label={match.awayLabel} score={hasScore ? match.awayScore : null} />
       </div>
-      {(match.venue || match.notes || match.decidedInOvertime) && (
+      {(match.venue || match.notes || resolutionLabel) && (
         <footer className={styles.footer}>
-          {match.decidedInOvertime && <span>Definido en tiempo extra</span>}
+          {resolutionLabel && <span>{resolutionLabel}</span>}
           {match.venue && <span>{match.venue}</span>}
           {match.notes && <strong>{match.notes}</strong>}
         </footer>

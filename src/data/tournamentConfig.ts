@@ -9,7 +9,7 @@ export const tournamentConfigs: Record<Category, TournamentConfig> = {
     name: 'Torneo Masculino',
     shortName: 'Masculino',
     timezone: TIMEZONE,
-    scoring: { win: 3, overtimeWin: 2, overtimeLoss: 1, loss: 0, draw: 1 },
+    scoring: { win: 3, overtimeWin: 2, overtimeLoss: 1, shootoutWin: 2, shootoutLoss: 1, loss: 0, draw: 1 },
     qualification: [
       { from: 1, to: 1, label: 'Final A', tone: 'primary' },
       { from: 2, to: 3, label: 'Repechaje A', tone: 'primary' },
@@ -22,7 +22,7 @@ export const tournamentConfigs: Record<Category, TournamentConfig> = {
     name: 'Torneo Femenino',
     shortName: 'Femenino',
     timezone: TIMEZONE,
-    scoring: { win: 3, overtimeWin: 2, overtimeLoss: 1, loss: 0, draw: 1 },
+    scoring: { win: 3, overtimeWin: 2, overtimeLoss: 1, shootoutWin: 2, shootoutLoss: 1, loss: 0, draw: 1 },
     qualification: [
       { from: 1, to: 1, label: 'Semifinal 1', tone: 'primary' },
       { from: 2, to: 3, label: 'Semifinal 2', tone: 'primary' },

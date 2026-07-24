@@ -23,6 +23,6 @@
 .eventForm { display:grid; gap:.5rem; grid-template-columns:repeat(2,1fr); }.eventForm button { align-self:end; }
 .roster { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin:1rem 0; padding:1rem; }.roster h3 { margin:0 0 .5rem; }.rosterForm { align-items:end; display:grid; gap:.5rem; grid-template-columns:2fr 1fr auto; }.rosterEntries > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
 .events > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
-.overtime { align-items:center; display:flex!important; font-size:.75rem; gap:.5rem; margin:0!important; }.overtime input { margin:0; min-height:0; width:auto; }.overtime span { color:var(--muted); font-weight:700; }
+.resolution { margin:0!important; }.match .hint { margin:0; }
 .toast { background:var(--navy); border-radius:8px; bottom:1rem; color:white; padding:.8rem 1rem; position:fixed; right:1rem; }
 @media(max-width:650px){.createMatch,.eventForm,.rosterForm{grid-template-columns:1fr}.teamEditor{grid-template-columns:32px 1fr}.teamEditor button{grid-column:1/-1}.matchHeader{align-items:flex-start;flex-direction:column}.scoreEditor{grid-template-columns:1fr 18px 1fr}.scoreEditor button{grid-column:1/-1}.sectionTitle{align-items:flex-start;gap:.5rem}.admin header h1{font-size:1.35rem}}

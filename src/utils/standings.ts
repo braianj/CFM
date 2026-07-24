@@ -1,4 +1,4 @@
-import type { Category, Match, ScoringRules, StandingRow, Team } from '../types/tournament'
+import type { Category, Match, MatchResolution, ScoringRules, StandingRow, Team } from '../types/tournament'
 
 type ResultMatch = Match & {
   homeTeamId: string
@@ -12,13 +12,20 @@ interface MiniTableRow {
   goalDifference: number
 }
 
+const isBeyondRegulation = (match: Match) =>
+  match.resolution === 'overtime' || match.resolution === 'shootout'
+
 // Single source of truth for how a finished match pays out, so the table and every
 // tie-breaking mini-table always agree.
 function awardPoints(match: ResultMatch, scoring: ScoringRules) {
   if (match.homeScore === match.awayScore) return { home: scoring.draw, away: scoring.draw }
 
-  const winner = match.decidedInOvertime ? scoring.overtimeWin : scoring.win
-  const loser = match.decidedInOvertime ? scoring.overtimeLoss : scoring.loss
+  const rewards: Record<MatchResolution, { winner: number; loser: number }> = {
+    regulation: { winner: scoring.win, loser: scoring.loss },
+    overtime: { winner: scoring.overtimeWin, loser: scoring.overtimeLoss },
+    shootout: { winner: scoring.shootoutWin, loser: scoring.shootoutLoss },
+  }
+  const { winner, loser } = rewards[match.resolution ?? 'regulation']
 
   return match.homeScore > match.awayScore
     ? { home: winner, away: loser }
@@ -143,7 +150,7 @@ export function calculateStandings(
       }
 
       const [winner, loser] = homeScore > awayScore ? [home, away] : [away, home]
-      if (match.decidedInOvertime) {
+      if (isBeyondRegulation(match)) {
         winner.overtimeWon += 1
         loser.overtimeLost += 1
         return

@@ -7,7 +7,7 @@ import { players as officialPlayers } from '../data/players'
 import { TIMEZONE, stageLabels, statusLabels } from '../data/tournamentConfig'
 import { ADMIN_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
-import type { Category, Match, MatchEventType, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
+import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
@@ -15,6 +15,12 @@ import styles from './AdminApp.module.css'
 type AdminView = 'matches' | 'teams' | 'statistics'
 
 const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
+const resolutions: MatchResolution[] = ['regulation', 'overtime', 'shootout']
+const resolutionLabels: Record<MatchResolution, string> = {
+  regulation: 'En tiempo reglamentario (3 / 0)',
+  overtime: 'En tiempo extra (2 / 1)',
+  shootout: 'Por penales (2 / 1)',
+}
 const stagesByCategory: Record<Category, MatchStage[]> = {
   men: ['regular', 'repechaje-a', 'repechaje-b', 'final-a', 'final-b'],
   women: ['regular', 'repechaje', 'semifinal-2', 'semifinal-1', 'third-place', 'final'],
@@ -223,13 +229,13 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
 function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; onSaved: () => void }) {
   const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
   const [awayScore, setAwayScore] = useState<number | null>(match.awayScore)
-  const [overtime, setOvertime] = useState(match.decidedInOvertime ?? false)
+  const [resolution, setResolution] = useState<MatchResolution>(match.resolution ?? 'regulation')
   useEffect(() => { setHomeScore(match.homeScore); setAwayScore(match.awayScore) }, [match.homeScore, match.awayScore])
-  useEffect(() => setOvertime(match.decidedInOvertime ?? false), [match.decidedInOvertime])
-  const isDraw = homeScore !== null && awayScore !== null && homeScore === awayScore
+  useEffect(() => setResolution(match.resolution ?? 'regulation'), [match.resolution])
+  const isTied = homeScore !== null && awayScore !== null && homeScore === awayScore
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    await saveMatch({ ...match, homeScore, awayScore, decidedInOvertime: overtime && !isDraw })
+    await saveMatch({ ...match, homeScore, awayScore, resolution: isTied ? 'regulation' : resolution })
     onSaved()
   }
   return (
@@ -244,10 +250,19 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
         <label><span>{getTeamName(match.awayTeamId, match.awayLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`} type="number" min="0" placeholder="—" value={awayScore ?? ''} onChange={(event) => setAwayScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <button type="submit">Guardar resultado</button>
       </div>
-      <label className={styles.overtime}>
-        <input type="checkbox" checked={overtime} disabled={isDraw} onChange={(event) => setOvertime(event.target.checked)} />
-        <span>Se definió en tiempo extra: el ganador suma 2 y el perdedor 1.</span>
+      <label className={styles.resolution}>
+        Cómo se definió
+        <select value={resolution} disabled={isTied} onChange={(event) => setResolution(event.target.value as MatchResolution)}>
+          {resolutions.map((value) => (
+            <option key={value} value={value}>{resolutionLabels[value]}</option>
+          ))}
+        </select>
       </label>
+      <p className={styles.hint}>
+        {isTied
+          ? 'Un partido no puede terminar empatado. Cargá el resultado final del tiempo extra o de los penales.'
+          : 'En tiempo reglamentario el ganador suma 3 y el perdedor 0. En tiempo extra o penales, 2 y 1.'}
+      </p>
     </form>
   )
 }

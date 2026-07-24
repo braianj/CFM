@@ -21,7 +21,7 @@ describe('calculateStandings', () => {
   let teams: Team[]
 
   beforeEach(() => {
-    scoring = { win: 3, overtimeWin: 2, overtimeLoss: 1, loss: 0, draw: 1 }
+    scoring = { win: 3, overtimeWin: 2, overtimeLoss: 1, shootoutWin: 2, shootoutLoss: 1, loss: 0, draw: 1 }
     teams = [
       { id: 'a', name: 'A', shortName: 'A', category: 'men' },
       { id: 'b', name: 'B', shortName: 'B', category: 'men' },
@@ -51,7 +51,7 @@ describe('calculateStandings', () => {
     let standings: StandingRow[]
 
     beforeEach(() => {
-      standings = calculateStandings('men', teams, [createMatch({ decidedInOvertime: true })], scoring)
+      standings = calculateStandings('men', teams, [createMatch({ resolution: 'overtime' })], scoring)
     })
 
     it('should award two points to the overtime winner', () => {
@@ -64,8 +64,8 @@ describe('calculateStandings', () => {
 
     it('should rank a regulation win above two overtime wins on points', () => {
       const rows = calculateStandings('men', teams, [
-        createMatch({ id: 'ot-1', homeTeamId: 'a', awayTeamId: 'c', decidedInOvertime: true }),
-        createMatch({ id: 'ot-2', homeTeamId: 'a', awayTeamId: 'd', decidedInOvertime: true }),
+        createMatch({ id: 'ot-1', homeTeamId: 'a', awayTeamId: 'c', resolution: 'overtime' }),
+        createMatch({ id: 'ot-2', homeTeamId: 'a', awayTeamId: 'd', resolution: 'overtime' }),
         createMatch({ id: 'reg', homeTeamId: 'b', awayTeamId: 'c' }),
       ], scoring)
 
@@ -78,11 +78,11 @@ describe('calculateStandings', () => {
     it('should rank the overtime winner first', () => {
       const rows = calculateStandings('men', teams, [
         // A beats B in overtime: 2 vs 1 between them.
-        createMatch({ id: 'h2h', homeTeamId: 'a', awayTeamId: 'b', homeScore: 3, awayScore: 2, decidedInOvertime: true }),
+        createMatch({ id: 'h2h', homeTeamId: 'a', awayTeamId: 'b', homeScore: 3, awayScore: 2, resolution: 'overtime' }),
         // B outscores C heavily so its overall goal difference beats A's.
         createMatch({ id: 'b-c', homeTeamId: 'b', awayTeamId: 'c', homeScore: 9, awayScore: 0 }),
         // A only edges D in overtime, which keeps both teams level on 4 points.
-        createMatch({ id: 'a-d', homeTeamId: 'a', awayTeamId: 'd', homeScore: 1, awayScore: 0, decidedInOvertime: true }),
+        createMatch({ id: 'a-d', homeTeamId: 'a', awayTeamId: 'd', homeScore: 1, awayScore: 0, resolution: 'overtime' }),
       ], scoring)
 
       const [first, second] = rows.filter((row) => ['a', 'b'].includes(row.team.id))
@@ -94,12 +94,21 @@ describe('calculateStandings', () => {
     })
   })
 
-  describe('when a draw is flagged as decided in overtime', () => {
+  describe('when a match is settled by a shootout', () => {
+    it('should pay the same as an overtime result', () => {
+      const standings = calculateStandings('men', teams, [createMatch({ resolution: 'shootout' })], scoring)
+
+      expect(standings.find((row) => row.team.id === 'a')).toMatchObject({ overtimeWon: 1, won: 0, points: 2 })
+      expect(standings.find((row) => row.team.id === 'b')).toMatchObject({ overtimeLost: 1, lost: 0, points: 1 })
+    })
+  })
+
+  describe('when a tied score is flagged as settled beyond regulation', () => {
     it('should ignore the flag and award the draw points', () => {
       const standings = calculateStandings(
         'men',
         teams,
-        [createMatch({ homeScore: 2, awayScore: 2, decidedInOvertime: true })],
+        [createMatch({ homeScore: 2, awayScore: 2, resolution: 'overtime' })],
         scoring,
       )
 
