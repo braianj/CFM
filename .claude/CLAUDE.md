@@ -183,12 +183,14 @@ scores, and publish or delete match events.
 Collections:
 
 - `teams`
+- `players`
 - `matches`
 - `matchEvents`
 
 `matchEvents` is the source of truth for player statistics. Supported event
-types are `goal`, `penalty`, and `major-penalty`; goal events may include an
-assist, and penalty events may include penalty minutes. Never maintain
+types are `goal`, `penalty`, and `major-penalty`; goal events may include first
+and second assists, and penalty events may include penalty minutes. Events may
+record a period and game clock. Never maintain
 aggregate player totals manually.
 
 The Firebase web configuration is public client configuration, not a secret.

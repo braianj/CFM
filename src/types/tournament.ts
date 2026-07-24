@@ -79,11 +79,27 @@ export interface MatchEvent {
   category: Category
   teamId: string
   type: MatchEventType
+  playerId?: string
   playerName: string
+  assistId?: string
   assistName?: string
+  secondAssistId?: string
+  secondAssistName?: string
+  period?: number
+  gameTime?: string
   minute?: number
   penaltyMinutes?: number
+  reason?: string
   notes?: string
+}
+
+export interface Player {
+  id: string
+  category: Category
+  teamId: string
+  name: string
+  number?: number
+  active: boolean
 }
 
 export interface PlayerStatistic {
@@ -91,6 +107,7 @@ export interface PlayerStatistic {
   teamId: string
   goals: number
   assists: number
+  points: number
   penalties: number
   majorPenalties: number
   penaltyMinutes: number

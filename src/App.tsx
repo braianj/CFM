@@ -4,7 +4,6 @@ import { PlayoffBracket } from './components/PlayoffBracket'
 import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { StatisticsTable } from './components/StatisticsTable'
-import { getTeamsByCategory, teams } from './data/teams'
 import { tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
 import type { Category } from './types/tournament'
@@ -21,13 +20,13 @@ const readStored = <T extends string>(key: string, allowed: T[], fallback: T): T
 export default function App() {
   const [category, setCategoryState] = useState<Category>(() => readStored('cfm-category', ['men', 'women'], 'men'))
   const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'standings', 'statistics'], 'matches'))
-  const { matches, events, usingLiveData } = useTournamentData()
+  const { matches, teams, events, usingLiveData } = useTournamentData()
   const config = tournamentConfigs[category]
-  const categoryTeams = getTeamsByCategory(category)
+  const categoryTeams = teams.filter((team) => team.category === category)
   const categoryMatches = useMemo(() => matches.filter((match) => match.category === category), [category, matches])
   const standings = useMemo(
     () => calculateStandings(category, teams, categoryMatches, config.scoring),
-    [category, categoryMatches, config.scoring],
+    [category, teams, categoryMatches, config.scoring],
   )
   const statistics = useMemo(() => calculatePlayerStatistics(category, events), [category, events])
 

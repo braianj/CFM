@@ -10,10 +10,12 @@ import {
 import { matches as seedMatches } from './matches'
 import { teams as seedTeams } from './teams'
 import { db } from '../firebase'
-import type { Match, MatchEvent, Team } from '../types/tournament'
+import type { Match, MatchEvent, Player, Team } from '../types/tournament'
 
 export const subscribeToTournamentData = (
   onMatches: (matches: Match[]) => void,
+  onTeams: (teams: Team[]) => void,
+  onPlayers: (players: Player[]) => void,
   onEvents: (events: MatchEvent[]) => void,
   onError: () => void,
 ): Unsubscribe => {
@@ -21,6 +23,13 @@ export const subscribeToTournamentData = (
     onSnapshot(collection(db, 'matches'), (snapshot) => {
       const remote = snapshot.docs.map((item) => item.data() as Match)
       onMatches(remote.length ? remote : seedMatches)
+    }, onError),
+    onSnapshot(collection(db, 'teams'), (snapshot) => {
+      const remote = snapshot.docs.map((item) => item.data() as Team)
+      onTeams(remote.length ? remote : seedTeams)
+    }, onError),
+    onSnapshot(collection(db, 'players'), (snapshot) => {
+      onPlayers(snapshot.docs.map((item) => item.data() as Player))
     }, onError),
     onSnapshot(collection(db, 'matchEvents'), (snapshot) => {
       onEvents(snapshot.docs.map((item) => item.data() as MatchEvent))
@@ -37,6 +46,12 @@ export const saveMatchEvent = (event: MatchEvent) =>
 
 export const removeMatchEvent = (eventId: string) =>
   deleteDoc(doc(db, 'matchEvents', eventId))
+
+export const savePlayer = (player: Player) =>
+  setDoc(doc(db, 'players', player.id), player)
+
+export const removePlayer = (playerId: string) =>
+  deleteDoc(doc(db, 'players', playerId))
 
 export async function seedFirestore() {
   const batch = writeBatch(db)

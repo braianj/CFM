@@ -8,7 +8,7 @@ describe('calculatePlayerStatistics', () => {
 
     beforeEach(() => {
       events = [
-        { id: '1', matchId: 'm1', category: 'men', teamId: 'a', type: 'goal', playerName: 'Ana', assistName: 'Beto' },
+        { id: '1', matchId: 'm1', category: 'men', teamId: 'a', type: 'goal', playerName: 'Ana', assistName: 'Beto', secondAssistName: 'Carla' },
         { id: '2', matchId: 'm1', category: 'men', teamId: 'a', type: 'major-penalty', playerName: 'Ana', penaltyMinutes: 5 },
       ]
     })
@@ -25,6 +25,14 @@ describe('calculatePlayerStatistics', () => {
 
     it('should credit the assist to a separate player', () => {
       expect(calculatePlayerStatistics('men', events)[1].assists).toBe(1)
+    })
+
+    it('should credit a second assist', () => {
+      expect(calculatePlayerStatistics('men', events).find((row) => row.playerName === 'Carla')?.assists).toBe(1)
+    })
+
+    it('should calculate points from goals and assists', () => {
+      expect(calculatePlayerStatistics('men', events)[0].points).toBe(1)
     })
   })
 

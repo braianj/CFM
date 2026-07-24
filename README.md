@@ -38,6 +38,8 @@ Solo `braianj@gmail.com` puede escribir datos. El ingreso usa Google y los cambi
 - cambiar el estado de un partido;
 - cargar o quitar resultados, incluso parciales en vivo;
 - registrar goles y asistencias;
+- administrar los planteles y números de camiseta;
+- registrar primera y segunda asistencia, período y tiempo de juego;
 - registrar faltas, faltas graves y minutos de penalización;
 - cargar los datos iniciales la primera vez.
 

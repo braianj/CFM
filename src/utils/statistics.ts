@@ -14,6 +14,7 @@ export function calculatePlayerStatistics(category: Category, events: MatchEvent
       teamId,
       goals: 0,
       assists: 0,
+      points: 0,
       penalties: 0,
       majorPenalties: 0,
       penaltyMinutes: 0,
@@ -26,6 +27,7 @@ export function calculatePlayerStatistics(category: Category, events: MatchEvent
     if (event.type === 'goal') {
       getRow(event.playerName, event.teamId).goals += 1
       if (event.assistName?.trim()) getRow(event.assistName, event.teamId).assists += 1
+      if (event.secondAssistName?.trim()) getRow(event.secondAssistName, event.teamId).assists += 1
       return
     }
     const row = getRow(event.playerName, event.teamId)
@@ -34,7 +36,10 @@ export function calculatePlayerStatistics(category: Category, events: MatchEvent
     if (event.type === 'major-penalty') row.majorPenalties += 1
   })
 
+  rows.forEach((row) => { row.points = row.goals + row.assists })
+
   return [...rows.values()].sort((a, b) =>
+    b.points - a.points ||
     b.goals - a.goals ||
     b.assists - a.assists ||
     a.penaltyMinutes - b.penaltyMinutes ||
