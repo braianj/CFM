@@ -96,10 +96,18 @@ application recalculates statuses every 30 seconds. `tbd` remains for
 placeholder participants and `postponed` is preserved as an exceptional
 override.
 
-A match is two periods of 20 minutes, so `MATCH_DURATION_MINUTES` is derived from
-`REGULATION_PERIODS * PERIOD_MINUTES`. It must never exceed the smallest gap
-between consecutive slots in the fixture, or two matches show as live at once; a
-test in `src/data/matches.test.ts` enforces that against the real schedule.
+A match is two stopped-clock periods of 15 minutes, plus 5 minutes of stopped-clock
+overtime and then a shootout if it is still tied. The clock runs continuously once a
+team leads by `RUNNING_CLOCK_LEAD` goals. Each team has `TIMEOUTS_PER_TEAM` timeout.
+
+`MATCH_DURATION_MINUTES` is wall-clock time, not played time, so it is NOT derived
+from the periods: a stopped clock takes far longer than 30 minutes. It must never
+exceed the smallest gap between consecutive slots in the fixture, or two matches
+show as live at once; a test in `src/data/matches.test.ts` enforces that against the
+real schedule.
+
+The scoresheet closes at the match's scheduled time. A delayed start does not extend
+it. The panel does not enforce this, because the deadline belongs to the table.
 
 A live match may have:
 
@@ -152,6 +160,19 @@ Ordering:
    order.
 
 Never let a match against a fourth team affect a three-team mini-table.
+
+## Discipline
+
+Two rules, both derived from `matchEvents` by `src/utils/discipline.ts`:
+
+- `MINORS_FOR_EJECTION` minor penalties in a single match eject the player and cost
+  them the next one. Majors do not count towards this.
+- `MINUTES_FOR_SUSPENSION` penalty minutes across the tournament cost one match. The
+  player may finish the current one unless they were also ejected for minors.
+
+The calculation counts and flags; it never decides which match somebody misses and
+never blocks a roster entry. Which fixture a suspension falls on is the
+organisation's call, and the panel must not pretend otherwise.
 
 ## Playoffs
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { track } from '../analytics'
+import { DisciplineNotice } from '../components/DisciplineNotice'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { getAdminRole, publishOfficialFixture, removeAdmin, removeMatchEvent, removeMatchRosterEntry, saveMatch, saveMatchEvent, saveMatchRosterEntry, savePlayer, saveTeam, saveAdmin, subscribeToAdmins } from '../data/firestore'
 import type { AdminEntry } from '../data/firestore'
@@ -13,6 +14,7 @@ import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry
 import { formatDay, formatTime } from '../utils/date'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
+import { calculateDiscipline } from '../utils/discipline'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
@@ -182,6 +184,7 @@ export function AdminApp() {
           rosters={rosters.filter((entry) => categories.includes(entry.category))}
           events={events.filter((event) => categories.includes(event.category))}
           showCategory={bothTournaments}
+          categories={categories}
           notify={notify}
           canManageSquads={isOwner}
         />
@@ -399,10 +402,11 @@ function MatchEditor({ match, teams, showCategory = false, onSaved }: { match: M
   )
 }
 
-function StatisticsAdmin({ matches, teams, players, rosters, events, notify, canManageSquads, showCategory }: {
+function StatisticsAdmin({ matches, teams, players, rosters, events, notify, canManageSquads, showCategory, categories }: {
   matches: Match[]; teams: Team[]; players: Player[]
   rosters: MatchRosterEntry[]; events: ReturnType<typeof useTournamentData>['events']
   notify: (message: string) => void; canManageSquads: boolean; showCategory: boolean
+  categories: Category[]
 }) {
   const [selectedMatchId, setSelectedMatchId] = useState('')
   const selectedMatch = matches.find((match) => match.id === selectedMatchId)
@@ -425,6 +429,9 @@ function StatisticsAdmin({ matches, teams, players, rosters, events, notify, can
           </div>
         ))}</div>
       </section>}
+      {categories.map((category) => (
+        <DisciplineNotice key={category} rows={calculateDiscipline(category, events)} teams={teams} />
+      ))}
       <section className={styles.section}>
         <h2>Cargar gol, asistencia o falta</h2>
         <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{getMatchOptionLabel(match, teams)}</option>)}</select></label>

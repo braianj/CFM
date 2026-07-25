@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Match } from '../types/tournament'
-import { MATCH_DURATION_MINUTES, PERIOD_MINUTES, REGULATION_PERIODS, getAutomaticMatchStatus } from './matchStatus'
+import { MATCH_DURATION_MINUTES, OVERTIME_MINUTES, PERIOD_MINUTES, REGULATION_PERIODS, getAutomaticMatchStatus } from './matchStatus'
 
 describe('match duration', () => {
-  it('should last two periods of twenty minutes', () => {
+  it('should be two stopped-clock periods of fifteen minutes', () => {
     expect(REGULATION_PERIODS).toBe(2)
-    expect(PERIOD_MINUTES).toBe(20)
-    expect(MATCH_DURATION_MINUTES).toBe(40)
+    expect(PERIOD_MINUTES).toBe(15)
+    expect(OVERTIME_MINUTES).toBe(5)
+  })
+
+  it('should keep the live window longer than the played minutes', () => {
+    // A stopped clock means wall-clock time exceeds the 30 played minutes.
+    expect(MATCH_DURATION_MINUTES).toBeGreaterThan(REGULATION_PERIODS * PERIOD_MINUTES)
   })
 })
 
@@ -38,13 +43,13 @@ describe('getAutomaticMatchStatus', () => {
     })
   })
 
-  describe('when the match is inside its two periods', () => {
+  describe('when the match is under way', () => {
     it('should mark the match as live', () => {
       expect(getAutomaticMatchStatus(match, new Date('2026-07-24T10:39:00-03:00'))).toBe('live')
     })
   })
 
-  describe('when both periods have elapsed', () => {
+  describe('when the live window has elapsed', () => {
     it('should mark the match as finished even without a score', () => {
       expect(getAutomaticMatchStatus(match, new Date('2026-07-24T10:41:00-03:00'))).toBe('finished')
     })

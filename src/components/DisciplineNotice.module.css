@@ -1,0 +1,8 @@
+.notice { background: var(--surface); border: 1px solid var(--live); border-radius: 12px; margin-top: 1rem; overflow: hidden; padding: .9rem; }
+.notice h3 { color: var(--live); font-size: .95rem; margin: 0; }
+.rule { color: var(--muted); font-size: .78rem; line-height: 1.5; margin: .35rem 0 .6rem; }
+.list { display: grid; gap: .1rem; list-style: none; margin: 0; padding: 0; }
+.list li { align-items: center; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; font-size: .85rem; gap: .5rem; justify-content: space-between; padding: .55rem 0; }
+.list li:first-child { border-top: 0; }
+.reasons { display: flex; flex-wrap: wrap; gap: .35rem; }
+.tag { background: #ffe2e5; border-radius: 99px; color: var(--live); font-size: .7rem; font-style: normal; font-weight: 900; padding: .2rem .5rem; }

@@ -64,7 +64,9 @@ Solo los administradores pueden escribir datos. El ingreso usa Google y los camb
 
 La tabla de estadísticas muestra partidos jugados (PJ), que sale de las convocatorias: quien figura en la planilla de un partido lo jugó. Quien jugó aparece en la tabla aunque no haya sumado nada, igual que en las planillas de la organización.
 
-Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 40 minutos y finalizado después. Un partido son dos tiempos de 20 minutos, y la grilla oficial programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
+Debajo de las estadísticas aparece un aviso de **Sanciones** cuando alguien alcanza un límite: 3 faltas menores en un mismo partido (expulsión y una fecha) o 15 minutos de penalización acumulados en el torneo (una fecha). El sitio cuenta y avisa; no decide qué fecha se pierde ni bloquea convocatorias, porque eso lo define la organización.
+
+Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 40 minutos y finalizado después. Un partido son dos tiempos de 15 minutos con reloj cortado, más 5 de tiempo extra y penales si sigue empatado, así que esos 40 minutos son reloj de pared y no tiempo de juego. La grilla oficial programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.
 
 La acción **Publicar fixture y planteles oficiales** borra todos los equipos y partidos publicados, vuelve a cargar los del repositorio y agrega los planteles inscriptos. No toca convocatorias ni estadísticas. Usala una sola vez, antes de empezar a cargar resultados. Mientras los datos publicados no coincidan con los del repositorio, el panel lo avisa con un recuadro arriba de todo.
 

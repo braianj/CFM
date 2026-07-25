@@ -5,6 +5,7 @@ import { PlayoffBracket } from './components/PlayoffBracket'
 import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { StatisticsTable } from './components/StatisticsTable'
+import { DisciplineNotice } from './components/DisciplineNotice'
 import { TeamFilter } from './components/TeamFilter'
 import { TeamRosters } from './components/TeamRosters'
 import { players as officialPlayers } from './data/players'
@@ -13,6 +14,7 @@ import { useTournamentData } from './hooks/useTournamentData'
 import type { Category, Match, MatchEvent, MatchRosterEntry, Team } from './types/tournament'
 import { ALL_TEAMS, filterMatchesByTeam } from './utils/matches'
 import { mergeRosters } from './utils/rosters'
+import { calculateDiscipline } from './utils/discipline'
 import { calculatePlayerStatistics } from './utils/statistics'
 import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
@@ -189,6 +191,7 @@ function StatisticsSection({ category, teams, events, rosters, showHeading }: Se
     <section className={styles.tournamentSection}>
       {showHeading && <h2 className={styles.tournamentHeading}>{tournamentConfigs[category].name}</h2>}
       <StatisticsTable rows={calculatePlayerStatistics(category, events, rosters)} teams={categoryTeams} />
+      <DisciplineNotice rows={calculateDiscipline(category, events)} teams={categoryTeams} />
     </section>
   )
 }
