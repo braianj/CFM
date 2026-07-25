@@ -12,6 +12,7 @@ const OWNER = 'braianj@gmail.com'
 const PROMOTED_OWNER = 'segunda.duena@example.com'
 const EDITOR = 'planillera@example.com'
 const STRANGER = 'curiosa@example.com'
+const LEGACY = 'sinrol@example.com'
 
 let env: RulesTestEnvironment
 
@@ -48,6 +49,7 @@ beforeEach(async () => {
     const db = context.firestore()
     await setDoc(doc(db, 'admins', EDITOR), { email: EDITOR, role: 'editor' })
     await setDoc(doc(db, 'admins', PROMOTED_OWNER), { email: PROMOTED_OWNER, role: 'owner' })
+    await setDoc(doc(db, 'admins', LEGACY), { email: LEGACY })
     await setDoc(doc(db, 'matches', 'h-1'), match)
     await setDoc(doc(db, 'teams', 'men-cau-1'), { id: 'men-cau-1', name: 'CAU Blanco' })
     await setDoc(doc(db, 'players', 'p1'), { id: 'p1', name: 'Alguien', active: true })
@@ -111,6 +113,16 @@ describe('an editor', () => {
 
   it('should be able to see the administrator list', async () => {
     await assertSucceeds(getDocs(collection(as(EDITOR), 'admins')))
+  })
+})
+
+describe('an entry saved before roles existed', () => {
+  it('should still be able to report a result', async () => {
+    await assertSucceeds(updateDoc(doc(as(LEGACY), 'matches', 'h-1'), { homeScore: 3, awayScore: 2 }))
+  })
+
+  it('should not be treated as an owner', async () => {
+    await assertFails(updateDoc(doc(as(LEGACY), 'teams', 'men-cau-1'), { name: 'Otro' }))
   })
 })
 
