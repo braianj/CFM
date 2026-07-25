@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "preview": "vite preview",
-    "test:rules": "firebase emulators:exec --only firestore --project cfm-hockey-rules \"vitest --run firestore.rules.test.ts --environment node\""
+    "test:rules": "firebase emulators:exec --only firestore --project cfm-hockey-rules \"vitest --run --config vitest.rules.config.ts\""
   },
   "dependencies": {
     "firebase": "^12.16.0",

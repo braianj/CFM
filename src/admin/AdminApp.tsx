@@ -6,7 +6,7 @@ import { getAdminRole, publishOfficialFixture, removeAdmin, removeMatchEvent, re
 import type { AdminEntry } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
 import { players as officialPlayers } from '../data/players'
-import { TIMEZONE, stageLabels, statusLabels } from '../data/tournamentConfig'
+import { TIMEZONE, stageLabels, statusLabels, tournamentConfigs } from '../data/tournamentConfig'
 import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
@@ -17,6 +17,13 @@ import { areOfficialRostersPublished, isOfficialFixturePublished } from '../util
 import styles from './AdminApp.module.css'
 
 type AdminView = 'matches' | 'teams' | 'statistics'
+type AdminScope = Category | 'all'
+
+const scopeCategories: Record<AdminScope, Category[]> = {
+  all: ['men', 'women'],
+  men: ['men'],
+  women: ['women'],
+}
 
 const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
 const resolutions: MatchResolution[] = ['regulation', 'overtime', 'shootout']
@@ -45,7 +52,7 @@ export function AdminApp() {
   const [access, setAccess] = useState<'checking' | AdminRole | 'denied'>('denied')
   const [message, setMessage] = useState('')
   const [view, setView] = useState<AdminView>('matches')
-  const [category, setCategory] = useState<Category>('men')
+  const [scope, setScope] = useState<AdminScope>('all')
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
 
@@ -102,8 +109,11 @@ export function AdminApp() {
   )
 
   const isOwner = access === 'owner'
-  const categoryTeams = teams.filter((team) => team.category === category)
-  const categoryMatches = matches.filter((match) => match.category === category)
+  const categories = scopeCategories[scope]
+  const bothTournaments = categories.length > 1
+  const scopedTeams = teams.filter((team) => categories.includes(team.category))
+  const scopedMatches = matches.filter((match) => categories.includes(match.category))
+  const scopeLabel = bothTournaments ? '' : scope === 'men' ? ' masculinos' : ' femeninos'
   const dataPublished =
     isOfficialFixturePublished(matches, officialMatches) && areOfficialRostersPublished(players, officialPlayers)
   const notify = (text: string) => setMessage(text)
@@ -122,9 +132,10 @@ export function AdminApp() {
           { value: 'statistics' as AdminView, label: 'Estadísticas' },
         ]} />
       </nav>
-      <SegmentedControl label="Torneo" value={category} onChange={setCategory} options={[
-        { value: 'men', label: 'Masculino' },
-        { value: 'women', label: 'Femenino' },
+      <SegmentedControl label="Torneo" value={scope} onChange={setScope} options={[
+        { value: 'all' as AdminScope, label: 'Todos' },
+        { value: 'men' as AdminScope, label: 'Masculino' },
+        { value: 'women' as AdminScope, label: 'Femenino' },
       ]} />
 
       {view === 'matches' && (
@@ -132,14 +143,22 @@ export function AdminApp() {
           {isOwner && (
             <section className={styles.section}>
               <h2>Crear partido</h2>
-              <MatchForm category={category} teams={categoryTeams} onSaved={() => notify('Partido creado.')} />
+              {bothTournaments
+                ? <p className={styles.hint}>Elegí Masculino o Femenino para crear un partido.</p>
+                : <MatchForm category={scope as Category} teams={scopedTeams} onSaved={() => notify('Partido creado.')} />}
             </section>
           )}
           <section className={styles.section}>
-            <h2>Partidos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
+            <h2>Partidos{scopeLabel}</h2>
             <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura dos tiempos de 20 minutos.</p>
-            <div className={styles.matchList}>{categoryMatches.map((match) => (
-              <MatchEditor key={match.id} match={match} teams={teams} onSaved={() => notify('Resultado actualizado.')} />
+            <div className={styles.matchList}>{scopedMatches.map((match) => (
+              <MatchEditor
+                key={match.id}
+                match={match}
+                teams={teams}
+                showCategory={bothTournaments}
+                onSaved={() => notify('Resultado actualizado.')}
+              />
             ))}</div>
           </section>
         </>
@@ -147,9 +166,9 @@ export function AdminApp() {
 
       {view === 'teams' && isOwner && (
         <section className={styles.section}>
-          <h2>Equipos {category === 'men' ? 'masculinos' : 'femeninos'}</h2>
-          <p className={styles.hint}>{category === 'men' ? 'Se mantienen seis equipos.' : 'Se mantienen cinco equipos.'} Editá sus nombres antes de armar el calendario.</p>
-          <div className={styles.teamList}>{categoryTeams.map((team, index) => (
+          <h2>Equipos{scopeLabel}</h2>
+          <p className={styles.hint}>Se mantienen seis equipos masculinos y cinco femeninos. Editá sus nombres antes de armar el calendario.</p>
+          <div className={styles.teamList}>{scopedTeams.map((team, index) => (
             <TeamEditor key={team.id} team={team} position={index + 1} onSaved={() => notify('Equipo actualizado.')} />
           ))}</div>
         </section>
@@ -157,12 +176,12 @@ export function AdminApp() {
 
       {view === 'statistics' && (
         <StatisticsAdmin
-          category={category}
-          matches={categoryMatches}
-          teams={categoryTeams}
-          players={players.filter((player) => player.category === category)}
-          rosters={rosters.filter((entry) => entry.category === category)}
-          events={events.filter((event) => event.category === category)}
+          matches={scopedMatches}
+          teams={scopedTeams}
+          players={players.filter((player) => categories.includes(player.category))}
+          rosters={rosters.filter((entry) => categories.includes(entry.category))}
+          events={events.filter((event) => categories.includes(event.category))}
+          showCategory={bothTournaments}
           notify={notify}
           canManageSquads={isOwner}
         />
@@ -338,7 +357,7 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
   )
 }
 
-function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; onSaved: () => void }) {
+function MatchEditor({ match, teams, showCategory = false, onSaved }: { match: Match; teams: Team[]; showCategory?: boolean; onSaved: () => void }) {
   const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
   const [awayScore, setAwayScore] = useState<number | null>(match.awayScore)
   const [resolution, setResolution] = useState<MatchResolution>(match.resolution ?? 'regulation')
@@ -354,7 +373,7 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
   return (
     <form className={styles.match} onSubmit={submit}>
       <div className={styles.matchHeader}>
-        <div><strong>{getMatchName(match, teams)}</strong><span>{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)} · {stageLabels[match.stage]}</span></div>
+        <div><strong>{getMatchName(match, teams)}</strong><span>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)} · {stageLabels[match.stage]}</span></div>
         <span className={`${styles.status} ${styles[match.status]}`}>{statusLabels[match.status]}</span>
       </div>
       <div className={styles.scoreEditor}>
@@ -380,10 +399,10 @@ function MatchEditor({ match, teams, onSaved }: { match: Match; teams: Team[]; o
   )
 }
 
-function StatisticsAdmin({ category, matches, teams, players, rosters, events, notify, canManageSquads }: {
-  category: Category; matches: Match[]; teams: Team[]; players: Player[]
+function StatisticsAdmin({ matches, teams, players, rosters, events, notify, canManageSquads, showCategory }: {
+  matches: Match[]; teams: Team[]; players: Player[]
   rosters: MatchRosterEntry[]; events: ReturnType<typeof useTournamentData>['events']
-  notify: (message: string) => void; canManageSquads: boolean
+  notify: (message: string) => void; canManageSquads: boolean; showCategory: boolean
 }) {
   const [selectedMatchId, setSelectedMatchId] = useState('')
   const selectedMatch = matches.find((match) => match.id === selectedMatchId)
@@ -391,7 +410,7 @@ function StatisticsAdmin({ category, matches, teams, players, rosters, events, n
     <>
       {canManageSquads && <section className={styles.section}>
         <h2>Planteles</h2>
-        <PlayerForm category={category} teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
+        <PlayerForm teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
         <p className={styles.hint}>Dar de baja oculta al jugador del sitio y de las convocatorias, sin perder las estadísticas que ya tenga cargadas.</p>
         <div className={styles.events}>{players.map((player) => (
           <div key={player.id} className={player.active ? undefined : styles.inactive}>
@@ -408,7 +427,7 @@ function StatisticsAdmin({ category, matches, teams, players, rosters, events, n
       </section>}
       <section className={styles.section}>
         <h2>Cargar gol, asistencia o falta</h2>
-        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{getMatchOptionLabel(match, teams)}</option>)}</select></label>
+        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{getMatchOptionLabel(match, teams)}</option>)}</select></label>
         {selectedMatch && <>
           <MatchRosterForm
             match={selectedMatch}
@@ -434,15 +453,16 @@ function StatisticsAdmin({ category, matches, teams, players, rosters, events, n
   )
 }
 
-function PlayerForm({ category, teams, onSaved }: { category: Category; teams: Team[]; onSaved: () => void }) {
+function PlayerForm({ teams, onSaved }: { teams: Team[]; onSaved: () => void }) {
   const [teamId, setTeamId] = useState('')
   const [name, setName] = useState('')
   const [number, setNumber] = useState('')
-  useEffect(() => setTeamId(''), [category])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!name.trim() || !teamId) return
-    await savePlayer({ id: crypto.randomUUID(), category, teamId, name: name.trim(), number: number === '' ? undefined : Number(number), active: true })
+    const team = teams.find((item) => item.id === teamId)
+    if (!name.trim() || !team) return
+    // The tournament comes from the team, so the form works with either scope.
+    await savePlayer({ id: crypto.randomUUID(), category: team.category, teamId: team.id, name: name.trim(), number: number === '' ? undefined : Number(number), active: true })
     setName(''); setNumber(''); onSaved()
   }
   return (
