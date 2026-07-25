@@ -340,7 +340,9 @@ The rules are NOT deployed by CI. After changing `firestore.rules`, run
 before shipping code that depends on them.
 
 `firestore.rules.test.ts` exercises the rules against the Firestore emulator with
-`npm run test:rules`. It is excluded from `npm test` because it needs the emulator.
+`npm run test:rules`. It is excluded from `npm test` because it needs the emulator,
+and it runs the emulator through `firebase-tools@13` on purpose: the current CLI
+requires Java 21 and this machine has 17. Drop the pin once the JDK is upgraded.
 Every permission change must be covered there: the panel hiding a button is not
 enforcement.
 
