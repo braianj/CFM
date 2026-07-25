@@ -368,7 +368,11 @@ Firestore is initialised with `ignoreUndefinedProperties`. The panel writes
 optional fields as `undefined` (a goal with no assist, a player with no number)
 and every one of those writes would otherwise throw.
 
-`matchEvents` is the source of truth for player statistics. Supported event
+Games played come from `matchRosters`: dressing for a match is playing it, counted
+once per match even if the roster holds duplicates. A player who dressed is listed
+with zeros rather than hidden, the way the organisation's own sheets do it.
+
+`matchEvents` is the source of truth for the rest of the player statistics. Supported event
 types are `goal`, `penalty`, and `major-penalty`; goal events may include first
 and second assists, and penalty events may include penalty minutes. Events may
 record a period and game clock. Never maintain

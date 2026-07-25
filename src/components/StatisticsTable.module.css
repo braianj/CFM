@@ -1,5 +1,5 @@
 .wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow-x:auto; }
-.wrap table { border-collapse:collapse; min-width:560px; width:100%; }
+.wrap table { border-collapse:collapse; min-width:600px; width:100%; }
 .wrap th,.wrap td { border-bottom:1px solid var(--border); font-size:.78rem; padding:.8rem .65rem; text-align:center; }
 .wrap th:first-child { text-align:left; }
 .wrap td:nth-child(2) { color:var(--muted); text-align:left; }

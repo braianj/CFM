@@ -10,7 +10,7 @@ import { TeamRosters } from './components/TeamRosters'
 import { players as officialPlayers } from './data/players'
 import { TIMEZONE, tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
-import type { Category, Match, MatchEvent, Team } from './types/tournament'
+import type { Category, Match, MatchEvent, MatchRosterEntry, Team } from './types/tournament'
 import { ALL_TEAMS, filterMatchesByTeam } from './utils/matches'
 import { mergeRosters } from './utils/rosters'
 import { calculatePlayerStatistics } from './utils/statistics'
@@ -48,7 +48,7 @@ export default function App() {
   const [scope, setScopeState] = useState<Scope>(() => readStored('cfm-category', ['all', 'men', 'women'], 'all'))
   const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'rosters', 'standings', 'statistics'], 'matches'))
   const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
-  const { matches, teams, players, events, usingLiveData } = useTournamentData()
+  const { matches, teams, players, rosters, events, usingLiveData } = useTournamentData()
 
   const rosterPlayers = useMemo(() => mergeRosters(officialPlayers, players), [players])
   const categories = scopeCategories[scope]
@@ -150,6 +150,7 @@ export default function App() {
               category={category}
               teams={teams}
               events={events}
+              rosters={rosters}
               showHeading={categories.length > 1}
             />
           ))
@@ -181,13 +182,13 @@ function StandingsSection({ category, teams, matches, showHeading }: SectionProp
   )
 }
 
-function StatisticsSection({ category, teams, events, showHeading }: SectionProps & { events: MatchEvent[] }) {
+function StatisticsSection({ category, teams, events, rosters, showHeading }: SectionProps & { events: MatchEvent[]; rosters: MatchRosterEntry[] }) {
   const categoryTeams = teams.filter((team) => team.category === category)
 
   return (
     <section className={styles.tournamentSection}>
       {showHeading && <h2 className={styles.tournamentHeading}>{tournamentConfigs[category].name}</h2>}
-      <StatisticsTable rows={calculatePlayerStatistics(category, events)} teams={categoryTeams} />
+      <StatisticsTable rows={calculatePlayerStatistics(category, events, rosters)} teams={categoryTeams} />
     </section>
   )
 }

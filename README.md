@@ -60,6 +60,8 @@ Solo los administradores pueden escribir datos. El ingreso usa Google y los camb
 - definir los convocados y su número de camiseta para cada partido;
 - registrar primera y segunda asistencia, período y tiempo de juego;
 - registrar faltas, faltas graves y minutos de penalización;
+
+La tabla de estadísticas muestra partidos jugados (PJ), que sale de las convocatorias: quien figura en la planilla de un partido lo jugó. Quien jugó aparece en la tabla aunque no haya sumado nada.
 - publicar el fixture oficial y los planteles inscriptos.
 
 Los estados se calculan automáticamente desde el horario: próximo antes del inicio, en vivo durante 40 minutos y finalizado después. Un partido son dos tiempos de 20 minutos, y la grilla oficial programa un partido por hora. Un partido en vivo puede conservar ambos resultados vacíos o tener un resultado parcial. Las posiciones solo incorporan partidos finalizados que tengan ambos marcadores.

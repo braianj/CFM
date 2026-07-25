@@ -138,6 +138,8 @@ export interface MatchRosterEntry {
 export interface PlayerStatistic {
   playerName: string
   teamId: string
+  // Matches the player dressed for, counted from the match rosters.
+  played: number
   goals: number
   assists: number
   points: number

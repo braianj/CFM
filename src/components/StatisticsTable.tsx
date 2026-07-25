@@ -8,10 +8,10 @@ export function StatisticsTable({ rows, teams }: { rows: PlayerStatistic[]; team
   return (
     <div className={styles.wrap}>
       <table>
-        <thead><tr><th>Jugador/a</th><th>Equipo</th><th title="Goles">G</th><th title="Asistencias">A</th><th title="Puntos">PTS</th><th title="Faltas">F</th><th title="Faltas graves">FG</th><th title="Minutos de penalización">MIN</th></tr></thead>
+        <thead><tr><th>Jugador/a</th><th>Equipo</th><th title="Partidos jugados">PJ</th><th title="Goles">G</th><th title="Asistencias">A</th><th title="Puntos">PTS</th><th title="Faltas">F</th><th title="Faltas graves">FG</th><th title="Minutos de penalización">MIN</th></tr></thead>
         <tbody>{rows.map((row) => (
           <tr key={`${row.teamId}-${row.playerName}`}>
-            <th>{row.playerName}</th><td>{teamName(row.teamId)}</td><td>{row.goals}</td><td>{row.assists}</td><td><strong>{row.points}</strong></td><td>{row.penalties}</td><td>{row.majorPenalties}</td><td>{row.penaltyMinutes}</td>
+            <th>{row.playerName}</th><td>{teamName(row.teamId)}</td><td>{row.played}</td><td>{row.goals}</td><td>{row.assists}</td><td><strong>{row.points}</strong></td><td>{row.penalties}</td><td>{row.majorPenalties}</td><td>{row.penaltyMinutes}</td>
           </tr>
         ))}</tbody>
       </table>

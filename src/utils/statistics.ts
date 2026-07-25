@@ -1,17 +1,26 @@
-import type { Category, MatchEvent, PlayerStatistic } from '../types/tournament'
+import type { Category, MatchEvent, MatchRosterEntry, PlayerStatistic } from '../types/tournament'
 
 const normalizeName = (name: string) => name.trim().replace(/\s+/g, ' ')
 
-export function calculatePlayerStatistics(category: Category, events: MatchEvent[]): PlayerStatistic[] {
+const rowKey = (teamId: string, playerName: string) =>
+  `${teamId}:${normalizeName(playerName).toLocaleLowerCase('es')}`
+
+export function calculatePlayerStatistics(
+  category: Category,
+  events: MatchEvent[],
+  rosters: MatchRosterEntry[] = [],
+): PlayerStatistic[] {
   const rows = new Map<string, PlayerStatistic>()
+  const appearances = new Map<string, Set<string>>()
+
   const getRow = (playerName: string, teamId: string) => {
-    const normalized = normalizeName(playerName)
-    const key = `${teamId}:${normalized.toLocaleLowerCase('es')}`
+    const key = rowKey(teamId, playerName)
     const existing = rows.get(key)
     if (existing) return existing
     const created: PlayerStatistic = {
-      playerName: normalized,
+      playerName: normalizeName(playerName),
       teamId,
+      played: 0,
       goals: 0,
       assists: 0,
       points: 0,
@@ -22,6 +31,16 @@ export function calculatePlayerStatistics(category: Category, events: MatchEvent
     rows.set(key, created)
     return created
   }
+
+  // Dressing for a match is playing it, so games played come from the match rosters.
+  // A player counts once per match even if the roster holds duplicate entries.
+  rosters.filter((entry) => entry.category === category).forEach((entry) => {
+    getRow(entry.playerName, entry.teamId)
+    const key = rowKey(entry.teamId, entry.playerName)
+    const played = appearances.get(key) ?? new Set<string>()
+    played.add(entry.matchId)
+    appearances.set(key, played)
+  })
 
   events.filter((event) => event.category === category).forEach((event) => {
     if (event.type === 'goal') {
@@ -36,7 +55,10 @@ export function calculatePlayerStatistics(category: Category, events: MatchEvent
     if (event.type === 'major-penalty') row.majorPenalties += 1
   })
 
-  rows.forEach((row) => { row.points = row.goals + row.assists })
+  rows.forEach((row, key) => {
+    row.points = row.goals + row.assists
+    row.played = appearances.get(key)?.size ?? 0
+  })
 
   return [...rows.values()].sort((a, b) =>
     b.points - a.points ||
