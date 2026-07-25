@@ -5,10 +5,12 @@ import { describe, expect, it } from 'vitest'
 // Read from disk: vitest stubs CSS imports, so `?raw` would hand back an empty string.
 const css = readFileSync(resolve(process.cwd(), 'src/styles/global.css'), 'utf8')
 
-const token = (name: string) => {
-  const match = css.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{3,6})`, 'i'))
+// Resolves one level of `var()` so the interaction roles reach their palette colour.
+const token = (name: string): string => {
+  const match = css.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{3,6}|var\\(--[a-z-]+\\))`, 'i'))
   if (!match) throw new Error(`El token --${name} no existe en global.css`)
-  return match[1]
+  const alias = match[1].match(/^var\(--([a-z-]+)\)$/)
+  return alias ? token(alias[1]) : match[1]
 }
 
 const luminance = (hex: string) => {
@@ -42,6 +44,10 @@ describe('palette contrast', () => {
       ['ink on the primary qualification band', token('ink'), token('accent-faint')],
       ['ink on the secondary qualification band', token('ink'), token('gold-faint')],
       ['the live colour on white', token('live'), WHITE],
+      ['the ink of a selected control', token('state-selected-ink'), token('state-selected')],
+      ['a filtered field', token('state-selected-line'), token('state-selected-soft')],
+      ['an idle option on the control track', token('state-idle-ink'), token('surface-muted')],
+      ['a hovered option', token('accent-dark'), token('state-hover')],
     ])('should keep %s readable', (_label, foreground, background) => {
       expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5)
     })
@@ -53,6 +59,7 @@ describe('palette contrast', () => {
       ['the focus ring on the muted surface', token('focus'), token('surface-muted')],
       ['the strong border on white', token('border-strong'), WHITE],
       ['the strong border on the page background', token('border-strong'), token('bg')],
+      ['a selected control against its track', token('state-selected'), token('surface-muted')],
     ])('should keep %s visible', (_label, foreground, background) => {
       expect(contrast(foreground, background)).toBeGreaterThanOrEqual(3)
     })

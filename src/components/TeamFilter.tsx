@@ -18,7 +18,7 @@ export function TeamFilter({ teams, value, onChange }: Props) {
   return (
     <label className={styles.filter}>
       <span>Equipo</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
+      <select className={value === ALL_TEAMS ? undefined : styles.selected} value={value} onChange={(event) => onChange(event.target.value)}>
         <option value={ALL_TEAMS}>Todos los equipos</option>
         {categories.length > 1
           ? categories.map((category) => (

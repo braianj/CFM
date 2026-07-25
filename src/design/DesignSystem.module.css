@@ -1,0 +1,33 @@
+.page { margin: 0 auto; max-width: 900px; padding: 1.25rem 1rem 4rem; }
+.head { align-items: center; display: flex; gap: .8rem; margin-bottom: 1.25rem; }
+.puck { align-items: center; background: var(--deep); border: 3px solid #cfdcd3; border-radius: 50%; color: white; display: flex; font-size: .65rem; font-weight: 900; height: 44px; justify-content: center; letter-spacing: .08em; width: 44px; }
+.head span { color: var(--accent-dark); font-size: .68rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.head h1 { font-size: 1.15rem; margin: .1rem 0 0; }
+.lead { color: var(--ink); font-size: .92rem; line-height: 1.6; }
+.lead code, .swatch code { background: var(--surface-muted); border-radius: 5px; font-size: .82em; padding: .1rem .3rem; }
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-top: 1.25rem; padding: 1.1rem; }
+.section h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
+.hint { color: var(--muted); font-size: .8rem; line-height: 1.55; margin: .4rem 0 0; }
+.grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); margin-top: .9rem; }
+.swatch { align-items: center; border: 1px solid var(--border); border-radius: 10px; display: grid; gap: .7rem; grid-template-columns: 44px 1fr; padding: .6rem; }
+.swatch p { color: var(--muted); font-size: .75rem; margin: .2rem 0; }
+.chip { border: 1px solid var(--border); border-radius: 8px; height: 44px; width: 44px; }
+.pass, .fail, .na { font-size: .72rem; font-weight: 850; }
+.pass { color: var(--accent-dark); }
+.fail { color: var(--live); }
+.na { color: var(--muted); }
+.demo { display: grid; gap: 1rem; margin-top: .9rem; max-width: 420px; }
+.buttons { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .9rem; }
+.buttons button { border: 0; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 800; min-height: 42px; padding: .65rem 1rem; }
+.buttons button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.buttons button:disabled { cursor: not-allowed; opacity: .5; }
+.primary { background: var(--accent-dark); color: white; }
+.secondary { background: var(--surface-muted); color: var(--ink); }
+.danger { background: transparent; color: var(--live); }
+.states { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .9rem; }
+.states span { border-radius: 99px; font-size: .72rem; font-weight: 850; padding: .35rem .65rem; }
+.upcoming { background: var(--accent-soft); color: var(--accent-dark); }
+.liveChip { background: var(--live); color: white; }
+.finished { background: var(--surface-muted); color: var(--muted); }
+.role { background: var(--accent-soft); color: var(--accent-dark); letter-spacing: .04em; }
+.back { color: var(--accent-dark); display: block; margin-top: 1.5rem; }

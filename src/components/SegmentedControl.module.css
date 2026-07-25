@@ -2,7 +2,7 @@
 .label { color: var(--muted); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .control { background: var(--surface-muted); border: 1px solid var(--border); border-radius: 12px; display: grid; grid-auto-columns: 1fr; grid-auto-flow: column; padding: 4px; }
 .button, .active { border: 0; border-radius: 8px; cursor: pointer; font: inherit; font-size: .8rem; font-weight: 800; line-height: 1.15; min-height: 44px; overflow-wrap: anywhere; padding: .5rem .35rem; transition: background-color .15s, color .15s; }
-.button { background: transparent; color: var(--muted); }
-.button:hover { color: var(--ink); }
-.active { background: var(--deep); color: white; }
+.button { background: transparent; color: var(--state-idle-ink); }
+.button:hover { background: var(--state-hover); color: var(--accent-dark); }
+.active { background: var(--state-selected); box-shadow: 0 1px 3px rgba(18, 40, 28, .25); color: var(--state-selected-ink); }
 .button:focus-visible, .active:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

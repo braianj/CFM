@@ -1,7 +1,19 @@
 /* Club Andino Ushuaia: verde y blanco. Los verdes salen de la marca del club
    (#44924f y #1b3e2f), oscurecidos donde hacía falta para que el texto blanco y el
-   texto sobre blanco pasen 4.5:1. */
+   texto sobre blanco pasen 4.5:1.
+
+   Dos capas: primero la paleta, que son los colores en crudo, y después los roles
+   de interacción, que dicen qué significa cada uno. Los componentes usan los roles,
+   nunca un color suelto, así "seleccionado" se ve igual en todo el sitio. */
 :root { --bg:#f2f7f3; --surface:#fff; --surface-muted:#eaf1ec; --border:#d6e3d9; --border-strong:#6f8677; --ink:#12281c; --muted:#5d7266; --deep:#1b3e2f; --accent:#3d8447; --accent-dark:#2b6b37; --accent-soft:#d9eede; --accent-faint:#eff8f1; --gold:#e5ae20; --gold-faint:#fff9e9; --live:#c52b3d; --focus:#1f9c4a; color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-synthesis:none; }
+:root {
+  --state-selected: var(--accent);
+  --state-selected-ink: #fff;
+  --state-selected-soft: var(--accent-soft);
+  --state-selected-line: var(--accent-dark);
+  --state-hover: var(--accent-soft);
+  --state-idle-ink: var(--muted);
+}
 * { box-sizing:border-box; }
 html { background:var(--bg); scroll-behavior:smooth; }
 body { margin:0; min-width:320px; }

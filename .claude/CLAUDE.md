@@ -209,9 +209,21 @@ the club's own material, `#44924f` and `#1b3e2f`, darkened where contrast requir
 it. Every colour lives in `src/styles/global.css` as a custom property; no component
 may hardcode a brand colour.
 
-Tokens: `--deep` is the dark green used for headers, active tabs and table heads.
-`--accent` is the mid green for badges and markers. `--accent-dark` is the readable
-green for link text and buttons. `--accent-soft` and `--accent-faint` are its tints.
+The file has two layers. The palette holds raw colours: `--deep` for dark headers
+and table heads, `--accent` for the brand green, `--accent-dark` for readable green
+text and buttons, `--accent-soft` and `--accent-faint` for tints.
+
+On top sit the interaction roles, which say what a colour *means*:
+`--state-selected` and `--state-selected-ink` fill whatever is chosen,
+`--state-selected-soft` and `--state-selected-line` mark a field that is filtering
+the screen, `--state-hover` is the hover tint and `--state-idle-ink` is an
+available but unchosen option. Components use the roles, never a raw colour, so
+selection looks the same everywhere.
+
+The living style guide is at `?design=1` (or `/design/`), built from
+`src/design/DesignSystem.tsx`. It measures contrast from the real tokens at
+runtime, so it cannot drift from the stylesheet. It is lazily imported and never
+reaches a normal visitor's bundle.
 
 `src/styles/palette.test.ts` parses those tokens and enforces 4.5:1 for text pairs
 and 3:1 for focus rings and strong borders. Adjust a colour only if that test
