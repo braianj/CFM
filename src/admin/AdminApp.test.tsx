@@ -1,10 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Match } from '../types/tournament'
 import { matches as officialMatches } from '../data/matches'
 import { teams as officialTeams } from '../data/teams'
 import { TIMEZONE } from '../data/tournamentConfig'
 import { formatDay, formatTime } from '../utils/date'
+
+const saveMatch = vi.fn()
 
 vi.mock('../analytics', () => ({ track: vi.fn(), initAnalytics: () => Promise.resolve() }))
 
@@ -47,7 +49,7 @@ vi.mock('../data/firestore', () => ({
   publishOfficialFixture: vi.fn(),
   saveAdmin: vi.fn(),
   removeAdmin: vi.fn(),
-  saveMatch: vi.fn(),
+  saveMatch,
   saveTeam: vi.fn(),
   savePlayer: vi.fn(),
   saveMatchEvent: vi.fn(),
@@ -66,13 +68,17 @@ const whenItStarts = (startDateTime: string) =>
   `${formatDay(startDateTime, TIMEZONE)} · ${formatTime(startDateTime, TIMEZONE)}`
 
 const listedStartTimes = () =>
-  screen.getAllByRole('button', { name: /^Guardar resultado$/ }).map((button) => {
+  screen.getAllByRole('button', { name: /^Guardar$/ }).map((button) => {
     const header = button.closest('form')!.querySelector('span')!
     return header.textContent ?? ''
   })
 
 describe('AdminApp', () => {
-  beforeEach(() => localStorage.clear())
+  beforeEach(() => {
+    localStorage.clear()
+    saveMatch.mockReset()
+    saveMatch.mockResolvedValue(undefined)
+  })
 
   describe('when Firestore returns the matches by document ID', () => {
     it('should list them by date and time instead', async () => {
@@ -101,6 +107,36 @@ describe('AdminApp', () => {
         expect(options[0].textContent).toContain(whenItStarts(chronological[0].startDateTime))
         expect(options.at(-1)!.textContent).toContain(whenItStarts(chronological.at(-1)!.startDateTime))
       })
+    })
+  })
+
+  describe('when the owner reschedules a match', () => {
+    it('should keep the kick-off on Ushuaia time', async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+
+      const row = screen.getByText(/All-Pakas vs Ovejas Negras/).closest('form')!
+      fireEvent.change(row.querySelector('input[type="time"]')!, { target: { value: '19:15' } })
+      fireEvent.submit(row)
+
+      await waitFor(() => expect(saveMatch).toHaveBeenCalled())
+      const scheduled = officialMatches.find((item) => item.id === 'h-3')!
+      expect(saveMatch.mock.calls[0][0]).toMatchObject({
+        id: 'h-3',
+        startDateTime: `${scheduled.startDateTime.slice(0, 10)}T19:15:00-03:00`,
+      })
+    })
+
+    it('should leave the kick-off alone when only the score changes', async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+
+      const row = screen.getByText(/All-Pakas vs Ovejas Negras/).closest('form')!
+      fireEvent.submit(row)
+
+      await waitFor(() => expect(saveMatch).toHaveBeenCalled())
+      const scheduled = officialMatches.find((item) => item.id === 'h-3')!
+      expect(saveMatch.mock.calls[0][0].startDateTime).toBe(scheduled.startDateTime)
     })
   })
 })

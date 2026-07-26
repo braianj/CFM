@@ -11,7 +11,7 @@ import { TIMEZONE, stageLabels, statusLabels, tournamentConfigs } from '../data/
 import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
-import { formatDay, formatTime } from '../utils/date'
+import { buildStartDateTime, formatDay, formatTime, splitStartDateTime } from '../utils/date'
 import { sortMatches } from '../utils/matches'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
@@ -161,7 +161,8 @@ export function AdminApp() {
                 match={match}
                 teams={teams}
                 showCategory={bothTournaments}
-                onSaved={() => notify('Resultado actualizado.')}
+                canReschedule={isOwner}
+                onSaved={(what) => notify(what)}
               />
             ))}</div>
           </section>
@@ -362,18 +363,34 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
   )
 }
 
-function MatchEditor({ match, teams, showCategory = false, onSaved }: { match: Match; teams: Team[]; showCategory?: boolean; onSaved: () => void }) {
+function MatchEditor({ match, teams, showCategory = false, canReschedule = false, onSaved }: {
+  match: Match; teams: Team[]; showCategory?: boolean; canReschedule?: boolean
+  onSaved: (message: string) => void
+}) {
   const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
   const [awayScore, setAwayScore] = useState<number | null>(match.awayScore)
   const [resolution, setResolution] = useState<MatchResolution>(match.resolution ?? 'regulation')
+  const scheduled = splitStartDateTime(match.startDateTime)
+  const [date, setDate] = useState(scheduled.date)
+  const [time, setTime] = useState(scheduled.time)
   useEffect(() => { setHomeScore(match.homeScore); setAwayScore(match.awayScore) }, [match.homeScore, match.awayScore])
   useEffect(() => setResolution(match.resolution ?? 'regulation'), [match.resolution])
+  useEffect(() => {
+    const next = splitStartDateTime(match.startDateTime)
+    setDate(next.date)
+    setTime(next.time)
+  }, [match.startDateTime])
+
   const isTied = homeScore !== null && awayScore !== null && homeScore === awayScore
+  const startDateTime = canReschedule && date && time ? buildStartDateTime(date, time) : match.startDateTime
+  const moved = startDateTime !== match.startDateTime
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    await saveMatch({ ...match, homeScore, awayScore, resolution: isTied ? 'regulation' : resolution })
-    void track('admin_action', { action: 'save_result', resolution: isTied ? 'regulation' : resolution })
-    onSaved()
+    const resolved = isTied ? 'regulation' : resolution
+    await saveMatch({ ...match, startDateTime, homeScore, awayScore, resolution: resolved })
+    void track('admin_action', { action: moved ? 'reschedule_match' : 'save_result', resolution: resolved })
+    onSaved(moved ? 'Partido reprogramado.' : 'Resultado actualizado.')
   }
   return (
     <form className={styles.match} onSubmit={submit}>
@@ -385,8 +402,14 @@ function MatchEditor({ match, teams, showCategory = false, onSaved }: { match: M
         <label><span>{getTeamName(match.homeTeamId, match.homeLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.homeTeamId, match.homeLabel, teams)}`} type="number" min="0" placeholder="—" value={homeScore ?? ''} onChange={(event) => setHomeScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <span className={styles.versus}>—</span>
         <label><span>{getTeamName(match.awayTeamId, match.awayLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`} type="number" min="0" placeholder="—" value={awayScore ?? ''} onChange={(event) => setAwayScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
-        <button type="submit">Guardar resultado</button>
+        <button type="submit">Guardar</button>
       </div>
+      {canReschedule && (
+        <div className={styles.reschedule}>
+          <label>Fecha<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+          <label>Hora<input type="time" value={time} onChange={(event) => setTime(event.target.value)} /></label>
+        </div>
+      )}
       <label className={styles.resolution}>
         Cómo se definió
         <select value={resolution} disabled={isTied} onChange={(event) => setResolution(event.target.value as MatchResolution)}>
@@ -398,7 +421,9 @@ function MatchEditor({ match, teams, showCategory = false, onSaved }: { match: M
       <p className={styles.hint}>
         {isTied
           ? 'Un partido no puede terminar empatado. Cargá el resultado final del tiempo extra o de los penales.'
-          : 'En tiempo reglamentario el ganador suma 3 y el perdedor 0. En tiempo extra o penales, 2 y 1.'}
+          : moved
+            ? `Se va a reprogramar para el ${formatDay(startDateTime, TIMEZONE).toLocaleLowerCase('es')} a las ${formatTime(startDateTime, TIMEZONE)}.`
+            : 'En tiempo reglamentario el ganador suma 3 y el perdedor 0. En tiempo extra o penales, 2 y 1.'}
       </p>
     </form>
   )

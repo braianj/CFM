@@ -106,6 +106,14 @@ exceed the smallest gap between consecutive slots in the fixture, or two matches
 show as live at once; a test in `src/data/matches.test.ts` enforces that against the
 real schedule.
 
+Kick-off times are always written with Ushuaia's offset. Read them with
+`splitStartDateTime` and write them with `buildStartDateTime`; never round-trip a
+kick-off through `Date`, or the panel would show the editor computer's timezone.
+
+Rescheduling is an owner action. `onlyResultChanged` in `firestore.rules` keeps an
+editor from moving a match, so the date inputs are hidden for them and refused by
+the server anyway.
+
 The scoresheet closes at the match's scheduled time. A delayed start does not extend
 it. The panel does not enforce this, because the deadline belongs to the table.
 

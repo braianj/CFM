@@ -54,6 +54,7 @@ Solo los administradores pueden escribir datos. El ingreso usa Google y los camb
 - editar los seis equipos masculinos y cinco femeninos;
 - crear partidos seleccionando equipos, fecha, hora y etapa;
 - cargar o quitar resultados, incluso parciales en vivo;
+- reprogramar la fecha y la hora de un partido (solo Organización);
 - indicar si un partido se definió en tiempo reglamentario, en tiempo extra o por penales;
 - registrar goles y asistencias;
 - administrar los planteles, y dar de baja o reactivar jugadores;
