@@ -12,6 +12,7 @@ import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { formatDay, formatTime } from '../utils/date'
+import { sortMatches } from '../utils/matches'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
 import { calculateDiscipline } from '../utils/discipline'
@@ -114,7 +115,8 @@ export function AdminApp() {
   const categories = scopeCategories[scope]
   const bothTournaments = categories.length > 1
   const scopedTeams = teams.filter((team) => categories.includes(team.category))
-  const scopedMatches = matches.filter((match) => categories.includes(match.category))
+  // Firestore hands the documents back by ID, so the panel sorts them like the site.
+  const scopedMatches = sortMatches(matches.filter((match) => categories.includes(match.category)))
   const scopeLabel = bothTournaments ? '' : scope === 'men' ? ' masculinos' : ' femeninos'
   const dataPublished =
     isOfficialFixturePublished(matches, officialMatches) && areOfficialRostersPublished(players, officialPlayers)
