@@ -42,3 +42,16 @@ export function splitStartDateTime(startDateTime: string) {
 }
 
 export const buildStartDateTime = (date: string, time: string) => `${date}T${time}:00${USHUAIA_OFFSET}`
+
+// Compact form for dense lists: "sáb 26/7". Composed by hand because es-AR renders
+// a bare day and month as "26-7", which reads like a range.
+export function formatShortDay(dateTime: string, timezone: string) {
+  const parts = new Intl.DateTimeFormat('es-AR', {
+    timeZone: timezone,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'numeric',
+  }).formatToParts(new Date(dateTime))
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? ''
+  return `${part('weekday').replace('.', '')} ${part('day')}/${part('month')}`
+}

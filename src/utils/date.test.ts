@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildStartDateTime, splitStartDateTime } from './date'
+import { buildStartDateTime, formatShortDay, splitStartDateTime } from './date'
 
 describe('splitStartDateTime', () => {
   describe('when the kick-off was written with the Ushuaia offset', () => {
@@ -29,5 +29,17 @@ describe('buildStartDateTime', () => {
     const { date, time } = splitStartDateTime(original)
 
     expect(buildStartDateTime(date, time)).toBe(original)
+  })
+})
+
+describe('formatShortDay', () => {
+  const USHUAIA = 'America/Argentina/Ushuaia'
+
+  it('should read as a date rather than a range', () => {
+    expect(formatShortDay('2026-07-26T13:00:00-03:00', USHUAIA)).toBe('dom 26/7')
+  })
+
+  it('should keep a late kick-off on its own day', () => {
+    expect(formatShortDay('2026-07-25T22:50:00-03:00', USHUAIA)).toBe('sáb 25/7')
   })
 })

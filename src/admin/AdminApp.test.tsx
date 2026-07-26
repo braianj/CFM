@@ -4,7 +4,7 @@ import type { Match } from '../types/tournament'
 import { matches as officialMatches } from '../data/matches'
 import { teams as officialTeams } from '../data/teams'
 import { TIMEZONE } from '../data/tournamentConfig'
-import { formatDay, formatTime } from '../utils/date'
+import { formatShortDay, formatTime } from '../utils/date'
 
 const saveMatch = vi.fn()
 const settledMatchIds: string[] = []
@@ -70,7 +70,7 @@ const chronological = [...officialMatches].sort(
 )
 
 const whenItStarts = (startDateTime: string) =>
-  `${formatDay(startDateTime, TIMEZONE)} · ${formatTime(startDateTime, TIMEZONE)}`
+  `${formatShortDay(startDateTime, TIMEZONE)} · ${formatTime(startDateTime, TIMEZONE)}`
 
 // Read in DOM order so the assertion is about the list, not about which rows are open.
 const matchHeaders = () => Array.from(document.querySelectorAll('[aria-controls^="match-"]'))

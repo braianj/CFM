@@ -11,7 +11,7 @@ import { TIMEZONE, stageLabels, statusLabels, tournamentConfigs } from '../data/
 import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
-import { buildStartDateTime, formatDay, formatTime, splitStartDateTime } from '../utils/date'
+import { buildStartDateTime, formatDay, formatShortDay, formatTime, splitStartDateTime } from '../utils/date'
 import { sortMatches } from '../utils/matches'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
@@ -47,7 +47,7 @@ const getMatchName = (match: Match, teams: Team[]) =>
   `${getTeamName(match.homeTeamId, match.homeLabel, teams)} vs ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`
 
 const getMatchOptionLabel = (match: Match, teams: Team[]) =>
-  `${getMatchName(match, teams)} · ${formatDay(match.startDateTime, TIMEZONE)} · ${formatTime(match.startDateTime, TIMEZONE)}`
+  `${getMatchName(match, teams)} · ${formatShortDay(match.startDateTime, TIMEZONE)} · ${formatTime(match.startDateTime, TIMEZONE)}`
 
 export function AdminApp() {
   const { matches, teams, players, rosters, events } = useTournamentData()
@@ -154,7 +154,7 @@ export function AdminApp() {
           )}
           <section className={styles.section}>
             <h2>Partidos{scopeLabel}</h2>
-            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura dos tiempos de 20 minutos.</p>
+            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura dos tiempos de 15 minutos con reloj cortado.</p>
             <div className={styles.matchList}>{scopedMatches.map((match) => (
               <MatchEditor
                 key={match.id}
@@ -409,11 +409,16 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
         onClick={() => setOpen((current) => !current)}
       >
         <Chevron open={open} />
-        <div><strong>{getMatchName(match, teams)}</strong><span>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)} · {stageLabels[match.stage]}</span></div>
-        <span className={styles.finalScore}>
-          {match.homeScore ?? '—'}<i>-</i>{match.awayScore ?? '—'}
-        </span>
+        <strong className={styles.matchName}>{getMatchName(match, teams)}</strong>
+        {match.homeScore !== null && match.awayScore !== null && (
+          <span className={styles.finalScore}>{match.homeScore}<i>-</i>{match.awayScore}</span>
+        )}
         <span className={`${styles.status} ${styles[match.status]}`}>{statusLabels[match.status]}</span>
+        <span className={styles.matchMeta}>
+          {showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}
+          {formatShortDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)}
+          {match.stage === 'regular' ? '' : ` · ${stageLabels[match.stage]}`}
+        </span>
       </button>
       <div id={panelId} hidden={!open}>
       <div className={styles.scoreEditor}>
