@@ -7,6 +7,7 @@ import { TIMEZONE } from '../data/tournamentConfig'
 import { formatDay, formatTime } from '../utils/date'
 
 const saveMatch = vi.fn()
+const settledMatchIds: string[] = []
 
 vi.mock('../analytics', () => ({ track: vi.fn(), initAnalytics: () => Promise.resolve() }))
 
@@ -37,7 +38,11 @@ vi.mock('../data/firestore', () => ({
     onEvents: (events: unknown[]) => void,
   ) => {
     // Firestore returns documents ordered by ID, which is not chronological.
-    onMatches([...officialMatches].sort((a, b) => a.id.localeCompare(b.id)))
+    onMatches([...officialMatches]
+      .map((item) => (settledMatchIds.includes(item.id)
+        ? { ...item, homeScore: 4, awayScore: 1, status: 'finished' as const }
+        : item))
+      .sort((a, b) => a.id.localeCompare(b.id)))
     onTeams(officialTeams)
     onPlayers([])
     onRosters([])
@@ -67,15 +72,15 @@ const chronological = [...officialMatches].sort(
 const whenItStarts = (startDateTime: string) =>
   `${formatDay(startDateTime, TIMEZONE)} · ${formatTime(startDateTime, TIMEZONE)}`
 
-const listedStartTimes = () =>
-  screen.getAllByRole('button', { name: /^Guardar$/ }).map((button) => {
-    const header = button.closest('form')!.querySelector('span')!
-    return header.textContent ?? ''
-  })
+// Read in DOM order so the assertion is about the list, not about which rows are open.
+const matchHeaders = () => Array.from(document.querySelectorAll('[aria-controls^="match-"]'))
+
+const listedStartTimes = () => matchHeaders().map((header) => header.textContent ?? '')
 
 describe('AdminApp', () => {
   beforeEach(() => {
     localStorage.clear()
+    settledMatchIds.length = 0
     saveMatch.mockReset()
     saveMatch.mockResolvedValue(undefined)
   })
@@ -137,6 +142,45 @@ describe('AdminApp', () => {
       await waitFor(() => expect(saveMatch).toHaveBeenCalled())
       const scheduled = officialMatches.find((item) => item.id === 'h-3')!
       expect(saveMatch.mock.calls[0][0].startDateTime).toBe(scheduled.startDateTime)
+    })
+  })
+
+  describe('when a match already has its result saved', () => {
+    beforeEach(() => settledMatchIds.push('h-1'))
+
+    it('should collapse it and leave the rest open', async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+
+      const collapsed = matchHeaders().filter((header) => header.getAttribute('aria-expanded') === 'false')
+
+      expect(collapsed).toHaveLength(1)
+      expect(collapsed[0].getAttribute('aria-controls')).toBe('match-h-1-editor')
+    })
+
+    it('should still show the teams, the date and the result while collapsed', async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+
+      const header = matchHeaders().find((item) => item.getAttribute('aria-controls') === 'match-h-1-editor')!
+
+      expect(header.textContent).toContain('CAU Verde vs CAU Blanco')
+      expect(header.textContent).toContain('21:30')
+      expect(header.textContent).toContain('4')
+      expect(header.textContent).toContain('1')
+    })
+
+    it('should hide the editor until it is expanded', async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+
+      const header = matchHeaders().find((item) => item.getAttribute('aria-controls') === 'match-h-1-editor')!
+      expect(document.getElementById('match-h-1-editor')).toHaveAttribute('hidden')
+
+      fireEvent.click(header)
+
+      expect(header).toHaveAttribute('aria-expanded', 'true')
+      expect(document.getElementById('match-h-1-editor')).not.toHaveAttribute('hidden')
     })
   })
 })

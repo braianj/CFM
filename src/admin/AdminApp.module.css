@@ -14,7 +14,13 @@
 .createMatch { display:grid; gap:.65rem; grid-template-columns:repeat(2,1fr); }.createMatch button { align-self:end; }
 .teamList { display:grid; gap:.75rem; }.teamEditor { align-items:end; background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.75rem; grid-template-columns:32px 1fr auto; padding:.75rem; }.teamEditor > span { align-self:center; background:var(--deep); border-radius:50%; color:white; display:grid; font-size:.75rem; font-weight:900; height:28px; place-items:center; width:28px; }
 .matchList { display:grid; gap:.75rem; }.match { background:var(--bg); border:1px solid var(--border); border-radius:10px; display:grid; gap:.8rem; padding:.85rem; }
-.matchHeader { align-items:center; display:flex; gap:1rem; justify-content:space-between; }.matchHeader > div { display:grid; gap:.2rem; }.matchHeader strong { font-size:.95rem; }.matchHeader div span { color:var(--muted); font-size:.72rem; }
+.matchHeader { align-items:center; background:transparent!important; border:0; color:inherit!important; cursor:pointer; display:flex; gap:.75rem; justify-content:space-between; min-height:0!important; padding:0!important; text-align:left; width:100%; }
+.matchHeader > div { display:grid; flex:1; gap:.2rem; min-width:0; }.matchHeader strong { font-size:.95rem; }.matchHeader div span { color:var(--muted); font-size:.72rem; }
+.matchHeader:focus-visible { border-radius:8px; outline:3px solid var(--focus); outline-offset:3px; }
+.chevron { color:var(--muted); flex:none; height:16px; transition:transform .15s; transform:rotate(-90deg); width:16px; }
+.chevronOpen { transform:rotate(0deg); }
+.finalScore { font-size:1rem; font-variant-numeric:tabular-nums; font-weight:900; white-space:nowrap; }.finalScore i { color:var(--muted); font-style:normal; padding:0 .2rem; }
+.collapsed { gap:0; }
 .status { background:var(--surface-muted); border-radius:999px; font-size:.7rem; font-weight:900; padding:.4rem .65rem; white-space:nowrap; }.live { background:#ffe2e5; color:var(--live); }.upcoming { background:var(--accent-soft); color:var(--accent-dark); }.finished { color:var(--muted); }
 .scoreEditor { align-items:end; display:grid; gap:.6rem; grid-template-columns:1fr 18px 1fr auto; }.scoreEditor label { margin:0; }.scoreEditor label span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.scoreEditor input { font-size:1.15rem; font-weight:900; text-align:center; }.versus { align-self:center; color:var(--muted); font-weight:900; text-align:center; }
 .admin input,.admin select { background:white; border:1px solid var(--border-strong); border-radius:7px; font:inherit; min-height:40px; padding:.45rem; width:100%; }

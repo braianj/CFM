@@ -385,6 +385,13 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
   const startDateTime = canReschedule && date && time ? buildStartDateTime(date, time) : match.startDateTime
   const moved = startDateTime !== match.startDateTime
 
+  // A match with its result already saved collapses, so the list stays about what
+  // still needs loading. It reopens on demand to correct a scoreline.
+  const settled = match.status === 'finished' && match.homeScore !== null && match.awayScore !== null
+  const [open, setOpen] = useState(!settled)
+  useEffect(() => setOpen(!settled), [settled])
+  const panelId = `match-${match.id}-editor`
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     const resolved = isTied ? 'regulation' : resolution
@@ -393,11 +400,22 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
     onSaved(moved ? 'Partido reprogramado.' : 'Resultado actualizado.')
   }
   return (
-    <form className={styles.match} onSubmit={submit}>
-      <div className={styles.matchHeader}>
+    <form className={`${styles.match} ${settled && !open ? styles.collapsed : ''}`} onSubmit={submit}>
+      <button
+        type="button"
+        className={styles.matchHeader}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Chevron open={open} />
         <div><strong>{getMatchName(match, teams)}</strong><span>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)} · {stageLabels[match.stage]}</span></div>
+        <span className={styles.finalScore}>
+          {match.homeScore ?? '—'}<i>-</i>{match.awayScore ?? '—'}
+        </span>
         <span className={`${styles.status} ${styles[match.status]}`}>{statusLabels[match.status]}</span>
-      </div>
+      </button>
+      <div id={panelId} hidden={!open}>
       <div className={styles.scoreEditor}>
         <label><span>{getTeamName(match.homeTeamId, match.homeLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.homeTeamId, match.homeLabel, teams)}`} type="number" min="0" placeholder="—" value={homeScore ?? ''} onChange={(event) => setHomeScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <span className={styles.versus}>—</span>
@@ -425,7 +443,16 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
             ? `Se va a reprogramar para el ${formatDay(startDateTime, TIMEZONE).toLocaleLowerCase('es')} a las ${formatTime(startDateTime, TIMEZONE)}.`
             : 'En tiempo reglamentario el ganador suma 3 y el perdedor 0. En tiempo extra o penales, 2 y 1.'}
       </p>
+      </div>
     </form>
+  )
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 

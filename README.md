@@ -63,6 +63,8 @@ Solo los administradores pueden escribir datos. El ingreso usa Google y los camb
 - registrar faltas, faltas graves y minutos de penalización;
 - publicar el fixture oficial y los planteles inscriptos.
 
+Los partidos que ya tienen resultado guardado se pliegan y muestran solo fecha, equipos y marcador. Se despliegan con un clic si hay que corregir algo, así la lista queda enfocada en lo que falta cargar.
+
 La tabla de estadísticas muestra partidos jugados (PJ), que sale de las convocatorias: quien figura en la planilla de un partido lo jugó. Quien jugó aparece en la tabla aunque no haya sumado nada, igual que en las planillas de la organización.
 
 Debajo de las estadísticas aparece un aviso de **Sanciones** cuando alguien alcanza un límite: 3 faltas menores en un mismo partido (expulsión y una fecha) o 15 minutos de penalización acumulados en el torneo (una fecha). El sitio cuenta y avisa; no decide qué fecha se pierde ni bloquea convocatorias, porque eso lo define la organización.

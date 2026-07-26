@@ -110,6 +110,11 @@ Kick-off times are always written with Ushuaia's offset. Read them with
 `splitStartDateTime` and write them with `buildStartDateTime`; never round-trip a
 kick-off through `Date`, or the panel would show the editor computer's timezone.
 
+A match whose result is already saved collapses in the panel to a header with the
+teams, the kick-off and the score, and reopens on click to correct it. The list is
+about what still needs loading, so it must not force the operator past rows that
+are already done.
+
 Rescheduling is an owner action. `onlyResultChanged` in `firestore.rules` keeps an
 editor from moving a match, so the date inputs are hidden for them and refused by
 the server anyway.
