@@ -469,7 +469,10 @@ function StatisticsAdmin({ matches, teams, players, rosters, events, notify, can
   categories: Category[]
 }) {
   const [selectedMatchId, setSelectedMatchId] = useState('')
+  const [editedEventId, setEditedEventId] = useState('')
   const selectedMatch = matches.find((match) => match.id === selectedMatchId)
+  // An event stops being editable if it is deleted or the operator changes match.
+  const editedEvent = events.find((event) => event.id === editedEventId && event.matchId === selectedMatchId)
   return (
     <>
       {canManageSquads && <section className={styles.section}>
@@ -494,7 +497,7 @@ function StatisticsAdmin({ matches, teams, players, rosters, events, notify, can
       ))}
       <section className={styles.section}>
         <h2>Cargar gol, asistencia o falta</h2>
-        <label>Partido<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{getMatchOptionLabel(match, teams)}</option>)}</select></label>
+        <label>Partido<select value={selectedMatchId} onChange={(event) => { setSelectedMatchId(event.target.value); setEditedEventId('') }}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{getMatchOptionLabel(match, teams)}</option>)}</select></label>
         {selectedMatch && <>
           <MatchRosterForm
             match={selectedMatch}
@@ -504,13 +507,24 @@ function StatisticsAdmin({ matches, teams, players, rosters, events, notify, can
             onSaved={() => notify('Convocatoria actualizada.')}
           />
           <EventForm
+            // Remounting is what loads the chosen event into the fields.
+            key={editedEvent?.id ?? `${selectedMatch.id}-nuevo`}
             match={selectedMatch}
             teams={teams}
             players={players}
             entries={rosters.filter((entry) => entry.matchId === selectedMatch.id)}
-            onSaved={() => notify('Estadística publicada.')}
+            edited={editedEvent}
+            onSaved={() => { setEditedEventId(''); notify(editedEvent ? 'Evento corregido.' : 'Estadística publicada.') }}
+            onCancel={() => setEditedEventId('')}
           />
-          <MatchEventList match={selectedMatch} teams={teams} events={events} rosters={rosters} />
+          <MatchEventList
+            match={selectedMatch}
+            teams={teams}
+            events={events}
+            rosters={rosters}
+            editedEventId={editedEvent?.id ?? ''}
+            onEdit={setEditedEventId}
+          />
         </>}
       </section>
     </>
@@ -519,14 +533,15 @@ function StatisticsAdmin({ matches, teams, players, rosters, events, notify, can
 
 // The same running order the public card shows, so a wrong reading of the paper
 // scoresheet is obvious here before anybody else sees it.
-function MatchEventList({ match, teams, events, rosters }: {
+function MatchEventList({ match, teams, events, rosters, editedEventId, onEdit }: {
   match: Match; teams: Team[]; events: MatchEvent[]; rosters: MatchRosterEntry[]
+  editedEventId: string; onEdit: (eventId: string) => void
 }) {
   const lines = buildMatchSummary(match.id, events, teams, rosters)
   if (!lines.length) return <p className={styles.hint}>Todavía no hay eventos cargados en este partido.</p>
   return (
     <div className={styles.events}>{lines.map((line) => (
-      <div key={line.id}>
+      <div key={line.id} className={line.id === editedEventId ? styles.editing : undefined}>
         <span>
           <strong>{line.period ? `P${line.period}` : '—'} {line.gameTime ?? ''}</strong>
           {' · '}{eventTypeLabels[line.type]}{line.penaltyMinutes ? ` ${line.penaltyMinutes}'` : ''}
@@ -534,7 +549,10 @@ function MatchEventList({ match, teams, events, rosters }: {
           {' · '}{line.player}
           {line.assists.length > 0 && ` · asist. ${line.assists.join(', ')}`}
         </span>
-        <button type="button" className={styles.danger} onClick={() => removeMatchEvent(line.id)}>Eliminar</button>
+        <span className={styles.rowActions}>
+          <button type="button" className={styles.secondary} onClick={() => onEdit(line.id)}>Editar</button>
+          <button type="button" className={styles.danger} onClick={() => removeMatchEvent(line.id)}>Eliminar</button>
+        </span>
       </div>
     ))}</div>
   )
@@ -604,24 +622,34 @@ function MatchRosterForm({ match, teams, players, entries, onSaved }: {
   )
 }
 
-function EventForm({ match, teams, players, entries, onSaved }: {
-  match: Match; teams: Team[]; players: Player[]; entries: MatchRosterEntry[]; onSaved: () => void
+// Loads a published event back into its own fields so a misread scoresheet can be
+// corrected in place. Saving keeps the document ID, so the correction replaces the
+// event instead of leaving the wrong one behind next to a duplicate.
+function EventForm({ match, teams, players, entries, edited, onSaved, onCancel }: {
+  match: Match; teams: Team[]; players: Player[]; entries: MatchRosterEntry[]
+  edited?: MatchEvent; onSaved: () => void; onCancel: () => void
 }) {
   const eligibleTeams = useMemo(() => teams.filter((team) => team.id === match.homeTeamId || team.id === match.awayTeamId), [match, teams])
-  const [type, setType] = useState<MatchEventType>('goal')
-  const [teamId, setTeamId] = useState(eligibleTeams[0]?.id ?? '')
-  const [playerId, setPlayerId] = useState('')
-  const [assistId, setAssistId] = useState('')
-  const [secondAssistId, setSecondAssistId] = useState('')
-  const [period, setPeriod] = useState(1)
-  const [gameTime, setGameTime] = useState('')
-  const [penaltyMinutes, setPenaltyMinutes] = useState(2)
-  useEffect(() => setTeamId(eligibleTeams[0]?.id ?? ''), [eligibleTeams])
+  const [type, setType] = useState<MatchEventType>(edited?.type ?? 'goal')
+  const [chosenTeamId, setTeamId] = useState(edited?.teamId ?? '')
+  const [playerId, setPlayerId] = useState(edited?.playerId ?? '')
+  const [assistId, setAssistId] = useState(edited?.assistId ?? '')
+  const [secondAssistId, setSecondAssistId] = useState(edited?.secondAssistId ?? '')
+  const [period, setPeriod] = useState(edited?.period ?? 1)
+  const [gameTime, setGameTime] = useState(edited?.gameTime ?? '')
+  const [penaltyMinutes, setPenaltyMinutes] = useState(edited?.penaltyMinutes ?? 2)
+  // Derived rather than stored, because the teams arrive from Firestore after the
+  // form is already on screen and a stored default would keep the first empty value.
+  const teamId = eligibleTeams.some((team) => team.id === chosenTeamId) ? chosenTeamId : eligibleTeams[0]?.id ?? ''
   const eligibleEntries = entries.filter((entry) => entry.teamId === teamId)
   const eligiblePlayers = eligibleEntries
     .map((entry) => players.find((player) => player.id === entry.playerId))
-    .filter((player): player is Player => Boolean(player?.active))
-  useEffect(() => { setPlayerId(''); setAssistId(''); setSecondAssistId('') }, [teamId])
+    // A player dropped from the squad keeps the events already published in their
+    // name, so correcting one of those must still offer them.
+    .filter((player): player is Player => Boolean(player?.active || (player && player.id === edited?.playerId)))
+  const changeTeam = (next: string) => {
+    setTeamId(next); setPlayerId(''); setAssistId(''); setSecondAssistId('')
+  }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     const player = players.find((item) => item.id === playerId)
@@ -630,19 +658,19 @@ function EventForm({ match, teams, players, entries, onSaved }: {
     const secondAssist = players.find((item) => item.id === secondAssistId)
     const rosterEntry = entries.find((entry) => entry.playerId === player.id)
     await saveMatchEvent({
-      id: crypto.randomUUID(), matchId: match.id, category: match.category, teamId, type,
+      id: edited?.id ?? crypto.randomUUID(), matchId: match.id, category: match.category, teamId, type,
       playerId: player.id, playerName: player.name, jerseyNumber: rosterEntry?.jerseyNumber,
       assistId: type === 'goal' ? assist?.id : undefined, assistName: type === 'goal' ? assist?.name : undefined,
       secondAssistId: type === 'goal' ? secondAssist?.id : undefined, secondAssistName: type === 'goal' ? secondAssist?.name : undefined,
       period, gameTime: gameTime.trim() || undefined, penaltyMinutes: type === 'goal' ? undefined : penaltyMinutes,
     })
-    void track('admin_action', { action: 'publish_event', event_type: type })
+    void track('admin_action', { action: edited ? 'edit_event' : 'publish_event', event_type: type })
     setPlayerId(''); setAssistId(''); setSecondAssistId(''); setGameTime(''); onSaved()
   }
   return (
     <form className={styles.eventForm} onSubmit={submit}>
-      <label>Tipo<select value={type} onChange={(event) => setType(event.target.value as MatchEventType)}>{eventTypes.map((value) => <option key={value} value={value}>{value === 'goal' ? 'Gol' : value === 'penalty' ? 'Falta' : 'Falta grave'}</option>)}</select></label>
-      <label>Equipo<select value={teamId} onChange={(event) => setTeamId(event.target.value)}>{eligibleTeams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
+      <label>Tipo<select value={type} onChange={(event) => setType(event.target.value as MatchEventType)}>{eventTypes.map((value) => <option key={value} value={value}>{eventTypeLabels[value]}</option>)}</select></label>
+      <label>Equipo<select value={teamId} onChange={(event) => changeTeam(event.target.value)}>{eligibleTeams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></label>
       <label>Jugador/a<select required value={playerId} onChange={(event) => setPlayerId(event.target.value)}><option value="">Seleccionar…</option>{eligiblePlayers.map((player) => <option key={player.id} value={player.id}>#{entries.find((entry) => entry.playerId === player.id)?.jerseyNumber} · {player.name}</option>)}</select></label>
       {type === 'goal' ? <>
         <label>1.ª asistencia<select value={assistId} onChange={(event) => setAssistId(event.target.value)}><option value="">Sin asistencia</option>{eligiblePlayers.filter((player) => player.id !== playerId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select></label>
@@ -650,7 +678,8 @@ function EventForm({ match, teams, players, entries, onSaved }: {
       </> : <label>Minutos de penalización<input type="number" min="0" value={penaltyMinutes} onChange={(event) => setPenaltyMinutes(Number(event.target.value))} /></label>}
       <label>Período<input type="number" min="1" max={REGULATION_PERIODS + 1} value={period} onChange={(event) => setPeriod(Number(event.target.value))} /></label>
       <label>Tiempo de juego<input placeholder="Ej. 12:34" pattern="[0-9]{1,2}:[0-9]{2}" value={gameTime} onChange={(event) => setGameTime(event.target.value)} /></label>
-      <button type="submit">Publicar evento</button>
+      <button type="submit">{edited ? 'Guardar corrección' : 'Publicar evento'}</button>
+      {edited && <button type="button" className={styles.secondary} onClick={onCancel}>Cancelar</button>}
     </form>
   )
 }

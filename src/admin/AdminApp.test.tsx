@@ -1,13 +1,25 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Match } from '../types/tournament'
+import type { Match, MatchEvent, MatchRosterEntry, Player } from '../types/tournament'
 import { matches as officialMatches } from '../data/matches'
 import { teams as officialTeams } from '../data/teams'
 import { TIMEZONE } from '../data/tournamentConfig'
 import { formatShortDay, formatTime } from '../utils/date'
 
 const saveMatch = vi.fn()
+const saveMatchEvent = vi.fn()
 const settledMatchIds: string[] = []
+
+// H-1 is CAU Verde against CAU Blanco.
+const scorer: Player = { id: 'jugador-1', category: 'men', teamId: 'men-cau-2', name: 'Joaquín Cuitiño', active: true }
+const rosterEntry: MatchRosterEntry = {
+  id: 'h-1_jugador-1', matchId: 'h-1', category: 'men', teamId: 'men-cau-2',
+  playerId: scorer.id, playerName: scorer.name, jerseyNumber: 6,
+}
+const publishedEvent: MatchEvent = {
+  id: 'evento-1', matchId: 'h-1', category: 'men', teamId: 'men-cau-2', type: 'goal',
+  playerId: scorer.id, playerName: scorer.name, jerseyNumber: 6, period: 1, gameTime: '2:43',
+}
 
 vi.mock('../analytics', () => ({ track: vi.fn(), initAnalytics: () => Promise.resolve() }))
 
@@ -44,9 +56,9 @@ vi.mock('../data/firestore', () => ({
         : item))
       .sort((a, b) => a.id.localeCompare(b.id)))
     onTeams(officialTeams)
-    onPlayers([])
-    onRosters([])
-    onEvents([])
+    onPlayers([scorer])
+    onRosters([rosterEntry])
+    onEvents([publishedEvent])
     return () => {}
   },
   getAdminRole: () => Promise.resolve('owner'),
@@ -57,7 +69,7 @@ vi.mock('../data/firestore', () => ({
   saveMatch,
   saveTeam: vi.fn(),
   savePlayer: vi.fn(),
-  saveMatchEvent: vi.fn(),
+  saveMatchEvent,
   removeMatchEvent: vi.fn(),
   saveMatchRosterEntry: vi.fn(),
   removeMatchRosterEntry: vi.fn(),
@@ -83,6 +95,8 @@ describe('AdminApp', () => {
     settledMatchIds.length = 0
     saveMatch.mockReset()
     saveMatch.mockResolvedValue(undefined)
+    saveMatchEvent.mockReset()
+    saveMatchEvent.mockResolvedValue(undefined)
   })
 
   describe('when Firestore returns the matches by document ID', () => {
@@ -142,6 +156,47 @@ describe('AdminApp', () => {
       await waitFor(() => expect(saveMatch).toHaveBeenCalled())
       const scheduled = officialMatches.find((item) => item.id === 'h-3')!
       expect(saveMatch.mock.calls[0][0].startDateTime).toBe(scheduled.startDateTime)
+    })
+  })
+
+  describe('when an event was read wrong from the scoresheet', () => {
+    const openTheEvent = async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+      screen.getByRole('button', { name: 'Estadísticas' }).click()
+      const selector = await screen.findByLabelText('Partido')
+      fireEvent.change(selector, { target: { value: 'h-1' } })
+      fireEvent.click(await screen.findByRole('button', { name: 'Editar' }))
+    }
+
+    it('should load it back into the form', async () => {
+      await openTheEvent()
+
+      // The call-up form has its own player selector, so read the event form's own.
+      const form = within(screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!)
+
+      expect(form.getByLabelText('Tiempo de juego')).toHaveValue('2:43')
+      expect(form.getByLabelText('Jugador/a')).toHaveValue(scorer.id)
+      expect(form.getByLabelText('Equipo')).toHaveValue('men-cau-2')
+    })
+
+    it('should replace the event instead of publishing a second one', async () => {
+      await openTheEvent()
+
+      const form = screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!
+      fireEvent.change(within(form).getByLabelText('Tiempo de juego'), { target: { value: '2:34' } })
+      fireEvent.submit(form)
+
+      await waitFor(() => expect(saveMatchEvent).toHaveBeenCalled())
+      expect(saveMatchEvent.mock.calls[0][0]).toMatchObject({ id: publishedEvent.id, gameTime: '2:34' })
+    })
+
+    it('should stop editing once the correction is saved', async () => {
+      await openTheEvent()
+
+      fireEvent.submit(screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!)
+
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Publicar evento' })).toBeInTheDocument())
     })
   })
 

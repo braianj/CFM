@@ -30,7 +30,9 @@
 .admin .secondary { background:var(--surface-muted); color:var(--ink); }.admin .danger { background:transparent; color:var(--live); min-height:34px; padding:.3rem; }
 .eventForm { display:grid; gap:.5rem; grid-template-columns:repeat(2,1fr); }.eventForm button { align-self:end; }
 .roster { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin:1rem 0; padding:1rem; }.roster h3 { margin:0 0 .5rem; }.rosterForm { align-items:end; display:grid; gap:.5rem; grid-template-columns:2fr 1fr auto; }.rosterEntries > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
-.events > div { align-items:center; border-top:1px solid var(--border); display:flex; justify-content:space-between; padding:.5rem 0; }
+.events > div { align-items:center; border-top:1px solid var(--border); display:flex; gap:.5rem; justify-content:space-between; padding:.5rem 0; }
+.rowActions { display:flex; flex:none; gap:.35rem; }.rowActions button { min-height:34px; padding:.3rem .6rem; }
+.events > div.editing { background:var(--state-selected-soft); box-shadow:inset 3px 0 0 var(--state-selected-line); padding-left:.5rem; }
 .adminForm { align-items:end; display:grid; gap:.6rem; grid-template-columns:1fr auto; }
 .reschedule { display:grid; gap:.6rem; grid-template-columns:1fr 1fr; }.reschedule label { margin:0; }
 .resolution { margin:0!important; }.inactive { opacity:.55; }.match .hint { margin:0; }
