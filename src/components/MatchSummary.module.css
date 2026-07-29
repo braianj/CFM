@@ -1,0 +1,14 @@
+.summary { display: grid; gap: .1rem; list-style: none; margin: 0; padding: 0; }
+.line { align-items: center; border-top: 1px solid var(--border); display: grid; gap: .6rem; grid-template-columns: 2.6rem 4px 1fr; padding: .5rem 0; }
+.line:first-child { border-top: 0; }
+.clock { display: grid; font-variant-numeric: tabular-nums; line-height: 1.15; text-align: right; }
+.period { color: var(--muted); font-size: .62rem; font-weight: 900; letter-spacing: .04em; }
+.time { font-size: .82rem; font-weight: 800; }
+.marker { align-self: stretch; border-radius: 99px; min-height: 26px; }
+.detail { display: grid; gap: .1rem; min-width: 0; }
+.headline { align-items: baseline; display: flex; flex-wrap: wrap; gap: .4rem; }
+.headline strong { font-size: .88rem; font-weight: 850; }
+.kind { border-radius: 99px; font-size: .62rem; font-weight: 900; letter-spacing: .03em; padding: .18rem .4rem; text-transform: uppercase; white-space: nowrap; }
+.goal { background: var(--accent-soft); color: var(--accent-dark); }
+.penalty { background: var(--surface-muted); color: var(--muted); }
+.team { color: var(--muted); font-size: .72rem; }

@@ -19,8 +19,12 @@ Un número entre paréntesis con `?` es una lectura dudosa.
 | H-7 CAU Blanco – All-Pakas | 2 – 3 (el 3.º es del shootout) | 2-3 SO | sí |
 | D-1 CAU Kipas – Ñires Zorras | 0 – 1 | 0-1 | sí |
 | D-2 CAU Kipas – All-Pakas Damas | 5 – 0 | 5-0 | sí |
-| D-3 Ovejas Negras Damas – Ñires Zorras | 0 – **8** | 0-7 | **NO** |
+| D-3 Ovejas Negras Damas – Ñires Zorras | 0 – **8** | 0-7 | **NO, corregir a 0-8** |
 | D-5 All-Pakas Damas – Ovejas Negras Damas | 1 – 1 + penal | 2-1 SO | sí |
+
+Ningún gol de D-3 está tachado: las ocho filas están numeradas del 1 al 8 y el
+«Resumen del Partido» que firma el árbitro cierra en `0-8`, con 0-3 en el primer
+período y 0-5 en el segundo. El resultado publicado (0-7) es el que hay que corregir.
 
 ## Qué planillas trae el PDF
 
@@ -126,6 +130,20 @@ y #6 en H-5.
 
 Las listas completas de casaca por partido están en las planillas; se transcriben al
 cargar cada convocatoria.
+
+## Casacas sin resolver
+
+Diecisiete números que no aparecen en la convocatoria de ese partido, casi siempre
+porque el dígito manuscrito se presta a confusión. La lista completa, con el plantel
+de cada equipo al lado, está en `casacas-a-resolver.md`. Hasta que estén resueltas no
+se cargan los 94 eventos.
+
+Ya resueltas contra la propia planilla:
+
+- **D-5, Ovejas Negras Damas #17.** No hay dos: Arano Fátima usó la **27** y
+  Carimatto Jesica la **17**. La falta de 10:17 es de Carimatto.
+- **D-5, asistencia del gol de Ovejas.** Se lee `81`, que no existe en el plantel. En
+  hielo estaban 83, 16, 18, 91 y 34, así que es la 91 o la 83. Sin resolver.
 
 ## Lo que todavía no transcribí
 

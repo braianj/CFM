@@ -51,3 +51,9 @@ export const statusLabels = {
   postponed: 'Postergado',
   tbd: 'A confirmar',
 } as const
+
+export const eventTypeLabels = {
+  goal: 'Gol',
+  penalty: 'Falta',
+  'major-penalty': 'Falta grave',
+} as const

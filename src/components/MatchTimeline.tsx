@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { tournamentConfigs } from '../data/tournamentConfig'
-import type { Match, Team } from '../types/tournament'
+import type { Match, MatchEvent, MatchRosterEntry, Team } from '../types/tournament'
 import { formatDay } from '../utils/date'
 import { getInitialMatchId, groupMatchesByDay } from '../utils/matches'
+import { buildMatchSummary } from '../utils/matchSummary'
 import { MatchCard } from './MatchCard'
 import styles from './MatchTimeline.module.css'
 
@@ -12,9 +13,11 @@ interface Props {
   timezone: string
   scrollKey: string
   showCategory?: boolean
+  events?: MatchEvent[]
+  rosters?: MatchRosterEntry[]
 }
 
-export function MatchTimeline({ matches, teams, timezone, scrollKey, showCategory = false }: Props) {
+export function MatchTimeline({ matches, teams, timezone, scrollKey, showCategory = false, events = [], rosters = [] }: Props) {
   const groups = groupMatchesByDay(matches, timezone)
 
   useEffect(() => {
@@ -44,6 +47,7 @@ export function MatchTimeline({ matches, teams, timezone, scrollKey, showCategor
                 teams={teams}
                 timezone={timezone}
                 categoryLabel={showCategory ? tournamentConfigs[match.category].shortName : undefined}
+                summary={buildMatchSummary(match.id, events, teams, rosters)}
               />
             ))}
           </div>

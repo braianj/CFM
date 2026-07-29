@@ -7,12 +7,13 @@ import { getAdminRole, publishOfficialFixture, removeAdmin, removeMatchEvent, re
 import type { AdminEntry } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
 import { players as officialPlayers } from '../data/players'
-import { TIMEZONE, stageLabels, statusLabels, tournamentConfigs } from '../data/tournamentConfig'
+import { TIMEZONE, eventTypeLabels, stageLabels, statusLabels, tournamentConfigs } from '../data/tournamentConfig'
 import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
-import type { Category, Match, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
+import type { Category, Match, MatchEvent, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { buildStartDateTime, formatDay, formatShortDay, formatTime, splitStartDateTime } from '../utils/date'
 import { sortMatches } from '../utils/matches'
+import { buildMatchSummary } from '../utils/matchSummary'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
 import { calculateDiscipline } from '../utils/discipline'
@@ -509,13 +510,33 @@ function StatisticsAdmin({ matches, teams, players, rosters, events, notify, can
             entries={rosters.filter((entry) => entry.matchId === selectedMatch.id)}
             onSaved={() => notify('Estadística publicada.')}
           />
+          <MatchEventList match={selectedMatch} teams={teams} events={events} rosters={rosters} />
         </>}
-        <div className={styles.events}>{events.map((event) => {
-          const match = matches.find((item) => item.id === event.matchId)
-          return <div key={event.id}><span><strong>{event.jerseyNumber !== undefined ? `#${event.jerseyNumber} ` : ''}{event.playerName}</strong> · {event.type === 'goal' ? 'Gol' : event.type === 'penalty' ? 'Falta' : 'Falta grave'}{match ? ` · ${getMatchName(match, teams)}` : ''}</span><button type="button" className={styles.danger} onClick={() => removeMatchEvent(event.id)}>Eliminar</button></div>
-        })}</div>
       </section>
     </>
+  )
+}
+
+// The same running order the public card shows, so a wrong reading of the paper
+// scoresheet is obvious here before anybody else sees it.
+function MatchEventList({ match, teams, events, rosters }: {
+  match: Match; teams: Team[]; events: MatchEvent[]; rosters: MatchRosterEntry[]
+}) {
+  const lines = buildMatchSummary(match.id, events, teams, rosters)
+  if (!lines.length) return <p className={styles.hint}>Todavía no hay eventos cargados en este partido.</p>
+  return (
+    <div className={styles.events}>{lines.map((line) => (
+      <div key={line.id}>
+        <span>
+          <strong>{line.period ? `P${line.period}` : '—'} {line.gameTime ?? ''}</strong>
+          {' · '}{eventTypeLabels[line.type]}{line.penaltyMinutes ? ` ${line.penaltyMinutes}'` : ''}
+          {' · '}{line.teamName}
+          {' · '}{line.player}
+          {line.assists.length > 0 && ` · asist. ${line.assists.join(', ')}`}
+        </span>
+        <button type="button" className={styles.danger} onClick={() => removeMatchEvent(line.id)}>Eliminar</button>
+      </div>
+    ))}</div>
   )
 }
 

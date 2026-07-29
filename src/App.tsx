@@ -124,6 +124,8 @@ export default function App() {
               timezone={TIMEZONE}
               showCategory={categories.length > 1}
               scrollKey={`${scope}-${selectedTeam?.id ?? ALL_TEAMS}`}
+              events={events}
+              rosters={rosters}
             />
           </>
         ) : view === 'rosters' ? (
