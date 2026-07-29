@@ -15,7 +15,7 @@ export function MatchSummary({ lines, teams }: Props) {
         <li key={line.id} className={styles.line}>
           <span className={styles.clock}>
             <span className={styles.period}>{line.period ? `P${line.period}` : ''}</span>
-            <span className={styles.time}>{line.gameTime ?? ''}</span>
+            <span className={styles.time}>{line.elapsed ?? ''}</span>
           </span>
           <span
             className={styles.marker}

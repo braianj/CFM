@@ -175,7 +175,7 @@ describe('AdminApp', () => {
       // The call-up form has its own player selector, so read the event form's own.
       const form = within(screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!)
 
-      expect(form.getByLabelText('Tiempo de juego')).toHaveValue('2:43')
+      expect(form.getByLabelText('Reloj restante')).toHaveValue('2:43')
       expect(form.getByLabelText('Jugador/a')).toHaveValue(scorer.id)
       expect(form.getByLabelText('Equipo')).toHaveValue('men-cau-2')
     })
@@ -184,7 +184,7 @@ describe('AdminApp', () => {
       await openTheEvent()
 
       const form = screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!
-      fireEvent.change(within(form).getByLabelText('Tiempo de juego'), { target: { value: '2:34' } })
+      fireEvent.change(within(form).getByLabelText('Reloj restante'), { target: { value: '2:34' } })
       fireEvent.submit(form)
 
       await waitFor(() => expect(saveMatchEvent).toHaveBeenCalled())

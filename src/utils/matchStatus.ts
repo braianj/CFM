@@ -8,6 +8,10 @@ export const TIMEOUTS_PER_TEAM = 1
 // The clock stops on every whistle, except once a team leads by this much.
 export const RUNNING_CLOCK_LEAD = 5
 
+// Any period past the regulation ones is the overtime period, which is shorter.
+export const periodLengthMinutes = (period: number) =>
+  period > REGULATION_PERIODS ? OVERTIME_MINUTES : PERIOD_MINUTES
+
 // How long a match shows as live. This is wall-clock time, not played time: with a
 // stopped clock, two 15-minute periods take considerably longer than 30 minutes.
 // The fixture schedules a match every 60 minutes and the zamboni 40 minutes after

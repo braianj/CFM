@@ -17,6 +17,9 @@ const event = (id: string, overrides: Partial<MatchEvent> = {}): MatchEvent => (
   ...overrides,
 })
 
+const clockOf = (period: number | undefined, gameTime: string) =>
+  buildMatchSummary('h-1', [event('gol', { period, gameTime })], teams)[0]
+
 const rosterEntry = (playerName: string, jerseyNumber: number): MatchRosterEntry => ({
   id: `h-1_${playerName}`,
   matchId: 'h-1',
@@ -144,6 +147,34 @@ describe('buildMatchSummary', () => {
       const [line] = buildMatchSummary('h-1', [event('gol', { teamId: 'men-cau-2' })], teams)
 
       expect(line.teamName).toBe('CAU Verde')
+    })
+  })
+
+  describe('when the scoresheet recorded the countdown clock', () => {
+    it('should report the time played in a regulation period', () => {
+      expect(clockOf(1, '2:50').elapsed).toBe('12:10')
+      expect(clockOf(2, '13:56').elapsed).toBe('1:04')
+    })
+
+    it('should measure overtime against its own shorter period', () => {
+      expect(clockOf(3, '2:50').elapsed).toBe('2:10')
+    })
+
+    it('should keep the countdown as the scoresheet wrote it', () => {
+      expect(clockOf(1, '2:50').remaining).toBe('2:50')
+    })
+
+    it('should read a whole period as zero played and the horn as the full period', () => {
+      expect(clockOf(1, '15:00').elapsed).toBe('0:00')
+      expect(clockOf(1, '0:00').elapsed).toBe('15:00')
+    })
+
+    it('should not invent a time when the clock does not fit its period', () => {
+      expect(clockOf(1, '18:35').elapsed).toBe('18:35')
+    })
+
+    it('should not invent a time when the period is unknown', () => {
+      expect(clockOf(undefined, '2:50').elapsed).toBe('2:50')
     })
   })
 })

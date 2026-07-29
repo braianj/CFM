@@ -1,10 +1,14 @@
 import type { MatchEvent, MatchEventType, MatchRosterEntry, Team } from '../types/tournament'
+import { periodLengthMinutes } from './matchStatus'
 
 export interface MatchSummaryLine {
   id: string
   type: MatchEventType
   period?: number
-  gameTime?: string
+  /** Minutes played when it happened, which is what a spectator reads off a clock. */
+  elapsed?: string
+  /** What was left on the rink clock, exactly as the scoresheet writes it. */
+  remaining?: string
   teamId: string
   teamName: string
   /** Scorer or penalised player, prefixed with the jersey number when it is known. */
@@ -26,13 +30,28 @@ const remainingSeconds = (gameTime?: string) => {
   return parsed ? Number(parsed[1]) * 60 + Number(parsed[2]) : null
 }
 
+const formatClock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+
+// The scoresheet writes the countdown clock, but a result is read as time played: a
+// goal with 2:50 left in a fifteen-minute period was scored at 12:10. Inverting it
+// needs the period, because overtime is shorter than a regulation one. A clock that
+// does not fit its period cannot be inverted, so it is reported as it was written
+// rather than turned into an invented number.
+function elapsedTime(period: number | undefined, gameTime: string | undefined) {
+  const remaining = remainingSeconds(gameTime)
+  if (remaining === null) return gameTime?.trim() || undefined
+  if (period === undefined) return gameTime?.trim()
+  const total = periodLengthMinutes(period) * 60
+  return remaining > total ? gameTime?.trim() : formatClock(total - remaining)
+}
+
 // Anything the sheet left blank sinks to the end of its period instead of jumping
 // to the top, which is what sorting an absent clock as zero would do.
 function inPlayingOrder(a: MatchSummaryLine, b: MatchSummaryLine) {
   const period = (a.period ?? Number.MAX_SAFE_INTEGER) - (b.period ?? Number.MAX_SAFE_INTEGER)
   if (period !== 0) return period
-  const left = remainingSeconds(a.gameTime)
-  const right = remainingSeconds(b.gameTime)
+  const left = remainingSeconds(a.remaining)
+  const right = remainingSeconds(b.remaining)
   if (left === null || right === null) return (left === null ? 1 : 0) - (right === null ? 1 : 0)
   return right - left
 }
@@ -64,7 +83,8 @@ export function buildMatchSummary(
       id: event.id,
       type: event.type,
       period: event.period,
-      gameTime: event.gameTime,
+      elapsed: elapsedTime(event.period, event.gameTime),
+      remaining: event.gameTime?.trim() || undefined,
       teamId: event.teamId,
       teamName: teams.find((team) => team.id === event.teamId)?.name ?? '',
       player: named(event.teamId, event.playerName, event.jerseyNumber),

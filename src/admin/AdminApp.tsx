@@ -543,7 +543,10 @@ function MatchEventList({ match, teams, events, rosters, editedEventId, onEdit }
     <div className={styles.events}>{lines.map((line) => (
       <div key={line.id} className={line.id === editedEventId ? styles.editing : undefined}>
         <span>
-          <strong>{line.period ? `P${line.period}` : '—'} {line.gameTime ?? ''}</strong>
+          {/* The played time is what the site shows; the countdown is what the paper
+              says, so both are here to be compared against the scoresheet. */}
+          <strong>{line.period ? `P${line.period}` : '—'} {line.elapsed ?? ''}</strong>
+          {line.remaining && line.remaining !== line.elapsed && <em className={styles.remaining}> (quedaban {line.remaining})</em>}
           {' · '}{eventTypeLabels[line.type]}{line.penaltyMinutes ? ` ${line.penaltyMinutes}'` : ''}
           {' · '}{line.teamName}
           {' · '}{line.player}
@@ -677,7 +680,8 @@ function EventForm({ match, teams, players, entries, edited, onSaved, onCancel }
         <label>2.ª asistencia<select value={secondAssistId} onChange={(event) => setSecondAssistId(event.target.value)}><option value="">Sin asistencia</option>{eligiblePlayers.filter((player) => player.id !== playerId && player.id !== assistId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select></label>
       </> : <label>Minutos de penalización<input type="number" min="0" value={penaltyMinutes} onChange={(event) => setPenaltyMinutes(Number(event.target.value))} /></label>}
       <label>Período<input type="number" min="1" max={REGULATION_PERIODS + 1} value={period} onChange={(event) => setPeriod(Number(event.target.value))} /></label>
-      <label>Tiempo de juego<input placeholder="Ej. 12:34" pattern="[0-9]{1,2}:[0-9]{2}" value={gameTime} onChange={(event) => setGameTime(event.target.value)} /></label>
+      {/* Copied straight off the sheet. The site converts it to time played. */}
+      <label>Reloj restante<input placeholder="Ej. 2:43" pattern="[0-9]{1,2}:[0-9]{2}" value={gameTime} onChange={(event) => setGameTime(event.target.value)} /></label>
       <button type="submit">{edited ? 'Guardar corrección' : 'Publicar evento'}</button>
       {edited && <button type="button" className={styles.secondary} onClick={onCancel}>Cancelar</button>}
     </form>

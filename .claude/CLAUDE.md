@@ -299,6 +299,13 @@ still passes.
 - Inside a period the game clock counts down, so a larger remaining time is earlier.
   An event with no clock sinks to the end of its period, and one with no period goes
   after every period, instead of jumping to the top the way a zeroed clock would.
+- `MatchEvent.gameTime` stores the rink clock exactly as the scoresheet writes it,
+  which is the time *left*. The site reads time *played*, so `buildMatchSummary`
+  inverts it against `periodLengthMinutes`, and overtime is measured against its own
+  shorter period. Never store the converted value: the panel has to stay copyable
+  straight off the paper, and only the stored form can be audited against it.
+  A clock longer than its period cannot be inverted and is shown as written rather
+  than turned into an invented number, which is also how a misread gets noticed.
 - Dates are Spanish and use `America/Argentina/Ushuaia`.
 - Do not expose repository paths or implementation instructions in the public
   interface.
