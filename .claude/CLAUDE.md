@@ -291,6 +291,14 @@ still passes.
 - Matches are grouped chronologically by day.
 - Initial match scrolling targets live, then upcoming, then the final match.
 - Auto-scroll runs only on initial timeline mount or tournament change.
+- A match card with published events unfolds on click into what happened, built by
+  `buildMatchSummary`. A card with no events is not a button: it must not offer to
+  open onto nothing. The panel renders the same summary for the selected match, so
+  the operator reads the events in the order the scoresheet describes and can spot a
+  misread before the public does.
+- Inside a period the game clock counts down, so a larger remaining time is earlier.
+  An event with no clock sinks to the end of its period, and one with no period goes
+  after every period, instead of jumping to the top the way a zeroed clock would.
 - Dates are Spanish and use `America/Argentina/Ushuaia`.
 - Do not expose repository paths or implementation instructions in the public
   interface.
