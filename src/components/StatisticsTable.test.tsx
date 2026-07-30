@@ -59,21 +59,40 @@ describe('StatisticsTable', () => {
       expect(leaderboard()).toHaveLength(1)
     })
 
-    it('should still list them in the full sheet, the way the official sheets do', () => {
+    it('should keep them out of the full sheet too, and only count them', () => {
       render(<StatisticsTable rows={[row('Con puntos', { goals: 1, points: 1 }), row('Sin puntos')]} teams={teams} />)
 
-      expect(screen.getByText('Ver la planilla completa · 2 jugadores')).toBeInTheDocument()
-      // The sheet lives inside a closed <details>, so it is in the document but not
-      // yet in the accessibility tree.
-      expect(screen.getByText('Sin puntos')).toBeInTheDocument()
+      expect(screen.getByText('Ver goles, faltas y minutos · 1 jugadores')).toBeInTheDocument()
+      expect(screen.queryByText('Sin puntos')).toBeNull()
+      expect(screen.getByText(/Otro jugador estuvo convocado/)).toBeInTheDocument()
+    })
+
+    it('should count several of them in the plural', () => {
+      render(<StatisticsTable rows={[
+        row('Con puntos', { goals: 1, points: 1 }),
+        row('Sin puntos'),
+        row('Tampoco'),
+      ]} teams={teams} />)
+
+      expect(screen.getByText(/Otros 2 jugadores estuvieron convocados/)).toBeInTheDocument()
     })
   })
 
-  describe('when nobody has scored yet', () => {
-    it('should not show an empty leaderboard', () => {
-      render(<StatisticsTable rows={[row('Sin puntos')]} teams={teams} />)
+  describe('when a player was only penalised', () => {
+    it('should list them in the sheet even though they have no points', () => {
+      render(<StatisticsTable rows={[row('Solo faltas', { penalties: 1, penaltyMinutes: 2 })]} teams={teams} />)
 
+      expect(screen.getByText('Solo faltas')).toBeInTheDocument()
       expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('when everybody only dressed', () => {
+    it('should say there is nothing yet instead of listing the squads', () => {
+      render(<StatisticsTable rows={[row('Uno'), row('Dos')]} teams={teams} />)
+
+      expect(screen.getByText(/se publicarán cuando estén disponibles/)).toBeInTheDocument()
+      expect(screen.queryByText('Uno')).toBeNull()
     })
   })
 

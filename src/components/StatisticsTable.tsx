@@ -13,11 +13,16 @@ const positions = (rows: PlayerStatistic[]) => {
 
 export function StatisticsTable({ rows, teams }: { rows: PlayerStatistic[]; teams: Team[] }) {
   const teamName = (id: string) => teams.find((team) => team.id === id)?.shortName ?? id
-  if (!rows.length) return <div className={styles.empty}>Las estadísticas individuales se publicarán cuando estén disponibles.</div>
+  if (!rows.some((row) => row.points > 0 || row.penalties > 0)) {
+    return <div className={styles.empty}>Las estadísticas individuales se publicarán cuando estén disponibles.</div>
+  }
 
-  // The leaderboard answers the question people arrive with. The full sheet is still
-  // there, but a nine-column spreadsheet of everyone who dressed is not a front page.
+  // Statistics are about what people did. Somebody who dressed and neither scored nor
+  // was penalised belongs in the squad list, not here: listing them turns the page
+  // into a roster with a column of zeros next to it.
   const scoring = rows.filter((row) => row.points > 0)
+  const involved = rows.filter((row) => row.points > 0 || row.penalties > 0)
+  const onlyDressed = rows.length - involved.length
   const ranks = positions(scoring)
 
   return (
@@ -46,23 +51,33 @@ export function StatisticsTable({ rows, teams }: { rows: PlayerStatistic[]; team
         </section>
       )}
 
-      <details className={styles.everyone}>
-        <summary>Ver la planilla completa · {rows.length} jugadores</summary>
-        <p className={styles.legend}>
-          <b>PJ</b> partidos jugados · <b>G</b> goles · <b>A</b> asistencias · <b>PTS</b> puntos ·{' '}
-          <b>F</b> faltas · <b>FG</b> faltas graves · <b>MIN</b> minutos de penalización
+      {involved.length > 0 && (
+        <details className={styles.everyone}>
+          <summary>Ver goles, faltas y minutos · {involved.length} jugadores</summary>
+          <p className={styles.legend}>
+            <b>PJ</b> partidos jugados · <b>G</b> goles · <b>A</b> asistencias · <b>PTS</b> puntos ·{' '}
+            <b>F</b> faltas · <b>FG</b> faltas graves · <b>MIN</b> minutos de penalización
+          </p>
+          <div className={styles.wrap}>
+            <table>
+              <thead><tr><th>Jugador/a</th><th>Equipo</th><th>PJ</th><th>G</th><th>A</th><th>PTS</th><th>F</th><th>FG</th><th>MIN</th></tr></thead>
+              <tbody>{involved.map((row) => (
+                <tr key={`${row.teamId}-${row.playerName}`}>
+                  <th>{row.playerName}</th><td>{teamName(row.teamId)}</td><td>{row.played}</td><td>{row.goals}</td><td>{row.assists}</td><td><strong>{row.points}</strong></td><td>{row.penalties}</td><td>{row.majorPenalties}</td><td>{row.penaltyMinutes}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </details>
+      )}
+
+      {onlyDressed > 0 && (
+        <p className={styles.dressed}>
+          {onlyDressed === 1
+            ? 'Otro jugador estuvo convocado y todavía no registra goles ni faltas.'
+            : `Otros ${onlyDressed} jugadores estuvieron convocados y todavía no registran goles ni faltas.`}
         </p>
-        <div className={styles.wrap}>
-          <table>
-            <thead><tr><th>Jugador/a</th><th>Equipo</th><th>PJ</th><th>G</th><th>A</th><th>PTS</th><th>F</th><th>FG</th><th>MIN</th></tr></thead>
-            <tbody>{rows.map((row) => (
-              <tr key={`${row.teamId}-${row.playerName}`}>
-                <th>{row.playerName}</th><td>{teamName(row.teamId)}</td><td>{row.played}</td><td>{row.goals}</td><td>{row.assists}</td><td><strong>{row.points}</strong></td><td>{row.penalties}</td><td>{row.majorPenalties}</td><td>{row.penaltyMinutes}</td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      </details>
+      )}
     </>
   )
 }

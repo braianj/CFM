@@ -431,8 +431,9 @@ optional fields as `undefined` (a goal with no assist, a player with no number)
 and every one of those writes would otherwise throw.
 
 Games played come from `matchRosters`: dressing for a match is playing it, counted
-once per match even if the roster holds duplicates. A player who dressed is listed
-with zeros rather than hidden, the way the organisation's own sheets do it.
+once per match even if the roster holds duplicates. `calculatePlayerStatistics` returns
+a row for everyone who dressed, with zeros; deciding who is worth showing is the view's
+job, not the calculation's.
 
 `matchEvents` is the source of truth for the rest of the player statistics. Supported event
 types are `goal`, `penalty`, and `major-penalty`; goal events may include first
@@ -460,9 +461,14 @@ an ejection and a suspension against nobody. Losing the row is the correct outco
 panel is where an unattributed penalty gets chased, not the public page.
 
 The statistics view leads with a leaderboard of the players who scored, and keeps the
-nine-column sheet behind a disclosure. Players tied on points share a position. Everyone
-who dressed stays in the full sheet with zeros, the way the organisation's own sheets
-list them.
+nine-column sheet behind a disclosure. Players tied on points share a position.
+
+A player who dressed and neither scored nor was penalised is NOT listed. Statistics are
+about what somebody did; listing everybody turns the page into a squad list with a
+column of zeros beside it, which is what the rosters view is for. They are counted in a
+line underneath instead, so the information is not lost. `calculatePlayerStatistics`
+still returns them, because games played is a real statistic and the panel needs the
+whole set; the omission belongs to the view.
 
 Jersey numbers belong to a player's match roster entry, not permanently to the
 player. A player may be absent or use a different number in every match.

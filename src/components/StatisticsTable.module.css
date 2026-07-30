@@ -22,4 +22,5 @@
 .wrap tbody th { background:var(--surface); left:0; position:sticky; text-align:left; }
 .wrap thead th:first-child { left:0; position:sticky; text-align:left; z-index:1; }
 .wrap td:nth-child(2) { color:var(--muted); text-align:left; }
+.dressed { color:var(--muted); font-size:.75rem; margin:.6rem .2rem 0; }
 .empty { background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--muted); padding:2rem 1rem; text-align:center; }
