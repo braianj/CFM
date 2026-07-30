@@ -30,7 +30,9 @@ export function calculateDiscipline(category: Category, events: MatchEvent[]): P
   const minorsPerMatch = new Map<string, Map<string, number>>()
 
   events
-    .filter((event) => event.category === category && event.type !== 'goal')
+    // A penalty whose jersey number is still unmatched cannot be attributed to
+    // anybody, so it is left out rather than counted against a nameless row.
+    .filter((event) => event.category === category && event.type !== 'goal' && event.playerName.trim())
     .forEach((event) => {
       const key = rowKey(event.teamId, event.playerName)
       const row = rows.get(key) ?? {

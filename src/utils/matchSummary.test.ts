@@ -150,6 +150,52 @@ describe('buildMatchSummary', () => {
     })
   })
 
+  describe('when the scoresheet number could not be matched to a player', () => {
+    it('should still name the number instead of dropping the event', () => {
+      const [line] = buildMatchSummary(
+        'h-1',
+        [event('gol', { playerName: '', jerseyNumber: 6, period: 1, gameTime: '2:43' })],
+        teams,
+      )
+
+      expect(line.player).toBe('#6 sin asignar')
+      expect(line.missing).toEqual(['jugador'])
+    })
+
+    it('should report an assist known only by its number', () => {
+      const [line] = buildMatchSummary(
+        'h-1',
+        [event('gol', { playerName: 'Martín Baeza', jerseyNumber: 92, assistJerseyNumber: 81, period: 1, gameTime: '2:43' })],
+        teams,
+      )
+
+      expect(line.assists).toEqual(['#81 sin asignar'])
+      expect(line.missing).toEqual(['asistencia'])
+    })
+
+    it('should list every hole the scoresheet left', () => {
+      const [line] = buildMatchSummary('h-1', [event('falta', { type: 'penalty', playerName: '' })], teams)
+
+      expect(line.missing).toEqual(['jugador', 'período', 'tiempo', 'minutos'])
+    })
+
+    it('should not ask for penalty minutes on a goal', () => {
+      const [line] = buildMatchSummary('h-1', [event('gol', { playerName: 'Martín Baeza', period: 1, gameTime: '2:43' })], teams)
+
+      expect(line.missing).toEqual([])
+    })
+
+    it('should ask for the time when the clock is unreadable', () => {
+      const [line] = buildMatchSummary(
+        'h-1',
+        [event('gol', { playerName: 'Martín Baeza', period: 1, gameTime: 'ilegible' })],
+        teams,
+      )
+
+      expect(line.missing).toEqual(['tiempo'])
+    })
+  })
+
   describe('when the scoresheet recorded the countdown clock', () => {
     it('should report the time played in a regulation period', () => {
       expect(clockOf(1, '2:50').elapsed).toBe('12:10')

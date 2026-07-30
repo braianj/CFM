@@ -42,13 +42,16 @@ export function calculatePlayerStatistics(
     appearances.set(key, played)
   })
 
+  // An event whose jersey number nobody could match yet has no player name. It stays
+  // published so the hole is visible, but it must not invent a nameless player row.
   events.filter((event) => event.category === category).forEach((event) => {
     if (event.type === 'goal') {
-      getRow(event.playerName, event.teamId).goals += 1
+      if (event.playerName.trim()) getRow(event.playerName, event.teamId).goals += 1
       if (event.assistName?.trim()) getRow(event.assistName, event.teamId).assists += 1
       if (event.secondAssistName?.trim()) getRow(event.secondAssistName, event.teamId).assists += 1
       return
     }
+    if (!event.playerName.trim()) return
     const row = getRow(event.playerName, event.teamId)
     row.penalties += 1
     row.penaltyMinutes += event.penaltyMinutes ?? 0

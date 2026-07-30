@@ -123,4 +123,14 @@ describe('calculateDiscipline', () => {
       expect(rows[0]).toMatchObject({ minorPenalties: 3, penaltyMinutes: 0 })
     })
   })
+  describe('when the penalised number was never matched to a player', () => {
+    it('should not report a nameless suspension', () => {
+      const rows = calculateDiscipline('men', [
+        penalty({ playerName: '', penaltyMinutes: 10 }),
+        penalty({ playerName: '', penaltyMinutes: 10 }),
+      ])
+
+      expect(rows).toEqual([])
+    })
+  })
 })

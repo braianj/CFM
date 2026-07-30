@@ -1,6 +1,9 @@
 import type { MatchEvent, MatchEventType, MatchRosterEntry, Team } from '../types/tournament'
 import { periodLengthMinutes } from './matchStatus'
 
+/** Shown where a name should be while the jersey number has no player matched to it. */
+export const UNASSIGNED = 'sin asignar'
+
 export interface MatchSummaryLine {
   id: string
   type: MatchEventType
@@ -16,6 +19,8 @@ export interface MatchSummaryLine {
   /** Only goals carry assists, already prefixed with their own jersey numbers. */
   assists: string[]
   penaltyMinutes?: number
+  /** Whatever the scoresheet left unreadable, so the panel can ask for exactly that. */
+  missing: string[]
 }
 
 const GAME_CLOCK = /^(\d{1,2}):([0-5]\d)$/
@@ -71,30 +76,48 @@ export function buildMatchSummary(
     .filter((entry) => entry.matchId === matchId)
     .forEach((entry) => numbers.set(rosterKey(entry.teamId, entry.playerName), entry.jerseyNumber))
 
+  // A number with nobody behind it is written out as such: the scoresheet did record
+  // somebody, and hiding the row would lose that.
   const named = (teamId: string, playerName: string, jerseyNumber?: number) => {
     const name = normalizeName(playerName)
     const number = jerseyNumber ?? numbers.get(rosterKey(teamId, name))
+    if (!name) return number === undefined ? UNASSIGNED : `#${number} ${UNASSIGNED}`
     return number === undefined ? name : `#${number} ${name}`
   }
 
   return events
     .filter((event) => event.matchId === matchId)
-    .map<MatchSummaryLine>((event) => ({
-      id: event.id,
-      type: event.type,
-      period: event.period,
-      elapsed: elapsedTime(event.period, event.gameTime),
-      remaining: event.gameTime?.trim() || undefined,
-      teamId: event.teamId,
-      teamName: teams.find((team) => team.id === event.teamId)?.name ?? '',
-      player: named(event.teamId, event.playerName, event.jerseyNumber),
-      assists:
+    .map<MatchSummaryLine>((event) => {
+      const assists =
         event.type === 'goal'
-          ? [event.assistName, event.secondAssistName]
-              .filter((name): name is string => Boolean(name?.trim()))
-              .map((name) => named(event.teamId, name))
-          : [],
-      penaltyMinutes: event.type === 'goal' ? undefined : event.penaltyMinutes,
-    }))
+          ? ([
+              [event.assistName, event.assistJerseyNumber],
+              [event.secondAssistName, event.secondAssistJerseyNumber],
+            ] as const)
+              .filter(([name, number]) => Boolean(name?.trim()) || number !== undefined)
+              .map(([name, number]) => named(event.teamId, name ?? '', number))
+          : []
+      const penaltyMinutes = event.type === 'goal' ? undefined : event.penaltyMinutes
+      const player = named(event.teamId, event.playerName, event.jerseyNumber)
+      return {
+        id: event.id,
+        type: event.type,
+        period: event.period,
+        elapsed: elapsedTime(event.period, event.gameTime),
+        remaining: event.gameTime?.trim() || undefined,
+        teamId: event.teamId,
+        teamName: teams.find((team) => team.id === event.teamId)?.name ?? '',
+        player,
+        assists,
+        penaltyMinutes,
+        missing: [
+          ...(player.includes(UNASSIGNED) ? ['jugador'] : []),
+          ...(assists.some((assist) => assist.includes(UNASSIGNED)) ? ['asistencia'] : []),
+          ...(event.period === undefined ? ['período'] : []),
+          ...(remainingSeconds(event.gameTime) === null ? ['tiempo'] : []),
+          ...(event.type !== 'goal' && penaltyMinutes === undefined ? ['minutos'] : []),
+        ],
+      }
+    })
     .sort(inPlayingOrder)
 }

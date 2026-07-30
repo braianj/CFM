@@ -98,12 +98,16 @@ export interface MatchEvent {
   teamId: string
   type: MatchEventType
   playerId?: string
+  // Empty while the scoresheet records a jersey number nobody could match to a
+  // player yet. The event is published anyway so the hole is visible and fixable.
   playerName: string
   jerseyNumber?: number
   assistId?: string
   assistName?: string
+  assistJerseyNumber?: number
   secondAssistId?: string
   secondAssistName?: string
+  secondAssistJerseyNumber?: number
   period?: number
   gameTime?: string
   minute?: number

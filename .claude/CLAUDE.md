@@ -432,6 +432,16 @@ and saves it under its own document ID. It must never be corrected by deleting a
 re-adding, which loses the original ID, and the form must keep offering a player who
 was since dropped from the squad, or their events could not be fixed at all.
 
+An event is entered by jersey number, because that is all a scoresheet records. The
+number resolves the player through that match's call-up. A number nobody claims is
+published anyway with `playerName` empty, and so is a missing period, clock or penalty
+minute count: the hole belongs in the database where it can be seen and filled in by
+hand, not dropped on the floor. `MatchSummaryLine.missing` names what each line is
+still waiting for, and the panel counts them per match.
+
+An event with no `playerName` never reaches the statistics or the discipline count. A
+nameless row in the scorers table would be worse than the gap it papers over.
+
 Jersey numbers belong to a player's match roster entry, not permanently to the
 player. A player may be absent or use a different number in every match.
 Statistics entry must only offer players included in that match's roster.

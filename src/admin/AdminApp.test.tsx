@@ -200,6 +200,57 @@ describe('AdminApp', () => {
     })
   })
 
+  describe('when the operator copies an event off the scoresheet', () => {
+    const openTheForm = async () => {
+      render(<AdminApp />)
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+      screen.getByRole('button', { name: 'Estadísticas' }).click()
+      fireEvent.change(await screen.findByLabelText('Partido'), { target: { value: 'h-1' } })
+      const form = screen.getByRole('button', { name: 'Publicar evento' }).closest('form')!
+      // The team defaults to whichever of the two comes first in the tournament data.
+      fireEvent.change(within(form).getByLabelText('Equipo'), { target: { value: scorer.teamId } })
+      return form
+    }
+
+    it('should resolve the player from the jersey number alone', async () => {
+      const form = await openTheForm()
+
+      fireEvent.change(within(form).getByLabelText('Jugador/a · casaca'), { target: { value: '6' } })
+
+      expect(within(form).getByLabelText('Jugador/a')).toHaveValue(scorer.id)
+    })
+
+    it('should save a number nobody claims with the player left blank', async () => {
+      const form = await openTheForm()
+
+      fireEvent.change(within(form).getByLabelText('Jugador/a · casaca'), { target: { value: '35' } })
+      fireEvent.submit(form)
+
+      await waitFor(() => expect(saveMatchEvent).toHaveBeenCalled())
+      expect(saveMatchEvent.mock.calls[0][0]).toMatchObject({ jerseyNumber: 35, playerName: '' })
+      expect(saveMatchEvent.mock.calls[0][0].playerId).toBeUndefined()
+    })
+
+    it('should keep an unreadable period and clock out of the event', async () => {
+      const form = await openTheForm()
+
+      fireEvent.change(within(form).getByLabelText('Jugador/a · casaca'), { target: { value: '6' } })
+      fireEvent.submit(form)
+
+      await waitFor(() => expect(saveMatchEvent).toHaveBeenCalled())
+      expect(saveMatchEvent.mock.calls[0][0].period).toBeUndefined()
+      expect(saveMatchEvent.mock.calls[0][0].gameTime).toBeUndefined()
+    })
+
+    it('should refuse an event with neither a number nor a player', async () => {
+      const form = await openTheForm()
+
+      fireEvent.submit(form)
+
+      expect(saveMatchEvent).not.toHaveBeenCalled()
+    })
+  })
+
   describe('when a match already has its result saved', () => {
     beforeEach(() => settledMatchIds.push('h-1'))
 

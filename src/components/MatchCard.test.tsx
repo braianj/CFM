@@ -34,6 +34,7 @@ const summary: MatchSummaryLine[] = [
     teamName: 'CAU Negro',
     player: '#92 Martín Baeza',
     assists: [],
+    missing: [],
   },
   {
     id: 'falta',
@@ -46,6 +47,7 @@ const summary: MatchSummaryLine[] = [
     player: '#6 Joaquín Cuitiño',
     assists: [],
     penaltyMinutes: 2,
+    missing: [],
   },
 ]
 

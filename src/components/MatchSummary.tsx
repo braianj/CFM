@@ -12,7 +12,7 @@ export function MatchSummary({ lines, teams }: Props) {
   return (
     <ol className={styles.summary}>
       {lines.map((line) => (
-        <li key={line.id} className={styles.line}>
+        <li key={line.id} className={`${styles.line} ${line.missing.length ? styles.pending : ''}`}>
           <span className={styles.clock}>
             <span className={styles.period}>{line.period ? `P${line.period}` : ''}</span>
             <span className={styles.time}>{line.elapsed ?? ''}</span>

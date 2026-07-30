@@ -33,6 +33,8 @@
 .events > div { align-items:center; border-top:1px solid var(--border); display:flex; gap:.5rem; justify-content:space-between; padding:.5rem 0; }
 .rowActions { display:flex; flex:none; gap:.35rem; }.rowActions button { min-height:34px; padding:.3rem .6rem; }
 .remaining { color:var(--muted); font-size:.8rem; font-style:normal; }
+.missing { background:var(--gold-faint); border-radius:99px; color:var(--ink); font-size:.72rem; font-style:normal; font-weight:800; margin-left:.4rem; padding:.15rem .45rem; white-space:nowrap; }
+.pendingHint { color:var(--muted); font-size:.7rem; font-weight:600; }
 .events > div.editing { background:var(--state-selected-soft); box-shadow:inset 3px 0 0 var(--state-selected-line); padding-left:.5rem; }
 .adminForm { align-items:end; display:grid; gap:.6rem; grid-template-columns:1fr auto; }
 .reschedule { display:grid; gap:.6rem; grid-template-columns:1fr 1fr; }.reschedule label { margin:0; }

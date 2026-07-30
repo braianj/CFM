@@ -113,4 +113,30 @@ describe('games played', () => {
       expect(rows[0]).toMatchObject({ playerName: 'Ana', goals: 1, played: 0 })
     })
   })
+  describe('when the scoresheet number was never matched to a player', () => {
+    it('should not invent a nameless row for the goal', () => {
+      const rows = calculatePlayerStatistics('men', [
+        { id: 'e1', matchId: 'm1', category: 'men', teamId: 'a', type: 'goal', playerName: '', jerseyNumber: 6 },
+      ], [])
+
+      expect(rows).toEqual([])
+    })
+
+    it('should still credit an assist that was matched', () => {
+      const rows = calculatePlayerStatistics('men', [
+        { id: 'e1', matchId: 'm1', category: 'men', teamId: 'a', type: 'goal', playerName: '', jerseyNumber: 6, assistName: 'Ana' },
+      ], [])
+
+      expect(rows).toHaveLength(1)
+      expect(rows[0]).toMatchObject({ playerName: 'Ana', assists: 1, goals: 0 })
+    })
+
+    it('should not invent a nameless row for the penalty', () => {
+      const rows = calculatePlayerStatistics('men', [
+        { id: 'e1', matchId: 'm1', category: 'men', teamId: 'a', type: 'penalty', playerName: '', jerseyNumber: 6, penaltyMinutes: 2 },
+      ], [])
+
+      expect(rows).toEqual([])
+    })
+  })
 })

@@ -12,3 +12,5 @@
 .goal { background: var(--accent-soft); color: var(--accent-dark); }
 .penalty { background: var(--surface-muted); color: var(--muted); }
 .team { color: var(--muted); font-size: .72rem; }
+/* A line still waiting to be completed reads as provisional rather than as a fact. */
+.pending .headline strong, .pending .time { color: var(--muted); }
