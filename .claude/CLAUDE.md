@@ -451,7 +451,16 @@ hand, not dropped on the floor. `MatchSummaryLine.missing` names what each line 
 still waiting for, and the panel counts them per match.
 
 An event with no `playerName` never reaches the statistics or the discipline count. A
-nameless row in the scorers table would be worse than the gap it papers over.
+nameless row in the scorers table would be worse than the gap it papers over, and in
+`calculateDiscipline` it was actively wrong: every unmatched number on a team collapsed
+into one key, so four penalties belonging to two different unknown players added up to
+an ejection and a suspension against nobody. Losing the row is the correct outcome; the
+panel is where an unattributed penalty gets chased, not the public page.
+
+The statistics view leads with a leaderboard of the players who scored, and keeps the
+nine-column sheet behind a disclosure. Players tied on points share a position. Everyone
+who dressed stays in the full sheet with zeros, the way the organisation's own sheets
+list them.
 
 Jersey numbers belong to a player's match roster entry, not permanently to the
 player. A player may be absent or use a different number in every match.

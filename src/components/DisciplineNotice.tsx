@@ -26,12 +26,14 @@ export function DisciplineNotice({ rows, teams }: Props) {
             <span className={styles.reasons}>
               {row.reasons.includes('three-minors') && (
                 <em className={styles.tag}>
-                  Expulsión en {row.ejectedFrom.length === 1 ? '1 partido' : `${row.ejectedFrom.length} partidos`}
+                  Expulsado por {MINORS_FOR_EJECTION} menores
+                  {row.ejectedFrom.length > 1 ? ` en ${row.ejectedFrom.length} partidos` : ''}
                 </em>
               )}
               {row.reasons.includes('penalty-minutes') && (
-                <em className={styles.tag}>{row.penaltyMinutes} min acumulados</em>
+                <em className={styles.tag}>Acumula {row.penaltyMinutes} minutos</em>
               )}
+              <em className={styles.consequence}>pierde una fecha</em>
             </span>
           </li>
         ))}
