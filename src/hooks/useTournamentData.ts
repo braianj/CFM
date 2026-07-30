@@ -4,6 +4,7 @@ import { teams as staticTeams } from '../data/teams'
 import { subscribeToTournamentData } from '../data/firestore'
 import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types/tournament'
 import { applyAutomaticMatchStatuses } from '../utils/matchStatus'
+import { resolvePlayoffParticipants } from '../utils/playoffs'
 
 export function useTournamentData() {
   const [storedMatches, setStoredMatches] = useState<Match[]>(staticMatches)
@@ -31,6 +32,11 @@ export function useTournamentData() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const matches = applyAutomaticMatchStatuses(storedMatches, now)
-  return { matches, teams, players, rosters, events, usingLiveData }
+  // Both derivations happen at read time, so a corrected result corrects the bracket
+  // and the statuses instead of leaving a stale value in the database. `publishedMatches`
+  // is what Firestore actually holds, and is what the panel must write back: saving a
+  // derived participant would freeze it, and would be refused for an editor by
+  // `onlyResultChanged`.
+  const matches = resolvePlayoffParticipants(applyAutomaticMatchStatuses(storedMatches, now), teams)
+  return { matches, publishedMatches: storedMatches, teams, players, rosters, events, usingLiveData }
 }

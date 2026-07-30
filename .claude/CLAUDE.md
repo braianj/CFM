@@ -207,8 +207,21 @@ Women (five teams):
 The men's tournament has no semifinals and the women's tournament has no
 Final A/B. Never reuse a stage across categories except `regular` and `final`.
 
-Unknown playoff participants use `homeLabel` and `awayLabel`. Replace those
-labels with team IDs when participants are known.
+Unknown playoff participants use `homeLabel` and `awayLabel`. They fill in by
+themselves: `resolvePlayoffParticipants` seeds the first round from the final standings
+once every regular match of that category has a result, and carries winners and losers
+forward as each round is played.
+
+That derivation happens at read time, in `useTournamentData`, so correcting a result
+corrects the bracket instead of leaving a stale team behind. It must never be written
+back: a frozen participant would survive the correction, and an editor saving a playoff
+result would have the write refused by `onlyResultChanged` for touching `homeTeamId`.
+The hook therefore also exposes `publishedMatches`, exactly what Firestore holds, and
+that is what the panel writes.
+
+The seeding waits for the whole regular phase on purpose. A table that can still move is
+not a seeding. An explicitly published participant always wins over the derived one: if
+the organisation named a team, that is a decision, not a placeholder.
 
 ## Analytics
 

@@ -59,7 +59,7 @@ const getMatchName = (match: Match, teams: Team[]) =>
   `${getTeamName(match.homeTeamId, match.homeLabel, teams)} vs ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`
 
 export function AdminApp() {
-  const { matches, teams, players, rosters, events } = useTournamentData()
+  const { matches, publishedMatches, teams, players, rosters, events } = useTournamentData()
   const [user, setUser] = useState<User | null>(null)
   const [access, setAccess] = useState<'checking' | AdminRole | 'denied'>('denied')
   const [message, setMessage] = useState('')
@@ -146,6 +146,7 @@ export function AdminApp() {
       {openMatch ? (
         <MatchWorkspace
           match={openMatch}
+          published={publishedMatches.find((match) => match.id === openMatch.id) ?? openMatch}
           teams={teams}
           players={players.filter((player) => player.category === openMatch.category)}
           rosters={rosters.filter((entry) => entry.matchId === openMatch.id)}
@@ -263,8 +264,9 @@ function MatchRow({ match, teams, progress, showCategory, onOpen }: {
 // Everything one scoresheet says, in the order it says it: the result, who dressed,
 // and what happened. Numbered because the operator does them in that order and the
 // second step is what makes the third one possible.
-function MatchWorkspace({ match, teams, players, rosters, events, canReschedule, onBack, notify }: {
-  match: Match; teams: Team[]; players: Player[]; rosters: MatchRosterEntry[]; events: MatchEvent[]
+function MatchWorkspace({ match, published, teams, players, rosters, events, canReschedule, onBack, notify }: {
+  match: Match; published: Match; teams: Team[]; players: Player[]
+  rosters: MatchRosterEntry[]; events: MatchEvent[]
   canReschedule: boolean; onBack: () => void; notify: (message: string) => void
 }) {
   // '' is the match itself; 'nuevo' or an event id is the editor. One thing on screen
@@ -325,6 +327,7 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
       <Step number={1} title="El resultado" done={progress.hasResult}>
         <MatchResultForm
           match={match}
+          published={published}
           teams={teams}
           canReschedule={canReschedule}
           onSaved={(what) => notify(what)}
@@ -601,8 +604,10 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
   )
 }
 
-function MatchResultForm({ match, teams, canReschedule = false, onSaved }: {
-  match: Match; teams: Team[]; canReschedule?: boolean
+// `match` carries the derived playoff participants, so the form can name the teams.
+// `published` is the document as Firestore holds it, and is what gets written back.
+function MatchResultForm({ match, published, teams, canReschedule = false, onSaved }: {
+  match: Match; published: Match; teams: Team[]; canReschedule?: boolean
   onSaved: (message: string) => void
 }) {
   const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
@@ -626,7 +631,7 @@ function MatchResultForm({ match, teams, canReschedule = false, onSaved }: {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     const resolved = isTied ? 'regulation' : resolution
-    await saveMatch({ ...match, startDateTime, homeScore, awayScore, resolution: resolved })
+    await saveMatch({ ...published, startDateTime, homeScore, awayScore, resolution: resolved })
     void track('admin_action', { action: moved ? 'reschedule_match' : 'save_result', resolution: resolved })
     onSaved(moved ? 'Partido reprogramado.' : 'Resultado actualizado.')
   }
