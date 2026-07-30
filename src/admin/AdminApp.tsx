@@ -549,7 +549,7 @@ function MatchEventList({ match, teams, events, rosters, editedEventId, onEdit }
 }) {
   const lines = buildMatchSummary(match.id, events, teams, rosters)
   if (!lines.length) return <p className={styles.hint}>Todavía no hay eventos cargados en este partido.</p>
-  const pending = lines.filter((line) => line.missing.length).length
+  const pending = lines.filter((line) => line.missing.length || line.notes).length
   return (
     <>
     {pending > 0 && <p className={styles.hint}>
@@ -568,6 +568,7 @@ function MatchEventList({ match, teams, events, rosters, editedEventId, onEdit }
           {' · '}{line.player}
           {line.assists.length > 0 && ` · asist. ${line.assists.join(', ')}`}
           {line.missing.length > 0 && <em className={styles.missing}> falta {line.missing.join(', ')}</em>}
+          {line.notes && <em className={styles.note}>{line.notes}</em>}
         </span>
         <span className={styles.rowActions}>
           <button type="button" className={styles.secondary} onClick={() => onEdit(line.id)}>Editar</button>
@@ -688,6 +689,7 @@ function EventForm({ match, teams, players, entries, edited, onSaved, onCancel }
   // empty, not period one.
   const [period, setPeriod] = useState(edited?.period?.toString() ?? '')
   const [gameTime, setGameTime] = useState(edited?.gameTime ?? '')
+  const [notes, setNotes] = useState(edited?.notes ?? '')
   const [penaltyMinutes, setPenaltyMinutes] = useState(edited?.penaltyMinutes?.toString() ?? (edited ? '' : '2'))
   // Derived rather than stored, because the teams arrive from Firestore after the
   // form is already on screen and a stored default would keep the first empty value.
@@ -728,9 +730,10 @@ function EventForm({ match, teams, players, entries, edited, onSaved, onCancel }
       secondAssistJerseyNumber: onGoal(numberOr(secondAssist.jersey)),
       period: numberOr(period), gameTime: gameTime.trim() || undefined,
       penaltyMinutes: type === 'goal' ? undefined : numberOr(penaltyMinutes),
+      notes: notes.trim() || undefined,
     })
     void track('admin_action', { action: edited ? 'edit_event' : 'publish_event', event_type: type })
-    setPlayer(person()); setAssist(person()); setSecondAssist(person()); setGameTime(''); onSaved()
+    setPlayer(person()); setAssist(person()); setSecondAssist(person()); setGameTime(''); setNotes(''); onSaved()
   }
   return (
     <form className={styles.eventForm} onSubmit={submit}>
@@ -756,6 +759,8 @@ function EventForm({ match, teams, players, entries, edited, onSaved, onCancel }
       <label>Período<input type="number" min="1" max={REGULATION_PERIODS + 1} placeholder="en blanco si no figura" value={period} onChange={(event) => setPeriod(event.target.value)} /></label>
       {/* Copied straight off the sheet. The site converts it to time played. */}
       <label>Reloj restante<input placeholder="Ej. 2:43" pattern="[0-9]{1,2}:[0-9]{2}" value={gameTime} onChange={(event) => setGameTime(event.target.value)} /></label>
+      {/* Lo que la planilla dice y no entra en ningún campo. Se borra al resolverlo. */}
+      <label>Nota de la planilla<input value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
       <button type="submit">{edited ? 'Guardar corrección' : 'Publicar evento'}</button>
       {edited && <button type="button" className={styles.secondary} onClick={onCancel}>Cancelar</button>}
     </form>

@@ -21,6 +21,12 @@ export interface MatchSummaryLine {
   penaltyMinutes?: number
   /** Whatever the scoresheet left unreadable, so the panel can ask for exactly that. */
   missing: string[]
+  /**
+   * What the paper says where it could not be turned into a field: an assist whose
+   * number is illegible, a clock that cannot be right. `missing` cannot express those,
+   * so without this the line would read as settled.
+   */
+  notes?: string
 }
 
 const GAME_CLOCK = /^(\d{1,2}):([0-5]\d)$/
@@ -110,6 +116,7 @@ export function buildMatchSummary(
         player,
         assists,
         penaltyMinutes,
+        notes: event.notes?.trim() || undefined,
         missing: [
           ...(player.includes(UNASSIGNED) ? ['jugador'] : []),
           ...(assists.some((assist) => assist.includes(UNASSIGNED)) ? ['asistencia'] : []),

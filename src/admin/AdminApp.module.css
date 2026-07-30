@@ -35,6 +35,7 @@
 .remaining { color:var(--muted); font-size:.8rem; font-style:normal; }
 .missing { background:var(--gold-faint); border-radius:99px; color:var(--ink); font-size:.72rem; font-style:normal; font-weight:800; margin-left:.4rem; padding:.15rem .45rem; white-space:nowrap; }
 .pendingHint { color:var(--muted); font-size:.7rem; font-weight:600; }
+.note { color:var(--muted); display:block; font-size:.72rem; font-style:italic; }
 .events > div.editing { background:var(--state-selected-soft); box-shadow:inset 3px 0 0 var(--state-selected-line); padding-left:.5rem; }
 .adminForm { align-items:end; display:grid; gap:.6rem; grid-template-columns:1fr auto; }
 .reschedule { display:grid; gap:.6rem; grid-template-columns:1fr 1fr; }.reschedule label { margin:0; }

@@ -54,14 +54,14 @@ describe('official rosters', () => {
     it.each([
       ['men-cau-1', 14],
       ['men-cau-2', 16],
-      ['men-cau-3', 13],
+      ['men-cau-3', 14],
       ['men-los-nires', 16],
       ['men-allpacas', 14],
       ['men-ovejas-negras', 13],
       ['women-cau-kipas', 15],
       ['women-allpacas', 9],
       ['women-ovejas-negras', 11],
-      ['women-acemhh', 8],
+      ['women-acemhh', 10],
       ['women-los-nires-zorras', 10],
     ])('should hold the %s roster with %i players', (teamId, expected) => {
       expect(getPlayersByTeam(teamId)).toHaveLength(expected)

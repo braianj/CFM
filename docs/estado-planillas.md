@@ -1,5 +1,14 @@
 # Estado de las planillas, partido por partido
 
+**Cargado el 30/7/2026:** 122 eventos (69 goles y 53 faltas) de las 14 planillas, mas 65
+convocatorias de las tres planillas del segundo escaneo. De esos 122, **91 quedaron
+completos** y 31 tienen algun dato que la planilla no dejaba leer. El panel los marca con
+un cartel de lo que falta y se completan a mano.
+
+Control automatico: los goles cargados dan exactamente el resultado publicado en 13 de los
+14 partidos. El unico que no cierra es D-3, y es porque el resultado publicado esta mal.
+Ninguna casaca resuelta quedo apuntando a un jugador fuera de la convocatoria de su partido.
+
 Orden cronológico. Dos escaneos distintos:
 
 - **PDF 1** = `planillas.pdf`, 22 páginas, 11 planillas (dos carillas cada una).
@@ -8,8 +17,9 @@ Orden cronológico. Dos escaneos distintos:
 Cada partido lista primero lo que está leído sin dudas y después lo que no entiendo.
 Los tiempos son **como los escribe la planilla**: reloj restante, no tiempo jugado.
 
-Resumen: **14 planillas leídas de 15 partidos jugados**. Falta la de H-9.
-De los 14, **6 están enteros** y **8 tienen algo que no puedo leer**.
+Resumen: **14 planillas leídas**. Ya hay 20 partidos con resultado cargado, así que además
+de H-9 faltan las de D-7, D-8, H-10, H-11 y H-12.
+De las 14 leídas, **6 están enteras** y **8 tienen algo que no puedo leer**.
 
 | # | Partido | Página | Resultado | Estado |
 |---|---|---|---|---|
@@ -23,10 +33,10 @@ De los 14, **6 están enteros** y **8 tienen algo que no puedo leer**.
 | 8 | H-5 CAU Verde 4-3 All-Pakas | PDF 1 · 9-10 | coincide | 1 duda |
 | 9 | H-6 Ñires 3-0 Ovejas Negras | PDF 1 · 11-12 | coincide | 1 duda |
 | 10 | D-4 CAU Kipas 2-1 ACEMHH (OT) | PDF 2 · 1 | coincide | **entero** |
-| 11 | D-5 All-Pakas D 2-1 Ovejas Negras D (SO) | PDF 1 · 21-22 | coincide | **3 dudas** |
+| 11 | D-5 All-Pakas D 1-2 Ovejas Negras D (SO) | PDF 1 · 21-22 | coincide | 2 dudas |
 | 12 | H-7 CAU Blanco 2-3 All-Pakas (SO) | PDF 1 · 13-14 | coincide | 2 dudas |
-| 13 | D-6 ACEMHH 0-5 Ñires Zorras | PDF 2 · 4-5 | verificar carga | **entero** |
-| 14 | H-8 CAU Negro 4-1 Ovejas Negras | PDF 2 · 2-3 | verificar carga | 1 duda |
+| 13 | D-6 ACEMHH 0-5 Ñires Zorras | PDF 2 · 4-5 | coincide | **entero** |
+| 14 | H-8 CAU Negro 4-1 Ovejas Negras | PDF 2 · 2-3 | coincide | 1 duda |
 | 15 | H-9 CAU Verde vs Ñires | **no está** | — | **sin planilla** |
 
 ---
@@ -214,9 +224,9 @@ Resuelto: no había dos #17. **Fátima Arano usó la 27**, Carimatto la 17. Fue 
    día. El 79 no existe: mi lectura tiene que ser 29 (Lypka), 19 (Alvarado) o 80 (García).
 2. **Asistencia del gol de Ovejas**: se lee **#81**, que no existe. En hielo estaban 83, 16,
    18, 91 y 34, así que es **91 Castarés** o **83 Villavicencio**.
-3. **La nota al margen «PENAL GOL #17».** Es el gol del shootout. No sé de qué equipo:
-   All-Pakas no tiene 17, y Ovejas sí (Carimatto), pero el que ganó los penales fue
-   All-Pakas.
+Resuelto también el gol del shootout: el resultado publicado es **1-2**, o sea que los
+penales los ganó Ovejas, y la nota «PENAL GOL #17» es de ellas. El #17 de Ovejas es
+Carimatto. Eso lo deduje del resultado, no lo leí en la planilla.
 
 ---
 

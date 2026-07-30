@@ -71,6 +71,8 @@ export const players: Player[] = [
     'Mateo Lopez Silva',
     'Ivan Shendera',
     ['Juan Lapertosa', 'GK'],
+    // Debutó en H-8; no figuraba en la hoja de inscripción original.
+    'Uriel Puig',
   ]),
   ...roster('men', 'men-los-nires', [
     ['Nicolas Badaracco', 'GK'],
@@ -171,6 +173,9 @@ export const players: Player[] = [
     ['Camila Di Stefano', 'A'],
     'Magdalena Ester Harambour Urbina',
     'Isabel Yazmina Tejeda Gonzalez',
+    // Ambas figuran en las planillas de D-4 y D-6 y no en la hoja de inscripción.
+    'Ariadna Rodriguez',
+    'Camila Magnoni',
   ]),
   ...roster('women', 'women-los-nires-zorras', [
     ['Ailin Melisa Aquino', 'A'],
