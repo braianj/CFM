@@ -98,8 +98,12 @@ const showTheList = async () => {
 const openMatch = async (matchId: string) => {
   await showTheList()
   fireEvent.click(document.getElementById(`match-${matchId}`)!)
-  await waitFor(() => expect(screen.getByRole('heading', { name: 'Qué pasó' })).toBeInTheDocument())
+  await waitFor(() => expect(screen.getByRole('heading', { name: /Qué pasó/ })).toBeInTheDocument())
 }
+
+// Steps 2 and 3 start folded, so anything inside them has to be revealed first.
+const openStep = (title: RegExp) =>
+  fireEvent.click(within(screen.getByRole('heading', { name: title })).getByRole('button'))
 
 describe('AdminApp', () => {
   beforeEach(() => {
@@ -144,8 +148,45 @@ describe('AdminApp', () => {
       await openMatch('h-1')
 
       expect(screen.getByRole('heading', { name: 'CAU Verde vs CAU Blanco' })).toBeInTheDocument()
-      expect(screen.getByRole('heading', { name: 'El resultado' })).toBeInTheDocument()
-      expect(screen.getByRole('heading', { name: 'Quiénes jugaron' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /El resultado/ })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /Quiénes jugaron/ })).toBeInTheDocument()
+    })
+  })
+
+  describe('when a match is opened', () => {
+    it('should fold the two long steps and leave the result open', async () => {
+      await openMatch('h-1')
+
+      // The result is short and is what gets loaded first, so it stays open.
+      expect(screen.getByRole('button', { name: 'Guardar' })).toBeInTheDocument()
+      expect(document.getElementById('step-2')).toHaveAttribute('hidden')
+      expect(document.getElementById('step-3')).toHaveAttribute('hidden')
+    })
+
+    it('should say what is inside a folded step without opening it', async () => {
+      await openMatch('h-1')
+
+      expect(screen.getByRole('heading', { name: /Quiénes jugaron/ }).textContent).toContain('1 anotados')
+      expect(screen.getByRole('heading', { name: /Qué pasó/ }).textContent).toContain('1 cargados')
+    })
+
+    it('should unfold a step when its heading is used', async () => {
+      await openMatch('h-1')
+
+      openStep(/Qué pasó/)
+
+      expect(document.getElementById('step-3')).not.toHaveAttribute('hidden')
+      expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+    })
+
+    it('should leave the step open after a trip to the editor', async () => {
+      await openMatch('h-1')
+      openStep(/Qué pasó/)
+      fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+
+      fireEvent.click(screen.getByRole('button', { name: '‹ Volver al partido' }))
+
+      expect(document.getElementById('step-3')).not.toHaveAttribute('hidden')
     })
   })
 
@@ -179,6 +220,7 @@ describe('AdminApp', () => {
   describe('when an event was read wrong from the scoresheet', () => {
     const openTheEvent = async () => {
       await openMatch('h-1')
+      openStep(/Qué pasó/)
       fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
     }
 
@@ -187,7 +229,7 @@ describe('AdminApp', () => {
 
       expect(screen.getByRole('heading', { name: 'Corregir el evento' })).toBeInTheDocument()
       // The three steps are gone: one thing on screen at a time.
-      expect(screen.queryByRole('heading', { name: 'Qué pasó' })).toBeNull()
+      expect(screen.queryByRole('heading', { name: /Qué pasó/ })).toBeNull()
       expect(screen.getByRole('button', { name: '‹ Volver al partido' })).toBeInTheDocument()
     })
 
@@ -218,7 +260,7 @@ describe('AdminApp', () => {
 
       fireEvent.submit(screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!)
 
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Qué pasó' })).toBeInTheDocument())
+      await waitFor(() => expect(screen.getByRole('heading', { name: /Qué pasó/ })).toBeInTheDocument())
       expect(screen.queryByRole('button', { name: 'Guardar corrección' })).toBeNull()
     })
   })
@@ -226,6 +268,7 @@ describe('AdminApp', () => {
   describe('when the operator copies an event off the scoresheet', () => {
     const openTheForm = async () => {
       await openMatch('h-1')
+      openStep(/Qué pasó/)
       fireEvent.click(screen.getByRole('button', { name: '+ Cargar un gol o una falta' }))
       const form = screen.getByRole('button', { name: 'Cargar el evento' }).closest('form')!
       // The team defaults to whichever of the two comes first in the tournament data.

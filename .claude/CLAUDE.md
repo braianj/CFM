@@ -361,7 +361,10 @@ Nothing that is not being worked on stays on screen.
 
 The landing view is a list of matches, each saying what it
 still needs; opening one replaces the screen with that match's three numbered steps:
-**1. El resultado**, **2. Quiénes jugaron**, **3. Qué pasó**. They are numbered because
+**1. El resultado**, **2. Quiénes jugaron**, **3. Qué pasó**. Steps 2 and 3 hold long
+lists, so they start folded with their heading reporting what is inside; the result stays
+open because it is short and is what gets loaded first. Which steps are open is held by
+the workspace, not by the step, so a step survives a trip to the event editor. They are numbered because
 the order matters: step 3 resolves a jersey number through the call-up loaded in step 2.
 Squad membership and team names are not per-match, so they live in a separate
 `Equipos y planteles` tab that only an owner sees.

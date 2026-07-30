@@ -270,6 +270,10 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
   // '' is the match itself; 'nuevo' or an event id is the editor. One thing on screen
   // at a time, the same as the list and the match.
   const [editing, setEditing] = useState('')
+  // Held here, not inside Step, so a step stays open across a trip to the editor.
+  const [openSteps, setOpenSteps] = useState<number[]>([])
+  const toggleStep = (step: number) => () =>
+    setOpenSteps((current) => current.includes(step) ? current.filter((item) => item !== step) : [...current, step])
   const editedEvent = events.find((event) => event.id === editing)
   const progress = getMatchProgress(match, rosters, events)
   const code = getMatchCode(match.id)
@@ -331,7 +335,9 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
         number={2}
         title="Quiénes jugaron"
         done={progress.calledUp > 0}
-        detail={progress.calledUp ? `${progress.calledUp} anotados` : undefined}
+        detail={progress.calledUp ? `${progress.calledUp} anotados` : 'sin cargar'}
+        open={openSteps.includes(2)}
+        onToggle={toggleStep(2)}
       >
         <p className={styles.hint}>
           Copiá las dos listas de la planilla con el número que usó cada uno ese día.
@@ -350,7 +356,9 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
         number={3}
         title="Qué pasó"
         done={progress.events > 0 && progress.pending === 0}
-        detail={progress.events ? `${progress.events} cargados${progress.pending ? `, ${progress.pending} sin completar` : ''}` : undefined}
+        detail={progress.events ? `${progress.events} cargados${progress.pending ? `, ${progress.pending} sin completar` : ''}` : 'sin cargar'}
+        open={openSteps.includes(3)}
+        onToggle={toggleStep(3)}
       >
         <MatchEventList
           match={match}
@@ -367,18 +375,41 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
   )
 }
 
-function Step({ number, title, done, detail, children }: {
-  number: number; title: string; done: boolean; detail?: string; children: ReactNode
+// The long steps fold away, because a match screen with two full lists on it is a wall.
+// The heading wraps the toggle rather than the other way round, so the step is still a
+// heading to anybody navigating by headings.
+function Step({ number, title, done, detail, open, onToggle, children }: {
+  number: number; title: string; done: boolean; detail?: string
+  open?: boolean; onToggle?: () => void; children: ReactNode
 }) {
+  const panelId = `step-${number}`
+  const inside = (
+    <>
+      <span className={`${styles.stepNumber} ${done ? styles.stepDone : ''}`}>{done ? '✓' : number}</span>
+      <span className={styles.stepTitle}>{title}</span>
+      {detail && <span className={styles.stepDetail}>{detail}</span>}
+      {onToggle && <Chevron open={Boolean(open)} />}
+    </>
+  )
   return (
     <section className={styles.section}>
-      <div className={styles.stepHead}>
-        <span className={`${styles.stepNumber} ${done ? styles.stepDone : ''}`}>{done ? '✓' : number}</span>
-        <h2>{title}</h2>
-        {detail && <span className={styles.stepDetail}>{detail}</span>}
-      </div>
-      {children}
+      <h2 className={styles.stepHead}>
+        {onToggle ? (
+          <button type="button" className={styles.stepToggle} aria-expanded={open} aria-controls={panelId} onClick={onToggle}>
+            {inside}
+          </button>
+        ) : inside}
+      </h2>
+      <div id={panelId} hidden={Boolean(onToggle) && !open}>{children}</div>
     </section>
+  )
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 

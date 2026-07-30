@@ -30,11 +30,17 @@
 .workspaceHead span { color:var(--accent-dark); font-size:.72rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; }
 .workspaceHead h2 { font-size:1.25rem; margin:.15rem 0; }
 .workspaceHead p { color:var(--muted); font-size:.8rem; }
-.stepHead { align-items:center; display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem; }
-.stepHead h2 { font-size:1.05rem; margin:0; }
+.stepHead { font-size:1.05rem; margin:0; }
+.stepHead, .stepToggle { align-items:center; column-gap:.5rem; display:flex; width:100%; }
+.stepToggle { background:transparent!important; border:0; color:inherit!important; cursor:pointer; font:inherit; min-height:0!important; padding:0!important; text-align:left; }
+.stepToggle:focus-visible { border-radius:8px; outline:3px solid var(--focus); outline-offset:4px; }
+.stepTitle { font-weight:850; }
 .stepNumber { background:var(--surface-muted); border-radius:50%; color:var(--muted); display:grid; flex:none; font-size:.8rem; font-weight:900; height:26px; place-items:center; width:26px; }
 .stepDone { background:var(--accent-dark); color:white; }
-.stepDetail { color:var(--muted); font-size:.75rem; margin-left:auto; }
+.stepDetail { color:var(--muted); font-size:.75rem; font-weight:600; margin-left:auto; }
+.stepHead + div:not([hidden]) { margin-top:.75rem; }
+.chevron { color:var(--muted); flex:none; height:16px; margin-left:.4rem; transform:rotate(-90deg); transition:transform .15s; width:16px; }
+.chevronOpen { transform:rotate(0deg); }
 .add { background:var(--accent-soft)!important; color:var(--accent-dark)!important; margin-top:.75rem; width:100%; }
 .add:hover { background:var(--state-hover)!important; }
 .scoreEditor { align-items:end; display:grid; gap:.6rem; grid-template-columns:1fr 18px 1fr auto; }.scoreEditor label { margin:0; }.scoreEditor label span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.scoreEditor input { font-size:1.15rem; font-weight:900; text-align:center; }.versus { align-self:center; color:var(--muted); font-weight:900; text-align:center; }
