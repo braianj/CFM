@@ -272,9 +272,11 @@ still passes.
 - Every match card shows its tournament only while both categories are listed.
 - Tournament, view and team-filter selections persist in local storage.
 - Views are `matches`, `rosters`, `standings` and `statistics`.
-- The matches view filters by team. A team's listing keeps the playoff matches it
-  could still reach, mirroring the official per-team sheets, and never includes
-  the other tournament.
+- The matches, rosters and statistics views filter by team. A team's match listing keeps
+  the playoff matches it could still reach, mirroring the official per-team sheets, and
+  never includes the other tournament. Filtering the statistics ranks that team's own
+  scorers, because somebody looking at one squad is asking about that squad. Standings
+  are never filtered: a table is the whole tournament or it is nothing.
 - The rosters view shows the registered squad of every team in scope, or of a
   single team when one is selected. The panel must keep reading the raw `players`
   collection so its publish check stays true.

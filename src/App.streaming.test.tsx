@@ -89,3 +89,57 @@ describe('rosters while Firestore streams in', () => {
     })
   })
 })
+
+describe('statistics filtered by team', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  const goal = (id: string, teamId: string, playerName: string): MatchEvent => ({
+    id, matchId: 'h-1', category: 'men', teamId, type: 'goal', playerName, period: 1, gameTime: '5:00',
+  })
+
+  const openStatistics = () => {
+    render(<App />)
+    act(() => {
+      emit.onTeams(officialTeams)
+      emit.onMatches(officialMatches)
+      emit.onPlayers(officialPlayers)
+      emit.onEvents([
+        goal('e1', 'men-cau-2', 'Del Verde'),
+        goal('e2', 'men-cau-1', 'Del Blanco'),
+        goal('e3', 'women-cau-kipas', 'De Kipas'),
+      ])
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Estadísticas' }))
+  }
+
+  describe('when no team is chosen', () => {
+    it('should show both tournaments', () => {
+      openStatistics()
+
+      // Cada nombre figura dos veces: en la tabla de puntos y en la planilla completa.
+      expect(screen.getAllByText('Del Verde')).toHaveLength(2)
+      expect(screen.getAllByText('De Kipas')).toHaveLength(2)
+    })
+  })
+
+  describe('when a team is chosen', () => {
+    it('should keep only that team', () => {
+      openStatistics()
+
+      fireEvent.change(screen.getByLabelText('Equipo'), { target: { value: 'men-cau-2' } })
+
+      expect(screen.getAllByText('Del Verde')).toHaveLength(2)
+      expect(screen.queryAllByText('Del Blanco')).toHaveLength(0)
+    })
+
+    it('should drop the other tournament', () => {
+      openStatistics()
+
+      fireEvent.change(screen.getByLabelText('Equipo'), { target: { value: 'men-cau-2' } })
+
+      expect(screen.queryAllByText('De Kipas')).toHaveLength(0)
+      expect(screen.queryByText('Torneo Femenino')).toBeNull()
+    })
+  })
+})

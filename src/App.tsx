@@ -148,16 +148,21 @@ export default function App() {
             />
           ))
         ) : (
-          categories.map((category) => (
-            <StatisticsSection
-              key={category}
-              category={category}
-              teams={teams}
-              events={events}
-              rosters={rosters}
-              showHeading={categories.length > 1}
-            />
-          ))
+          <>
+            <TeamFilter teams={scopedTeams} value={selectedTeam?.id ?? ALL_TEAMS} onChange={setTeamId} />
+            {/* A team belongs to one tournament, so picking one drops the other section. */}
+            {(selectedTeam ? [selectedTeam.category] : categories).map((category) => (
+              <StatisticsSection
+                key={category}
+                category={category}
+                teams={teams}
+                events={events}
+                rosters={rosters}
+                teamId={selectedTeam?.id}
+                showHeading={!selectedTeam && categories.length > 1}
+              />
+            ))}
+          </>
         )}
       </main>
       <footer className={styles.siteFooter}>Horarios de Ushuaia (UTC−3) · {usingLiveData ? 'Datos publicados desde la organización' : 'Datos iniciales del torneo'}</footer>
@@ -186,14 +191,20 @@ function StandingsSection({ category, teams, matches, showHeading }: SectionProp
   )
 }
 
-function StatisticsSection({ category, teams, events, rosters, showHeading }: SectionProps & { events: MatchEvent[]; rosters: MatchRosterEntry[] }) {
+function StatisticsSection({ category, teams, events, rosters, teamId, showHeading }: SectionProps & {
+  events: MatchEvent[]; rosters: MatchRosterEntry[]; teamId?: string
+}) {
   const categoryTeams = teams.filter((team) => team.category === category)
+  // Narrowing to one team ranks its own scorers, which is what somebody looking at a
+  // single squad is asking for. The totals themselves are the tournament's.
+  const ofTeam = <T extends { teamId: string }>(rows: T[]) =>
+    teamId ? rows.filter((row) => row.teamId === teamId) : rows
 
   return (
     <section className={styles.tournamentSection}>
       {showHeading && <h2 className={styles.tournamentHeading}>{tournamentConfigs[category].name}</h2>}
-      <StatisticsTable rows={calculatePlayerStatistics(category, events, rosters)} teams={categoryTeams} />
-      <DisciplineNotice rows={calculateDiscipline(category, events)} teams={categoryTeams} />
+      <StatisticsTable rows={ofTeam(calculatePlayerStatistics(category, events, rosters))} teams={categoryTeams} />
+      <DisciplineNotice rows={ofTeam(calculateDiscipline(category, events))} teams={categoryTeams} />
     </section>
   )
 }
