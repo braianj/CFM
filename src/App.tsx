@@ -8,6 +8,7 @@ import { StatisticsTable } from './components/StatisticsTable'
 import { DisciplineNotice } from './components/DisciplineNotice'
 import { TeamFilter } from './components/TeamFilter'
 import { TeamRosters } from './components/TeamRosters'
+import { PlayerCard } from './components/PlayerCard'
 import { players as officialPlayers } from './data/players'
 import { TIMEZONE, tournamentConfigs } from './data/tournamentConfig'
 import { useTournamentData } from './hooks/useTournamentData'
@@ -50,9 +51,12 @@ export default function App() {
   const [scope, setScopeState] = useState<Scope>(() => readStored('cfm-category', ['all', 'men', 'women'], 'all'))
   const [view, setViewState] = useState<View>(() => readStored('cfm-view', ['matches', 'rosters', 'standings', 'statistics'], 'matches'))
   const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
+  // Not persisted: a player card is where you happen to be, not a preference.
+  const [playerId, setPlayerId] = useState('')
   const { matches, teams, players, rosters, events, usingLiveData } = useTournamentData()
 
   const rosterPlayers = useMemo(() => mergeRosters(officialPlayers, players), [players])
+  const selectedPlayer = rosterPlayers.find((player) => player.id === playerId)
   const categories = scopeCategories[scope]
   const scopedTeams = useMemo(() => teams.filter((team) => categories.includes(team.category)), [categories, teams])
   const scopedMatches = useMemo(() => matches.filter((match) => categories.includes(match.category)), [categories, matches])
@@ -72,6 +76,7 @@ export default function App() {
   const setTeamId = (next: string) => {
     localStorage.setItem('cfm-team', next)
     setTeamIdState(next)
+    setPlayerId('')
     const team = scopedTeams.find((candidate) => candidate.id === next)
     void track('select_team', team
       ? { team_id: team.id, team_name: team.name, category: team.category }
@@ -82,11 +87,13 @@ export default function App() {
     setScopeState(next)
     localStorage.setItem('cfm-team', ALL_TEAMS)
     setTeamIdState(ALL_TEAMS)
+    setPlayerId('')
     void track('select_tournament', { tournament: next })
   }
   const setView = (next: View) => {
     localStorage.setItem('cfm-view', next)
     setViewState(next)
+    setPlayerId('')
     void track('select_view', { view: next, tournament: scope })
   }
 
@@ -129,14 +136,27 @@ export default function App() {
             />
           </>
         ) : view === 'rosters' ? (
-          <>
-            <TeamFilter teams={scopedTeams} value={selectedTeam?.id ?? ALL_TEAMS} onChange={setTeamId} />
-            <TeamRosters
-              teams={selectedTeam ? [selectedTeam] : scopedTeams}
-              players={rosterPlayers}
-              showCategory={categories.length > 1}
+          selectedPlayer ? (
+            <PlayerCard
+              player={selectedPlayer}
+              team={teams.find((team) => team.id === selectedPlayer.teamId)}
+              teams={teams}
+              matches={matches}
+              rosters={rosters}
+              events={events}
+              onBack={() => setPlayerId('')}
             />
-          </>
+          ) : (
+            <>
+              <TeamFilter teams={scopedTeams} value={selectedTeam?.id ?? ALL_TEAMS} onChange={setTeamId} />
+              <TeamRosters
+                teams={selectedTeam ? [selectedTeam] : scopedTeams}
+                players={rosterPlayers}
+                showCategory={categories.length > 1}
+                onSelect={setPlayerId}
+              />
+            </>
+          )
         ) : view === 'standings' ? (
           categories.map((category) => (
             <StandingsSection

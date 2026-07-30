@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from './types/tournament'
 
@@ -87,6 +87,69 @@ describe('rosters while Firestore streams in', () => {
 
       expect(screen.queryByText(CAU_BLANCO_GK)).toBeNull()
     })
+  })
+})
+
+describe('a player card', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  const scorer = officialPlayers.find((player) => player.name === 'Martin Baeza')!
+
+  const openTheCard = () => {
+    render(<App />)
+    act(() => {
+      emit.onTeams(officialTeams)
+      emit.onMatches(officialMatches)
+      emit.onPlayers(officialPlayers)
+      emit.onRosters([{
+        id: 'h-8_baeza', matchId: 'h-8', category: 'men', teamId: scorer.teamId,
+        playerId: scorer.id, playerName: scorer.name, jerseyNumber: 92,
+      }])
+      emit.onEvents([{
+        id: 'e1', matchId: 'h-8', category: 'men', teamId: scorer.teamId, type: 'goal',
+        playerName: scorer.name, jerseyNumber: 92, period: 1, gameTime: '8:45',
+      }])
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Planteles' }))
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(scorer.name) }))
+  }
+
+  it('should open from the squad list', () => {
+    openTheCard()
+
+    expect(screen.getByRole('heading', { name: scorer.name })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '‹ Volver al plantel' })).toBeInTheDocument()
+  })
+
+  it('should total what the player did', () => {
+    openTheCard()
+
+    // "Partidos" is also a view tab, so read the totals list itself.
+    const totals = within(document.querySelector('dl')!)
+    const total = (label: string) => totals.getByText(label).closest('div')!.textContent
+    expect(total('Goles')).toBe('Goles1')
+    expect(total('Partidos')).toBe('Partidos1')
+    expect(total('Puntos')).toBe('Puntos1')
+    expect(total('Faltas')).toBe('Faltas0')
+  })
+
+  it('should list the match with the time played and the number used', () => {
+    openTheCard()
+
+    expect(screen.getByText(/vs Ovejas Negras/)).toBeInTheDocument()
+    expect(screen.getByText(/#92/)).toBeInTheDocument()
+    // The sheet says 8:45 left in a fifteen-minute period.
+    expect(screen.getByText(/6:15/)).toBeInTheDocument()
+  })
+
+  it('should go back to the squad list', () => {
+    openTheCard()
+
+    fireEvent.click(screen.getByRole('button', { name: '‹ Volver al plantel' }))
+
+    expect(screen.queryByRole('heading', { name: scorer.name })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'CAU Negro' })).toBeInTheDocument()
   })
 })
 

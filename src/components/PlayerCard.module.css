@@ -1,0 +1,27 @@
+.card { display: grid; gap: 1rem; }
+.back { background: transparent; border: 0; color: var(--accent-dark); cursor: pointer; font: inherit; font-weight: 800; justify-self: start; padding: .4rem 0; }
+.back:focus-visible { border-radius: 8px; outline: 3px solid var(--focus); outline-offset: 3px; }
+.head { align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: grid; gap: .8rem; grid-template-columns: 5px 1fr; padding: .9rem; }
+.marker { border-radius: 99px; height: 38px; width: 5px; }
+.head h2 { font-size: 1.15rem; margin: 0; }
+.head p { color: var(--muted); font-size: .78rem; font-weight: 700; margin: .2rem 0 0; }
+.totals { display: grid; gap: .5rem; grid-template-columns: repeat(3, 1fr); margin: 0; }
+.totals div { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .6rem .5rem; text-align: center; }
+.totals dt { color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .02em; }
+.totals dd { font-size: 1.3rem; font-variant-numeric: tabular-nums; font-weight: 900; margin: .1rem 0 0; }
+.highlight { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+.highlight dd { color: var(--accent-dark); }
+.matches { display: grid; gap: .6rem; list-style: none; margin: 0; padding: 0; }
+.matches > li { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .75rem .9rem; }
+.matchHead { align-items: baseline; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; }
+.matchHead strong { font-size: .92rem; }
+.matchHead span { color: var(--muted); font-size: .74rem; font-weight: 700; }
+.quiet { color: var(--muted); font-size: .76rem; font-style: italic; margin: .4rem 0 0; }
+.actions { display: grid; gap: .3rem; list-style: none; margin: .5rem 0 0; padding: 0; }
+.actions li { align-items: baseline; display: flex; flex-wrap: wrap; gap: .45rem; }
+.tag { border-radius: 99px; font-size: .68rem; font-weight: 900; letter-spacing: .02em; padding: .18rem .45rem; text-transform: uppercase; white-space: nowrap; }
+.scoring { background: var(--accent-soft); color: var(--accent-dark); }
+.penalising { background: #ffe2e5; color: var(--live); }
+.when { font-size: .78rem; font-variant-numeric: tabular-nums; font-weight: 800; }
+.with { color: var(--muted); font-size: .74rem; }
+.empty { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); margin: 0; padding: 2rem 1rem; text-align: center; }

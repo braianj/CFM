@@ -48,7 +48,7 @@ const formatClock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(s
 // needs the period, because overtime is shorter than a regulation one. A clock that
 // does not fit its period cannot be inverted, so it is reported as it was written
 // rather than turned into an invented number.
-function elapsedTime(period: number | undefined, gameTime: string | undefined) {
+export function elapsedTime(period: number | undefined, gameTime: string | undefined) {
   const remaining = remainingSeconds(gameTime)
   if (remaining === null) return gameTime?.trim() || undefined
   if (period === undefined) return gameTime?.trim()

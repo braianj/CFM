@@ -17,7 +17,7 @@ const player = (id: string, name: string, role?: Player['role']): Player => ({
 describe('TeamRosters', () => {
   describe('when a club has not submitted its roster', () => {
     it('should say the squad is still pending', () => {
-      render(<TeamRosters teams={[team]} players={[]} showCategory={false} />)
+      render(<TeamRosters teams={[team]} players={[]} showCategory={false} onSelect={() => {}} />)
 
       expect(screen.getByText('El plantel todavía no fue publicado.')).toBeInTheDocument()
     })
@@ -25,7 +25,7 @@ describe('TeamRosters', () => {
 
   describe('when the scope has no team at all', () => {
     it('should show an empty state', () => {
-      render(<TeamRosters teams={[]} players={[]} showCategory={false} />)
+      render(<TeamRosters teams={[]} players={[]} showCategory={false} onSelect={() => {}} />)
 
       expect(screen.getByText('No hay equipos para esta selección.')).toBeInTheDocument()
     })
@@ -35,7 +35,7 @@ describe('TeamRosters', () => {
     it('should list only the active players', () => {
       const squad = [player('a', 'Activa'), { ...player('b', 'Inactiva'), active: false }]
 
-      render(<TeamRosters teams={[team]} players={squad} showCategory={false} />)
+      render(<TeamRosters teams={[team]} players={squad} showCategory={false} onSelect={() => {}} />)
 
       expect(screen.getByText('Activa')).toBeInTheDocument()
       expect(screen.queryByText('Inactiva')).toBeNull()
@@ -45,7 +45,7 @@ describe('TeamRosters', () => {
 
   describe('when a player declared a role', () => {
     it('should show the role next to the name', () => {
-      render(<TeamRosters teams={[team]} players={[player('a', 'Arquero', 'GK')]} showCategory={false} />)
+      render(<TeamRosters teams={[team]} players={[player('a', 'Arquero', 'GK')]} showCategory={false} onSelect={() => {}} />)
 
       expect(screen.getByTitle('Arquero/a')).toHaveTextContent('GK')
     })

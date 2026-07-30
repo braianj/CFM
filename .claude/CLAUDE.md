@@ -280,6 +280,12 @@ still passes.
 - The rosters view shows the registered squad of every team in scope, or of a
   single team when one is selected. The panel must keep reading the raw `players`
   collection so its publish check stays true.
+- Selecting a player opens their card, built by `buildPlayerRecord`: the totals, and
+  underneath them every match they dressed for with what they did in it. The card is
+  not persisted the way the tournament, view and team filter are, because it is where
+  somebody happens to be, not a preference; changing any of those three closes it.
+  A player is identified by name inside their team, the same key the statistics use,
+  because an event may carry no player id.
 - The public rosters merge `src/data/players.ts` with the published documents by
   ID (`mergeRosters`). Never switch between the two lists on a condition such as
   `players.length`: a published collection arrives over several snapshots, and an

@@ -6,6 +6,7 @@ interface Props {
   teams: Team[]
   players: Player[]
   showCategory: boolean
+  onSelect: (playerId: string) => void
 }
 
 const roleLabels: Record<PlayerRole, string> = {
@@ -14,7 +15,7 @@ const roleLabels: Record<PlayerRole, string> = {
   GK: 'Arquero/a',
 }
 
-export function TeamRosters({ teams, players, showCategory }: Props) {
+export function TeamRosters({ teams, players, showCategory, onSelect }: Props) {
   if (!teams.length) {
     return <div className={styles.empty}>No hay equipos para esta selección.</div>
   }
@@ -38,8 +39,11 @@ export function TeamRosters({ teams, players, showCategory }: Props) {
               <ul className={styles.squad}>
                 {squad.map((player) => (
                   <li key={player.id}>
-                    <span>{player.name}</span>
-                    {player.role && <em className={styles.role} title={roleLabels[player.role]}>{player.role}</em>}
+                    <button type="button" className={styles.player} onClick={() => onSelect(player.id)}>
+                      <span>{player.name}</span>
+                      {player.role && <em className={styles.role} title={roleLabels[player.role]}>{player.role}</em>}
+                      <span className={styles.go} aria-hidden="true">›</span>
+                    </button>
                   </li>
                 ))}
               </ul>
