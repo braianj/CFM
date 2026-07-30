@@ -355,7 +355,11 @@ when the remote database is empty or unavailable. The administration page is
 available at `/admin/`.
 
 The panel is organised by match, not by feature, because the operator works from one
-paper scoresheet at a time. The landing view is a list of matches, each saying what it
+paper scoresheet at a time. It is one screen deep at every level: the list of matches
+gives way to one match, and one match gives way to one event being loaded or corrected.
+Nothing that is not being worked on stays on screen.
+
+The landing view is a list of matches, each saying what it
 still needs; opening one replaces the screen with that match's three numbered steps:
 **1. El resultado**, **2. Quiénes jugaron**, **3. Qué pasó**. They are numbered because
 the order matters: step 3 resolves a jersey number through the call-up loaded in step 2.

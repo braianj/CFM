@@ -182,6 +182,15 @@ describe('AdminApp', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
     }
 
+    it('should open the editor on its own screen', async () => {
+      await openTheEvent()
+
+      expect(screen.getByRole('heading', { name: 'Corregir el evento' })).toBeInTheDocument()
+      // The three steps are gone: one thing on screen at a time.
+      expect(screen.queryByRole('heading', { name: 'Qué pasó' })).toBeNull()
+      expect(screen.getByRole('button', { name: '‹ Volver al partido' })).toBeInTheDocument()
+    })
+
     it('should load it back into the form', async () => {
       await openTheEvent()
 
@@ -204,18 +213,20 @@ describe('AdminApp', () => {
       expect(saveMatchEvent.mock.calls[0][0]).toMatchObject({ id: publishedEvent.id, gameTime: '2:34' })
     })
 
-    it('should stop editing once the correction is saved', async () => {
+    it('should go back to the match once the correction is saved', async () => {
       await openTheEvent()
 
       fireEvent.submit(screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!)
 
-      await waitFor(() => expect(screen.getByRole('button', { name: 'Cargar el evento' })).toBeInTheDocument())
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'Qué pasó' })).toBeInTheDocument())
+      expect(screen.queryByRole('button', { name: 'Guardar corrección' })).toBeNull()
     })
   })
 
   describe('when the operator copies an event off the scoresheet', () => {
     const openTheForm = async () => {
       await openMatch('h-1')
+      fireEvent.click(screen.getByRole('button', { name: '+ Cargar un gol o una falta' }))
       const form = screen.getByRole('button', { name: 'Cargar el evento' }).closest('form')!
       // The team defaults to whichever of the two comes first in the tournament data.
       fireEvent.change(within(form).getByLabelText('Equipo'), { target: { value: scorer.teamId } })

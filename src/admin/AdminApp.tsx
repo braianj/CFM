@@ -267,18 +267,53 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
   match: Match; teams: Team[]; players: Player[]; rosters: MatchRosterEntry[]; events: MatchEvent[]
   canReschedule: boolean; onBack: () => void; notify: (message: string) => void
 }) {
-  const [editedEventId, setEditedEventId] = useState('')
-  const editedEvent = events.find((event) => event.id === editedEventId)
+  // '' is the match itself; 'nuevo' or an event id is the editor. One thing on screen
+  // at a time, the same as the list and the match.
+  const [editing, setEditing] = useState('')
+  const editedEvent = events.find((event) => event.id === editing)
   const progress = getMatchProgress(match, rosters, events)
   const code = getMatchCode(match.id)
+  const where = (
+    <span>
+      {code ? `Partido ${code} · ` : ''}{tournamentConfigs[match.category].shortName}
+      {match.stage === 'regular' ? '' : ` · ${stageLabels[match.stage]}`}
+    </span>
+  )
+
+  if (editing) {
+    const close = () => setEditing('')
+    return (
+      <>
+        <button type="button" className={styles.back} onClick={close}>‹ Volver al partido</button>
+        <div className={styles.workspaceHead}>
+          {where}
+          <h2>{editedEvent ? 'Corregir el evento' : 'Cargar un gol o una falta'}</h2>
+          <p>{getMatchName(match, teams)}</p>
+        </div>
+        <section className={styles.section}>
+          <p className={styles.hint}>
+            Copiá los datos como los escribe la planilla. Lo que no se entienda, dejalo en blanco.
+          </p>
+          <EventForm
+            key={editedEvent?.id ?? `${match.id}-nuevo`}
+            match={match}
+            teams={teams}
+            players={players}
+            entries={rosters}
+            edited={editedEvent}
+            onSaved={() => { close(); notify(editedEvent ? 'Evento corregido.' : 'Evento cargado.') }}
+            onCancel={close}
+          />
+        </section>
+      </>
+    )
+  }
+
   return (
     <>
       <button type="button" className={styles.back} onClick={onBack}>‹ Volver a los partidos</button>
       <div className={styles.workspaceHead}>
-        <span>
-          {code ? `Partido ${code} · ` : ''}{tournamentConfigs[match.category].shortName}
-          {match.stage === 'regular' ? '' : ` · ${stageLabels[match.stage]}`}
-        </span>
+        {where}
         <h2>{getMatchName(match, teams)}</h2>
         <p>{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)}</p>
       </div>
@@ -322,21 +357,11 @@ function MatchWorkspace({ match, teams, players, rosters, events, canReschedule,
           teams={teams}
           events={events}
           rosters={rosters}
-          editedEventId={editedEvent?.id ?? ''}
-          onEdit={setEditedEventId}
+          onEdit={setEditing}
         />
-        <h3 className={styles.subhead}>{editedEvent ? 'Corregir este evento' : 'Cargar un gol o una falta'}</h3>
-        <EventForm
-          // Remounting is what loads the chosen event into the fields.
-          key={editedEvent?.id ?? `${match.id}-nuevo`}
-          match={match}
-          teams={teams}
-          players={players}
-          entries={rosters}
-          edited={editedEvent}
-          onSaved={() => { setEditedEventId(''); notify(editedEvent ? 'Evento corregido.' : 'Evento cargado.') }}
-          onCancel={() => setEditedEventId('')}
-        />
+        <button type="button" className={styles.add} onClick={() => setEditing('nuevo')}>
+          + Cargar un gol o una falta
+        </button>
       </Step>
     </>
   )
@@ -609,9 +634,9 @@ function MatchResultForm({ match, teams, canReschedule = false, onSaved }: {
 
 // The same running order the public card shows, so a wrong reading of the paper
 // scoresheet is obvious here before anybody else sees it.
-function MatchEventList({ match, teams, events, rosters, editedEventId, onEdit }: {
+function MatchEventList({ match, teams, events, rosters, onEdit }: {
   match: Match; teams: Team[]; events: MatchEvent[]; rosters: MatchRosterEntry[]
-  editedEventId: string; onEdit: (eventId: string) => void
+  onEdit: (eventId: string) => void
 }) {
   const lines = buildMatchSummary(match.id, events, teams, rosters)
   if (!lines.length) return <p className={styles.hint}>Todavía no hay eventos cargados en este partido.</p>
@@ -623,7 +648,7 @@ function MatchEventList({ match, teams, events, rosters, editedEventId, onEdit }
       Editalos para completarlos a mano.
     </p>}
     <div className={styles.events}>{lines.map((line) => (
-      <div key={line.id} className={line.id === editedEventId ? styles.editing : undefined}>
+      <div key={line.id}>
         <span>
           {/* The played time is what the site shows; the countdown is what the paper
               says, so both are here to be compared against the scoresheet. */}
