@@ -350,11 +350,22 @@ Firebase is configured in project `cfm-hockey` on the free Spark plan:
 
 The public app subscribes to Firestore and falls back to versioned seed data
 when the remote database is empty or unavailable. The administration page is
-available at `/admin/`. Its primary tabs are Matches, Teams, and Statistics;
-each has a men's/women's tournament selector. It edits the fixed six men's and
-five women's team slots, creates scheduled matches, edits scores, manages
-rosters, and publishes or deletes match events. Never expose internal match
-IDs in the interface.
+available at `/admin/`.
+
+The panel is organised by match, not by feature, because the operator works from one
+paper scoresheet at a time. The landing view is a list of matches, each saying what it
+still needs; opening one replaces the screen with that match's three numbered steps:
+**1. El resultado**, **2. Quiénes jugaron**, **3. Qué pasó**. They are numbered because
+the order matters: step 3 resolves a jersey number through the call-up loaded in step 2.
+Squad membership and team names are not per-match, so they live in a separate
+`Equipos y planteles` tab that only an owner sees.
+
+The match list shows the organisation's own match code (`H-8`, `D-3`), which is printed
+at the top of the paper sheet. This is the one place a document ID is shown, and it is
+shown because it is not really an ID: the fixture IDs were chosen to mirror the official
+codes, and hiding them forced the operator to match a match by team names and time.
+The public site still never shows it. A match with no official number, such as a playoff
+or one created from the panel, shows its stage instead of inventing a code.
 
 A `Datos oficiales` action replaces every published team and match with the
 versioned seed data and upserts the versioned rosters. It is destructive for

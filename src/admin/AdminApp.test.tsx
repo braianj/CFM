@@ -84,10 +84,22 @@ const chronological = [...officialMatches].sort(
 const whenItStarts = (startDateTime: string) =>
   `${formatShortDay(startDateTime, TIMEZONE)} · ${formatTime(startDateTime, TIMEZONE)}`
 
-// Read in DOM order so the assertion is about the list, not about which rows are open.
-const matchHeaders = () => Array.from(document.querySelectorAll('[aria-controls^="match-"]'))
+// Read in DOM order so the assertion is about the list itself.
+const matchRows = () => Array.from(document.querySelectorAll('[id^="match-"]'))
 
-const listedStartTimes = () => matchHeaders().map((header) => header.textContent ?? '')
+const listedStartTimes = () => matchRows().map((row) => row.textContent ?? '')
+
+const showTheList = async () => {
+  render(<AdminApp />)
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+}
+
+// The panel is one match at a time, so every test that loads anything opens one first.
+const openMatch = async (matchId: string) => {
+  await showTheList()
+  fireEvent.click(document.getElementById(`match-${matchId}`)!)
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Qué pasó' })).toBeInTheDocument())
+}
 
 describe('AdminApp', () => {
   beforeEach(() => {
@@ -101,8 +113,7 @@ describe('AdminApp', () => {
 
   describe('when Firestore returns the matches by document ID', () => {
     it('should list them by date and time instead', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+      await showTheList()
 
       const shown = listedStartTimes()
 
@@ -111,30 +122,38 @@ describe('AdminApp', () => {
         expect(text).toContain(whenItStarts(chronological[index].startDateTime))
       })
     })
+  })
 
-    it('should offer the statistics match selector in the same order', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+  describe('when the operator is looking for the match on their paper sheet', () => {
+    it('should show the code the scoresheet prints', async () => {
+      await showTheList()
 
-      screen.getByRole('button', { name: 'Estadísticas' }).click()
+      expect(document.getElementById('match-h-1')!.textContent).toContain('H-1')
+      expect(document.getElementById('match-d-3')!.textContent).toContain('D-3')
+    })
 
-      await waitFor(() => {
-        const options = screen
-          .getAllByRole('option')
-          .filter((option) => (option as HTMLOptionElement).value.startsWith('d-') || (option as HTMLOptionElement).value.startsWith('h-'))
-        expect(options).toHaveLength(officialMatches.length)
-        expect(options[0].textContent).toContain(whenItStarts(chronological[0].startDateTime))
-        expect(options.at(-1)!.textContent).toContain(whenItStarts(chronological.at(-1)!.startDateTime))
-      })
+    it('should say what each match still needs', async () => {
+      settledMatchIds.push('h-2')
+      await showTheList()
+
+      expect(document.getElementById('match-h-3')!.textContent).toContain('falta el resultado')
+      expect(document.getElementById('match-h-2')!.textContent).not.toContain('falta el resultado')
+    })
+
+    it('should open the match it was told to open', async () => {
+      await openMatch('h-1')
+
+      expect(screen.getByRole('heading', { name: 'CAU Verde vs CAU Blanco' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'El resultado' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Quiénes jugaron' })).toBeInTheDocument()
     })
   })
 
   describe('when the owner reschedules a match', () => {
     it('should keep the kick-off on Ushuaia time', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+      await openMatch('h-3')
 
-      const row = screen.getByText(/All-Pakas vs Ovejas Negras/).closest('form')!
+      const row = screen.getByRole('button', { name: 'Guardar' }).closest('form')!
       fireEvent.change(row.querySelector('input[type="time"]')!, { target: { value: '19:15' } })
       fireEvent.submit(row)
 
@@ -147,11 +166,9 @@ describe('AdminApp', () => {
     })
 
     it('should leave the kick-off alone when only the score changes', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
+      await openMatch('h-3')
 
-      const row = screen.getByText(/All-Pakas vs Ovejas Negras/).closest('form')!
-      fireEvent.submit(row)
+      fireEvent.submit(screen.getByRole('button', { name: 'Guardar' }).closest('form')!)
 
       await waitFor(() => expect(saveMatch).toHaveBeenCalled())
       const scheduled = officialMatches.find((item) => item.id === 'h-3')!
@@ -161,12 +178,8 @@ describe('AdminApp', () => {
 
   describe('when an event was read wrong from the scoresheet', () => {
     const openTheEvent = async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
-      screen.getByRole('button', { name: 'Estadísticas' }).click()
-      const selector = await screen.findByLabelText('Partido')
-      fireEvent.change(selector, { target: { value: 'h-1' } })
-      fireEvent.click(await screen.findByRole('button', { name: 'Editar' }))
+      await openMatch('h-1')
+      fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
     }
 
     it('should load it back into the form', async () => {
@@ -196,17 +209,14 @@ describe('AdminApp', () => {
 
       fireEvent.submit(screen.getByRole('button', { name: 'Guardar corrección' }).closest('form')!)
 
-      await waitFor(() => expect(screen.getByRole('button', { name: 'Publicar evento' })).toBeInTheDocument())
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Cargar el evento' })).toBeInTheDocument())
     })
   })
 
   describe('when the operator copies an event off the scoresheet', () => {
     const openTheForm = async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
-      screen.getByRole('button', { name: 'Estadísticas' }).click()
-      fireEvent.change(await screen.findByLabelText('Partido'), { target: { value: 'h-1' } })
-      const form = screen.getByRole('button', { name: 'Publicar evento' }).closest('form')!
+      await openMatch('h-1')
+      const form = screen.getByRole('button', { name: 'Cargar el evento' }).closest('form')!
       // The team defaults to whichever of the two comes first in the tournament data.
       fireEvent.change(within(form).getByLabelText('Equipo'), { target: { value: scorer.teamId } })
       return form
@@ -251,42 +261,4 @@ describe('AdminApp', () => {
     })
   })
 
-  describe('when a match already has its result saved', () => {
-    beforeEach(() => settledMatchIds.push('h-1'))
-
-    it('should collapse it and leave the rest open', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
-
-      const collapsed = matchHeaders().filter((header) => header.getAttribute('aria-expanded') === 'false')
-
-      expect(collapsed).toHaveLength(1)
-      expect(collapsed[0].getAttribute('aria-controls')).toBe('match-h-1-editor')
-    })
-
-    it('should still show the teams, the date and the result while collapsed', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
-
-      const header = matchHeaders().find((item) => item.getAttribute('aria-controls') === 'match-h-1-editor')!
-
-      expect(header.textContent).toContain('CAU Verde vs CAU Blanco')
-      expect(header.textContent).toContain('21:30')
-      expect(header.textContent).toContain('4')
-      expect(header.textContent).toContain('1')
-    })
-
-    it('should hide the editor until it is expanded', async () => {
-      render(<AdminApp />)
-      await waitFor(() => expect(screen.getByRole('heading', { name: 'Partidos' })).toBeInTheDocument())
-
-      const header = matchHeaders().find((item) => item.getAttribute('aria-controls') === 'match-h-1-editor')!
-      expect(document.getElementById('match-h-1-editor')).toHaveAttribute('hidden')
-
-      fireEvent.click(header)
-
-      expect(header).toHaveAttribute('aria-expanded', 'true')
-      expect(document.getElementById('match-h-1-editor')).not.toHaveAttribute('hidden')
-    })
-  })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { track } from '../analytics'
 import { DisciplineNotice } from '../components/DisciplineNotice'
@@ -7,20 +7,21 @@ import { getAdminRole, publishOfficialFixture, removeAdmin, removeMatchEvent, re
 import type { AdminEntry } from '../data/firestore'
 import { matches as officialMatches } from '../data/matches'
 import { players as officialPlayers } from '../data/players'
-import { TIMEZONE, eventTypeLabels, stageLabels, statusLabels, tournamentConfigs } from '../data/tournamentConfig'
+import { TIMEZONE, eventTypeLabels, stageLabels, tournamentConfigs } from '../data/tournamentConfig'
 import { OWNER_EMAIL, auth, googleProvider } from '../firebase'
 import { useTournamentData } from '../hooks/useTournamentData'
 import type { Category, Match, MatchEvent, MatchEventType, MatchResolution, MatchRosterEntry, MatchStage, Player, Team } from '../types/tournament'
 import { buildStartDateTime, formatDay, formatShortDay, formatTime, splitStartDateTime } from '../utils/date'
 import { sortMatches } from '../utils/matches'
 import { buildMatchSummary } from '../utils/matchSummary'
+import { getMatchCode, getMatchProgress, type MatchProgress } from '../utils/matchProgress'
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
 import { calculateDiscipline } from '../utils/discipline'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
-type AdminView = 'matches' | 'teams' | 'statistics'
+type AdminView = 'matches' | 'teams'
 type AdminScope = Category | 'all'
 
 const scopeCategories: Record<AdminScope, Category[]> = {
@@ -57,9 +58,6 @@ const getTeamName = (teamId: string | undefined, label: string | undefined, team
 const getMatchName = (match: Match, teams: Team[]) =>
   `${getTeamName(match.homeTeamId, match.homeLabel, teams)} vs ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`
 
-const getMatchOptionLabel = (match: Match, teams: Team[]) =>
-  `${getMatchName(match, teams)} · ${formatShortDay(match.startDateTime, TIMEZONE)} · ${formatTime(match.startDateTime, TIMEZONE)}`
-
 export function AdminApp() {
   const { matches, teams, players, rosters, events } = useTournamentData()
   const [user, setUser] = useState<User | null>(null)
@@ -67,6 +65,7 @@ export function AdminApp() {
   const [message, setMessage] = useState('')
   const [view, setView] = useState<AdminView>('matches')
   const [scope, setScope] = useState<AdminScope>('all')
+  const [openMatchId, setOpenMatchId] = useState('')
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
 
@@ -132,6 +131,7 @@ export function AdminApp() {
   const dataPublished =
     isOfficialFixturePublished(matches, officialMatches) && areOfficialRostersPublished(players, officialPlayers)
   const notify = (text: string) => setMessage(text)
+  const openMatch = matches.find((match) => match.id === openMatchId)
 
   return (
     <main className={styles.admin}>
@@ -139,77 +139,248 @@ export function AdminApp() {
         <div><span>CFM Ushuaia Hockey</span><h1>Administración</h1></div>
         <button type="button" className={styles.secondary} onClick={() => signOut(auth)}>Salir</button>
       </header>
-      {isOwner && !dataPublished && <FixturePublisher pending notify={notify} />}
-      <nav className={styles.mainTabs} aria-label="Administración">
-        <SegmentedControl label="Sección" value={view} onChange={setView} options={[
-          { value: 'matches' as AdminView, label: 'Partidos' },
-          ...(isOwner ? [{ value: 'teams' as AdminView, label: 'Equipos' }] : []),
-          { value: 'statistics' as AdminView, label: 'Estadísticas' },
-        ]} />
-      </nav>
-      <SegmentedControl label="Torneo" value={scope} onChange={setScope} options={[
-        { value: 'all' as AdminScope, label: 'Todos' },
-        { value: 'men' as AdminScope, label: 'Masculino' },
-        { value: 'women' as AdminScope, label: 'Femenino' },
-      ]} />
+      {isOwner && !dataPublished && !openMatch && <FixturePublisher pending notify={notify} />}
 
-      {view === 'matches' && (
+      {/* One match at a time: the operator has one paper sheet in their hand, and
+          everything that sheet says belongs on one screen. */}
+      {openMatch ? (
+        <MatchWorkspace
+          match={openMatch}
+          teams={teams}
+          players={players.filter((player) => player.category === openMatch.category)}
+          rosters={rosters.filter((entry) => entry.matchId === openMatch.id)}
+          events={events.filter((event) => event.matchId === openMatch.id)}
+          canReschedule={isOwner}
+          onBack={() => setOpenMatchId('')}
+          notify={notify}
+        />
+      ) : (
         <>
-          {isOwner && (
-            <section className={styles.section}>
-              <h2>Crear partido</h2>
-              {bothTournaments
-                ? <p className={styles.hint}>Elegí Masculino o Femenino para crear un partido.</p>
-                : <MatchForm category={scope as Category} teams={scopedTeams} onSaved={() => notify('Partido creado.')} />}
-            </section>
-          )}
-          <section className={styles.section}>
-            <h2>Partidos{scopeLabel}</h2>
-            <p className={styles.hint}>El estado se calcula automáticamente según el horario. Cada partido dura dos tiempos de 15 minutos con reloj cortado.</p>
-            <div className={styles.matchList}>{scopedMatches.map((match) => (
-              <MatchEditor
-                key={match.id}
-                match={match}
-                teams={teams}
-                showCategory={bothTournaments}
-                canReschedule={isOwner}
-                onSaved={(what) => notify(what)}
+          <nav className={styles.mainTabs} aria-label="Administración">
+            <SegmentedControl label="Sección" value={view} onChange={setView} options={[
+              { value: 'matches' as AdminView, label: 'Partidos' },
+              ...(isOwner ? [{ value: 'teams' as AdminView, label: 'Equipos y planteles' }] : []),
+            ]} />
+          </nav>
+          <SegmentedControl label="Torneo" value={scope} onChange={setScope} options={[
+            { value: 'all' as AdminScope, label: 'Todos' },
+            { value: 'men' as AdminScope, label: 'Masculino' },
+            { value: 'women' as AdminScope, label: 'Femenino' },
+          ]} />
+
+          {view === 'matches' ? (
+            <>
+              {categories.map((category) => (
+                <DisciplineNotice
+                  key={category}
+                  rows={calculateDiscipline(category, events)}
+                  teams={teams}
+                />
+              ))}
+              <section className={styles.section}>
+                <h2>Partidos{scopeLabel}</h2>
+                <p className={styles.hint}>Tocá un partido para cargar su resultado, quiénes jugaron y qué pasó.</p>
+                <div className={styles.matchList}>{scopedMatches.map((match) => (
+                  <MatchRow
+                    key={match.id}
+                    match={match}
+                    teams={teams}
+                    progress={getMatchProgress(match, rosters, events)}
+                    showCategory={bothTournaments}
+                    onOpen={() => setOpenMatchId(match.id)}
+                  />
+                ))}</div>
+              </section>
+              {isOwner && (
+                <section className={styles.section}>
+                  <h2>Crear partido</h2>
+                  {bothTournaments
+                    ? <p className={styles.hint}>Elegí Masculino o Femenino para crear un partido.</p>
+                    : <MatchForm category={scope as Category} teams={scopedTeams} onSaved={() => notify('Partido creado.')} />}
+                </section>
+              )}
+            </>
+          ) : isOwner && (
+            <>
+              <section className={styles.section}>
+                <h2>Equipos{scopeLabel}</h2>
+                <p className={styles.hint}>Se mantienen seis equipos masculinos y cinco femeninos.</p>
+                <div className={styles.teamList}>{scopedTeams.map((team, index) => (
+                  <TeamEditor key={team.id} team={team} position={index + 1} onSaved={() => notify('Equipo actualizado.')} />
+                ))}</div>
+              </section>
+              <SquadsAdmin
+                teams={scopedTeams}
+                players={players.filter((player) => categories.includes(player.category))}
+                notify={notify}
               />
-            ))}</div>
-          </section>
+            </>
+          )}
+
+          {isOwner && dataPublished && <FixturePublisher notify={notify} />}
+          {isOwner && <AdminManager currentEmail={user?.email ?? ''} notify={notify} />}
         </>
       )}
-
-      {view === 'teams' && isOwner && (
-        <section className={styles.section}>
-          <h2>Equipos{scopeLabel}</h2>
-          <p className={styles.hint}>Se mantienen seis equipos masculinos y cinco femeninos. Editá sus nombres antes de armar el calendario.</p>
-          <div className={styles.teamList}>{scopedTeams.map((team, index) => (
-            <TeamEditor key={team.id} team={team} position={index + 1} onSaved={() => notify('Equipo actualizado.')} />
-          ))}</div>
-        </section>
-      )}
-
-      {view === 'statistics' && (
-        <StatisticsAdmin
-          matches={scopedMatches}
-          teams={scopedTeams}
-          players={players.filter((player) => categories.includes(player.category))}
-          rosters={rosters.filter((entry) => categories.includes(entry.category))}
-          events={events.filter((event) => categories.includes(event.category))}
-          showCategory={bothTournaments}
-          categories={categories}
-          notify={notify}
-          canManageSquads={isOwner}
-        />
-      )}
-
-      {isOwner && dataPublished && <FixturePublisher notify={notify} />}
-      {isOwner && <AdminManager currentEmail={user?.email ?? ''} notify={notify} />}
 
       {message && <div className={styles.toast} role="status">{message}</div>}
       <a className={styles.publicLink} href="./">Ver sitio público</a>
     </main>
+  )
+}
+
+// One line per match, saying at a glance what it still needs. The official code is
+// first because that is what the operator reads off the top of the paper sheet.
+function MatchRow({ match, teams, progress, showCategory, onOpen }: {
+  match: Match; teams: Team[]; progress: MatchProgress; showCategory: boolean; onOpen: () => void
+}) {
+  const code = getMatchCode(match.id)
+  const pending = [
+    ...(progress.hasResult ? [] : ['falta el resultado']),
+    ...(progress.calledUp ? [] : ['falta quiénes jugaron']),
+    ...(progress.events ? [] : ['falta qué pasó']),
+    ...(progress.pending ? [`${progress.pending} sin completar`] : []),
+  ]
+  return (
+    <button type="button" id={`match-${match.id}`} className={styles.matchRow} onClick={onOpen}>
+      <span className={styles.matchCode}>{code || stageLabels[match.stage]}</span>
+      <span className={styles.matchName}>{getMatchName(match, teams)}</span>
+      {progress.hasResult && (
+        <span className={styles.finalScore}>{match.homeScore}<i>-</i>{match.awayScore}</span>
+      )}
+      <span className={styles.matchMeta}>
+        {showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}
+        {formatShortDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)}
+        {code && match.stage !== 'regular' ? ` · ${stageLabels[match.stage]}` : ''}
+      </span>
+      <span className={`${styles.badge} ${progress.done ? styles.badgeDone : styles.badgeTodo}`}>
+        {progress.done ? 'Completo' : pending.join(' · ') || 'Sin cargar'}
+      </span>
+      <span className={styles.go} aria-hidden="true">›</span>
+    </button>
+  )
+}
+
+// Everything one scoresheet says, in the order it says it: the result, who dressed,
+// and what happened. Numbered because the operator does them in that order and the
+// second step is what makes the third one possible.
+function MatchWorkspace({ match, teams, players, rosters, events, canReschedule, onBack, notify }: {
+  match: Match; teams: Team[]; players: Player[]; rosters: MatchRosterEntry[]; events: MatchEvent[]
+  canReschedule: boolean; onBack: () => void; notify: (message: string) => void
+}) {
+  const [editedEventId, setEditedEventId] = useState('')
+  const editedEvent = events.find((event) => event.id === editedEventId)
+  const progress = getMatchProgress(match, rosters, events)
+  const code = getMatchCode(match.id)
+  return (
+    <>
+      <button type="button" className={styles.back} onClick={onBack}>‹ Volver a los partidos</button>
+      <div className={styles.workspaceHead}>
+        <span>
+          {code ? `Partido ${code} · ` : ''}{tournamentConfigs[match.category].shortName}
+          {match.stage === 'regular' ? '' : ` · ${stageLabels[match.stage]}`}
+        </span>
+        <h2>{getMatchName(match, teams)}</h2>
+        <p>{formatDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)}</p>
+      </div>
+
+      <Step number={1} title="El resultado" done={progress.hasResult}>
+        <MatchResultForm
+          match={match}
+          teams={teams}
+          canReschedule={canReschedule}
+          onSaved={(what) => notify(what)}
+        />
+      </Step>
+
+      <Step
+        number={2}
+        title="Quiénes jugaron"
+        done={progress.calledUp > 0}
+        detail={progress.calledUp ? `${progress.calledUp} anotados` : undefined}
+      >
+        <p className={styles.hint}>
+          Copiá las dos listas de la planilla con el número que usó cada uno ese día.
+          Sin esto, el paso 3 no puede saber de quién es cada casaca.
+        </p>
+        <MatchRosterForm
+          match={match}
+          teams={teams}
+          players={players}
+          entries={rosters}
+          onSaved={() => notify('Convocatoria actualizada.')}
+        />
+      </Step>
+
+      <Step
+        number={3}
+        title="Qué pasó"
+        done={progress.events > 0 && progress.pending === 0}
+        detail={progress.events ? `${progress.events} cargados${progress.pending ? `, ${progress.pending} sin completar` : ''}` : undefined}
+      >
+        <MatchEventList
+          match={match}
+          teams={teams}
+          events={events}
+          rosters={rosters}
+          editedEventId={editedEvent?.id ?? ''}
+          onEdit={setEditedEventId}
+        />
+        <h3 className={styles.subhead}>{editedEvent ? 'Corregir este evento' : 'Cargar un gol o una falta'}</h3>
+        <EventForm
+          // Remounting is what loads the chosen event into the fields.
+          key={editedEvent?.id ?? `${match.id}-nuevo`}
+          match={match}
+          teams={teams}
+          players={players}
+          entries={rosters}
+          edited={editedEvent}
+          onSaved={() => { setEditedEventId(''); notify(editedEvent ? 'Evento corregido.' : 'Evento cargado.') }}
+          onCancel={() => setEditedEventId('')}
+        />
+      </Step>
+    </>
+  )
+}
+
+function Step({ number, title, done, detail, children }: {
+  number: number; title: string; done: boolean; detail?: string; children: ReactNode
+}) {
+  return (
+    <section className={styles.section}>
+      <div className={styles.stepHead}>
+        <span className={`${styles.stepNumber} ${done ? styles.stepDone : ''}`}>{done ? '✓' : number}</span>
+        <h2>{title}</h2>
+        {detail && <span className={styles.stepDetail}>{detail}</span>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function SquadsAdmin({ teams, players, notify }: {
+  teams: Team[]; players: Player[]; notify: (message: string) => void
+}) {
+  return (
+    <section className={styles.section}>
+      <h2>Planteles</h2>
+      <p className={styles.hint}>
+        Quiénes están inscriptos en cada club. Quiénes jugaron cada partido se carga adentro del partido.
+        Dar de baja oculta al jugador sin perder las estadísticas que ya tenga.
+      </p>
+      <PlayerForm teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
+      <div className={styles.events}>{players.map((player) => (
+        <div key={player.id} className={player.active ? undefined : styles.inactive}>
+          <span><strong>{player.name}</strong>{player.role ? ` · ${player.role}` : ''} · {teams.find((team) => team.id === player.teamId)?.name}{player.active ? '' : ' · dado de baja'}</span>
+          <button
+            type="button"
+            className={player.active ? styles.danger : undefined}
+            onClick={() => savePlayer({ ...player, active: !player.active })}
+          >
+            {player.active ? 'Dar de baja' : 'Reactivar'}
+          </button>
+        </div>
+      ))}</div>
+    </section>
   )
 }
 
@@ -374,8 +545,8 @@ function MatchForm({ category, teams, onSaved }: { category: Category; teams: Te
   )
 }
 
-function MatchEditor({ match, teams, showCategory = false, canReschedule = false, onSaved }: {
-  match: Match; teams: Team[]; showCategory?: boolean; canReschedule?: boolean
+function MatchResultForm({ match, teams, canReschedule = false, onSaved }: {
+  match: Match; teams: Team[]; canReschedule?: boolean
   onSaved: (message: string) => void
 }) {
   const [homeScore, setHomeScore] = useState<number | null>(match.homeScore)
@@ -396,13 +567,6 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
   const startDateTime = canReschedule && date && time ? buildStartDateTime(date, time) : match.startDateTime
   const moved = startDateTime !== match.startDateTime
 
-  // A match with its result already saved collapses, so the list stays about what
-  // still needs loading. It reopens on demand to correct a scoreline.
-  const settled = match.status === 'finished' && match.homeScore !== null && match.awayScore !== null
-  const [open, setOpen] = useState(!settled)
-  useEffect(() => setOpen(!settled), [settled])
-  const panelId = `match-${match.id}-editor`
-
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     const resolved = isTied ? 'regulation' : resolution
@@ -411,27 +575,7 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
     onSaved(moved ? 'Partido reprogramado.' : 'Resultado actualizado.')
   }
   return (
-    <form className={`${styles.match} ${settled && !open ? styles.collapsed : ''}`} onSubmit={submit}>
-      <button
-        type="button"
-        className={styles.matchHeader}
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <Chevron open={open} />
-        <strong className={styles.matchName}>{getMatchName(match, teams)}</strong>
-        {match.homeScore !== null && match.awayScore !== null && (
-          <span className={styles.finalScore}>{match.homeScore}<i>-</i>{match.awayScore}</span>
-        )}
-        <span className={`${styles.status} ${styles[match.status]}`}>{statusLabels[match.status]}</span>
-        <span className={styles.matchMeta}>
-          {showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}
-          {formatShortDay(match.startDateTime, TIMEZONE)} · {formatTime(match.startDateTime, TIMEZONE)}
-          {match.stage === 'regular' ? '' : ` · ${stageLabels[match.stage]}`}
-        </span>
-      </button>
-      <div id={panelId} hidden={!open}>
+    <form onSubmit={submit}>
       <div className={styles.scoreEditor}>
         <label><span>{getTeamName(match.homeTeamId, match.homeLabel, teams)}</span><input aria-label={`Goles de ${getTeamName(match.homeTeamId, match.homeLabel, teams)}`} type="number" min="0" placeholder="—" value={homeScore ?? ''} onChange={(event) => setHomeScore(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <span className={styles.versus}>—</span>
@@ -459,85 +603,7 @@ function MatchEditor({ match, teams, showCategory = false, canReschedule = false
             ? `Se va a reprogramar para el ${formatDay(startDateTime, TIMEZONE).toLocaleLowerCase('es')} a las ${formatTime(startDateTime, TIMEZONE)}.`
             : 'En tiempo reglamentario el ganador suma 3 y el perdedor 0. En tiempo extra o penales, 2 y 1.'}
       </p>
-      </div>
     </form>
-  )
-}
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function StatisticsAdmin({ matches, teams, players, rosters, events, notify, canManageSquads, showCategory, categories }: {
-  matches: Match[]; teams: Team[]; players: Player[]
-  rosters: MatchRosterEntry[]; events: ReturnType<typeof useTournamentData>['events']
-  notify: (message: string) => void; canManageSquads: boolean; showCategory: boolean
-  categories: Category[]
-}) {
-  const [selectedMatchId, setSelectedMatchId] = useState('')
-  const [editedEventId, setEditedEventId] = useState('')
-  const selectedMatch = matches.find((match) => match.id === selectedMatchId)
-  // An event stops being editable if it is deleted or the operator changes match.
-  const editedEvent = events.find((event) => event.id === editedEventId && event.matchId === selectedMatchId)
-  return (
-    <>
-      {canManageSquads && <section className={styles.section}>
-        <h2>Planteles</h2>
-        <PlayerForm teams={teams} onSaved={() => notify('Jugador/a agregado/a.')} />
-        <p className={styles.hint}>Dar de baja oculta al jugador del sitio y de las convocatorias, sin perder las estadísticas que ya tenga cargadas.</p>
-        <div className={styles.events}>{players.map((player) => (
-          <div key={player.id} className={player.active ? undefined : styles.inactive}>
-            <span><strong>{player.name}</strong>{player.role ? ` · ${player.role}` : ''} · {teams.find((team) => team.id === player.teamId)?.name}{player.active ? '' : ' · dado de baja'}</span>
-            <button
-              type="button"
-              className={player.active ? styles.danger : undefined}
-              onClick={() => savePlayer({ ...player, active: !player.active })}
-            >
-              {player.active ? 'Dar de baja' : 'Reactivar'}
-            </button>
-          </div>
-        ))}</div>
-      </section>}
-      {categories.map((category) => (
-        <DisciplineNotice key={category} rows={calculateDiscipline(category, events)} teams={teams} />
-      ))}
-      <section className={styles.section}>
-        <h2>Cargar gol, asistencia o falta</h2>
-        <label>Partido<select value={selectedMatchId} onChange={(event) => { setSelectedMatchId(event.target.value); setEditedEventId('') }}><option value="">Seleccionar partido…</option>{matches.map((match) => <option key={match.id} value={match.id}>{showCategory ? `${tournamentConfigs[match.category].shortName} · ` : ''}{getMatchOptionLabel(match, teams)}</option>)}</select></label>
-        {selectedMatch && <>
-          <MatchRosterForm
-            match={selectedMatch}
-            teams={teams}
-            players={players}
-            entries={rosters.filter((entry) => entry.matchId === selectedMatch.id)}
-            onSaved={() => notify('Convocatoria actualizada.')}
-          />
-          <EventForm
-            // Remounting is what loads the chosen event into the fields.
-            key={editedEvent?.id ?? `${selectedMatch.id}-nuevo`}
-            match={selectedMatch}
-            teams={teams}
-            players={players}
-            entries={rosters.filter((entry) => entry.matchId === selectedMatch.id)}
-            edited={editedEvent}
-            onSaved={() => { setEditedEventId(''); notify(editedEvent ? 'Evento corregido.' : 'Estadística publicada.') }}
-            onCancel={() => setEditedEventId('')}
-          />
-          <MatchEventList
-            match={selectedMatch}
-            teams={teams}
-            events={events}
-            rosters={rosters}
-            editedEventId={editedEvent?.id ?? ''}
-            onEdit={setEditedEventId}
-          />
-        </>}
-      </section>
-    </>
   )
 }
 
@@ -761,7 +827,7 @@ function EventForm({ match, teams, players, entries, edited, onSaved, onCancel }
       <label>Reloj restante<input placeholder="Ej. 2:43" pattern="[0-9]{1,2}:[0-9]{2}" value={gameTime} onChange={(event) => setGameTime(event.target.value)} /></label>
       {/* Lo que la planilla dice y no entra en ningún campo. Se borra al resolverlo. */}
       <label>Nota de la planilla<input value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
-      <button type="submit">{edited ? 'Guardar corrección' : 'Publicar evento'}</button>
+      <button type="submit">{edited ? 'Guardar corrección' : 'Cargar el evento'}</button>
       {edited && <button type="button" className={styles.secondary} onClick={onCancel}>Cancelar</button>}
     </form>
   )
