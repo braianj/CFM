@@ -1,0 +1,13 @@
+.board { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 1rem; overflow: hidden; }
+.board h3 { font-size: .95rem; margin: 0; padding: .9rem .9rem 0; }
+.rule { color: var(--muted); font-size: .78rem; margin: .25rem 0 .6rem; padding: 0 .9rem; }
+.wrap { overflow-x: auto; }
+.wrap table { border-collapse: collapse; min-width: 520px; width: 100%; }
+.wrap th, .wrap td { border-top: 1px solid var(--border); font-size: .78rem; padding: .7rem .6rem; text-align: center; }
+.wrap thead th { background: var(--surface-muted); font-size: .7rem; }
+.wrap tbody th { background: var(--surface); left: 0; position: sticky; text-align: left; }
+.wrap thead th:first-child { left: 0; position: sticky; text-align: left; z-index: 1; }
+.wrap td:nth-child(2) { color: var(--muted); text-align: left; }
+.wrap tbody td:last-child strong { color: var(--accent-dark); }
+.legend { color: var(--muted); font-size: .72rem; line-height: 1.6; margin: 0; padding: .7rem .9rem; }
+.legend b { color: var(--ink); }

@@ -137,6 +137,12 @@ export interface MatchRosterEntry {
   playerId: string
   playerName: string
   jerseyNumber: number
+  // The goalkeeper's line for this match, copied from the scoresheet footer. Absent
+  // for everybody else, and absent for a goalkeeper whose line was not filled in.
+  // Shots on target are not stored: they are saves plus goals against.
+  saves?: number
+  goalsAgainst?: number
+  minutesPlayed?: number
 }
 
 export interface PlayerStatistic {

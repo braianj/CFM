@@ -5,6 +5,7 @@ import { PlayoffBracket } from './components/PlayoffBracket'
 import { SegmentedControl } from './components/SegmentedControl'
 import { StandingsTable } from './components/StandingsTable'
 import { StatisticsTable } from './components/StatisticsTable'
+import { GoalkeeperTable } from './components/GoalkeeperTable'
 import { DisciplineNotice } from './components/DisciplineNotice'
 import { TeamFilter } from './components/TeamFilter'
 import { TeamRosters } from './components/TeamRosters'
@@ -17,6 +18,7 @@ import { ALL_TEAMS, filterMatchesByTeam } from './utils/matches'
 import { mergeRosters } from './utils/rosters'
 import { calculateDiscipline } from './utils/discipline'
 import { calculatePlayerStatistics } from './utils/statistics'
+import { calculateGoalkeeperStatistics } from './utils/goalkeepers'
 import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
 
@@ -224,6 +226,7 @@ function StatisticsSection({ category, teams, events, rosters, teamId, showHeadi
     <section className={styles.tournamentSection}>
       {showHeading && <h2 className={styles.tournamentHeading}>{tournamentConfigs[category].name}</h2>}
       <StatisticsTable rows={ofTeam(calculatePlayerStatistics(category, events, rosters))} teams={categoryTeams} />
+      <GoalkeeperTable rows={ofTeam(calculateGoalkeeperStatistics(category, rosters))} teams={categoryTeams} />
       <DisciplineNotice rows={ofTeam(calculateDiscipline(category, events))} teams={categoryTeams} />
     </section>
   )

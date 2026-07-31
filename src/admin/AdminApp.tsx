@@ -18,6 +18,7 @@ import { getMatchCode, getMatchProgress, type MatchProgress } from '../utils/mat
 import { REGULATION_PERIODS } from '../utils/matchStatus'
 import { adminDocId, isValidAdminEmail, roleLabels, type AdminRole } from '../utils/admins'
 import { calculateDiscipline } from '../utils/discipline'
+import { hasGoalkeeperLine } from '../utils/goalkeepers'
 import { areOfficialRostersPublished, isOfficialFixturePublished } from '../utils/publishing'
 import styles from './AdminApp.module.css'
 
@@ -278,6 +279,7 @@ function MatchWorkspace({ match, published, teams, players, rosters, events, can
     setOpenSteps((current) => current.includes(step) ? current.filter((item) => item !== step) : [...current, step])
   const editedEvent = events.find((event) => event.id === editing)
   const progress = getMatchProgress(match, rosters, events)
+  const goalkeepers = rosters.filter(hasGoalkeeperLine).length
   const code = getMatchCode(match.id)
   const where = (
     <span>
@@ -373,6 +375,25 @@ function MatchWorkspace({ match, published, teams, players, rosters, events, can
         <button type="button" className={styles.add} onClick={() => setEditing('nuevo')}>
           + Cargar un gol o una falta
         </button>
+      </Step>
+
+      <Step
+        number={4}
+        title="Los arqueros"
+        done={goalkeepers > 0}
+        detail={goalkeepers ? `${goalkeepers} cargados` : 'sin cargar'}
+        open={openSteps.includes(4)}
+        onToggle={toggleStep(4)}
+      >
+        <p className={styles.hint}>
+          Del pie de la planilla: los minutos, las atajadas y los goles recibidos.
+          Los tiros al arco se calculan solos.
+        </p>
+        <GoalkeeperForm
+          teams={teams}
+          entries={rosters}
+          onSaved={() => notify('Arquero actualizado.')}
+        />
       </Step>
     </>
   )
@@ -726,6 +747,78 @@ function PlayerForm({ teams, onSaved }: { teams: Team[]; onSaved: () => void }) 
       <label>Número habitual (opcional)<input type="number" min="0" value={number} onChange={(event) => setNumber(event.target.value)} /></label>
       <button type="submit">Agregar al plantel</button>
     </form>
+  )
+}
+
+// The scoresheet keeps goalkeeping in its own footer block, apart from the call-up,
+// so it is loaded apart too. Shots on target are never entered: they are the saves
+// plus the goals conceded, and asking for all three would let them disagree.
+function GoalkeeperForm({ teams, entries, onSaved }: {
+  teams: Team[]; entries: MatchRosterEntry[]; onSaved: () => void
+}) {
+  const [playerId, setPlayerId] = useState('')
+  const [minutes, setMinutes] = useState('')
+  const [saves, setSaves] = useState('')
+  const [goalsAgainst, setGoalsAgainst] = useState('')
+  const chosen = entries.find((entry) => entry.playerId === playerId)
+  const teamName = (id: string) => teams.find((team) => team.id === id)?.name ?? id
+
+  const pick = (id: string) => {
+    setPlayerId(id)
+    const entry = entries.find((item) => item.playerId === id)
+    setMinutes(entry?.minutesPlayed?.toString() ?? '')
+    setSaves(entry?.saves?.toString() ?? '')
+    setGoalsAgainst(entry?.goalsAgainst?.toString() ?? '')
+  }
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!chosen) return
+    await saveMatchRosterEntry({
+      ...chosen,
+      minutesPlayed: numberOr(minutes),
+      saves: numberOr(saves),
+      goalsAgainst: numberOr(goalsAgainst),
+    })
+    void track('admin_action', { action: 'save_goalkeeper_line' })
+    setPlayerId(''); setMinutes(''); setSaves(''); setGoalsAgainst(''); onSaved()
+  }
+
+  const loaded = entries.filter(hasGoalkeeperLine)
+  return (
+    <>
+      {entries.length === 0 ? (
+        <p className={styles.hint}>Cargá primero quiénes jugaron: el arquero sale de esa lista.</p>
+      ) : (
+        <form className={styles.eventForm} onSubmit={submit}>
+          <label>Arquero/a<select required value={playerId} onChange={(event) => pick(event.target.value)}>
+            <option value="">Seleccionar…</option>
+            {[...entries].sort((a, b) => a.jerseyNumber - b.jerseyNumber).map((entry) => (
+              <option key={entry.id} value={entry.playerId}>
+                #{entry.jerseyNumber} · {entry.playerName} · {teamName(entry.teamId)}
+              </option>
+            ))}
+          </select></label>
+          <label>Minutos jugados<input type="number" min="0" placeholder="en blanco si no figura" value={minutes} onChange={(event) => setMinutes(event.target.value)} /></label>
+          <label>Atajadas<input type="number" min="0" placeholder="en blanco si no figura" value={saves} onChange={(event) => setSaves(event.target.value)} /></label>
+          <label>Goles recibidos<input type="number" min="0" placeholder="en blanco si no figura" value={goalsAgainst} onChange={(event) => setGoalsAgainst(event.target.value)} /></label>
+          <button type="submit">Guardar el arquero</button>
+        </form>
+      )}
+      <div className={styles.events}>{loaded.map((entry) => {
+        const shots = (entry.saves ?? 0) + (entry.goalsAgainst ?? 0)
+        return (
+          <div key={entry.id}>
+            <span>
+              <strong>#{entry.jerseyNumber} {entry.playerName}</strong> · {teamName(entry.teamId)}
+              {' · '}{entry.saves ?? 0} atajadas · {entry.goalsAgainst ?? 0} recibidos · {shots} tiros
+              {entry.minutesPlayed !== undefined ? ` · ${entry.minutesPlayed} min` : ''}
+            </span>
+            <button type="button" className={styles.secondary} onClick={() => pick(entry.playerId)}>Editar</button>
+          </div>
+        )
+      })}</div>
+    </>
   )
 }
 

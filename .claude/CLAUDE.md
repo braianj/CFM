@@ -387,10 +387,11 @@ Nothing that is not being worked on stays on screen.
 
 The landing view is a list of matches, each saying what it
 still needs; opening one replaces the screen with that match's three numbered steps:
-**1. El resultado**, **2. Quiénes jugaron**, **3. Qué pasó**. Steps 2 and 3 hold long
-lists, so they start folded with their heading reporting what is inside; the result stays
-open because it is short and is what gets loaded first. Which steps are open is held by
-the workspace, not by the step, so a step survives a trip to the event editor. They are numbered because
+**1. El resultado**, **2. Quiénes jugaron**, **3. Qué pasó**, **4. Los arqueros**.
+Steps 2 to 4 hold long lists, so they start folded with their heading reporting what is
+inside; the result stays open because it is short and is what gets loaded first. Which
+steps are open is held by the workspace, not by the step, so a step survives a trip to
+the event editor. They are numbered because
 the order matters: step 3 resolves a jersey number through the call-up loaded in step 2.
 Squad membership and team names are not per-match, so they live in a separate
 `Equipos y planteles` tab that only an owner sees.
@@ -467,6 +468,17 @@ Games played come from `matchRosters`: dressing for a match is playing it, count
 once per match even if the roster holds duplicates. `calculatePlayerStatistics` returns
 a row for everyone who dressed, with zeros; deciding who is worth showing is the view's
 job, not the calculation's.
+
+Goalkeeping also lives on the roster entry, as optional `saves`, `goalsAgainst` and
+`minutesPlayed`, because the scoresheet records it in its own footer block and only
+that block says where a change of goalkeeper happened. It is not derived from the
+events: two keepers can split a match, and the events cannot say which of them was on
+the ice. `calculateGoalkeeperStatistics` reads those lines, and a roster entry counts
+as a goalkeeper's only once any part of the line was written down.
+
+Shots on target are never stored. They are saves plus goals against, computed on read,
+so the three can never disagree. A goalkeeper who faced nothing has a null save
+percentage, not a perfect one, and is ranked last rather than first.
 
 `matchEvents` is the source of truth for the rest of the player statistics. Supported event
 types are `goal`, `penalty`, and `major-penalty`; goal events may include first

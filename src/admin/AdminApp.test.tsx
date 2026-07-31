@@ -8,6 +8,7 @@ import { formatShortDay, formatTime } from '../utils/date'
 
 const saveMatch = vi.fn()
 const saveMatchEvent = vi.fn()
+const saveMatchRosterEntry = vi.fn()
 const settledMatchIds: string[] = []
 
 // H-1 is CAU Verde against CAU Blanco.
@@ -71,7 +72,7 @@ vi.mock('../data/firestore', () => ({
   savePlayer: vi.fn(),
   saveMatchEvent,
   removeMatchEvent: vi.fn(),
-  saveMatchRosterEntry: vi.fn(),
+  saveMatchRosterEntry,
   removeMatchRosterEntry: vi.fn(),
 }))
 
@@ -113,6 +114,8 @@ describe('AdminApp', () => {
     saveMatch.mockResolvedValue(undefined)
     saveMatchEvent.mockReset()
     saveMatchEvent.mockResolvedValue(undefined)
+    saveMatchRosterEntry.mockReset()
+    saveMatchRosterEntry.mockResolvedValue(undefined)
   })
 
   describe('when Firestore returns the matches by document ID', () => {
@@ -214,6 +217,47 @@ describe('AdminApp', () => {
       await waitFor(() => expect(saveMatch).toHaveBeenCalled())
       const scheduled = officialMatches.find((item) => item.id === 'h-3')!
       expect(saveMatch.mock.calls[0][0].startDateTime).toBe(scheduled.startDateTime)
+    })
+  })
+
+  describe('when the goalkeeper line is loaded', () => {
+    const openTheStep = async () => {
+      await openMatch('h-1')
+      openStep(/Los arqueros/)
+    }
+
+    it('should offer the players already called up for this match', async () => {
+      await openTheStep()
+
+      expect(screen.getByLabelText('Arquero/a')).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: `#6 · ${scorer.name} · CAU Verde` })).toBeInTheDocument()
+    })
+
+    it('should save the minutes, the saves and the goals against on the call-up', async () => {
+      await openTheStep()
+
+      fireEvent.change(screen.getByLabelText('Arquero/a'), { target: { value: scorer.id } })
+      fireEvent.change(screen.getByLabelText('Minutos jugados'), { target: { value: '30' } })
+      fireEvent.change(screen.getByLabelText('Atajadas'), { target: { value: '17' } })
+      fireEvent.change(screen.getByLabelText('Goles recibidos'), { target: { value: '3' } })
+      fireEvent.submit(screen.getByRole('button', { name: 'Guardar el arquero' }).closest('form')!)
+
+      await waitFor(() => expect(saveMatchRosterEntry).toHaveBeenCalled())
+      expect(saveMatchRosterEntry.mock.calls[0][0]).toMatchObject({
+        id: rosterEntry.id, playerId: scorer.id, minutesPlayed: 30, saves: 17, goalsAgainst: 3,
+      })
+    })
+
+    it('should leave a field the scoresheet did not fill in empty', async () => {
+      await openTheStep()
+
+      fireEvent.change(screen.getByLabelText('Arquero/a'), { target: { value: scorer.id } })
+      fireEvent.change(screen.getByLabelText('Atajadas'), { target: { value: '17' } })
+      fireEvent.submit(screen.getByRole('button', { name: 'Guardar el arquero' }).closest('form')!)
+
+      await waitFor(() => expect(saveMatchRosterEntry).toHaveBeenCalled())
+      expect(saveMatchRosterEntry.mock.calls[0][0].minutesPlayed).toBeUndefined()
+      expect(saveMatchRosterEntry.mock.calls[0][0].goalsAgainst).toBeUndefined()
     })
   })
 
