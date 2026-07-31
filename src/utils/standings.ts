@@ -10,6 +10,7 @@ type ResultMatch = Match & {
 interface MiniTableRow {
   points: number
   goalDifference: number
+  goalsFor: number
 }
 
 const isBeyondRegulation = (match: Match) =>
@@ -72,28 +73,50 @@ function createMiniTable(
   return new Map(
     [...miniTable].map(([teamId, row]) => [
       teamId,
-      { points: row.points, goalDifference: row.goalsFor - row.goalsAgainst },
+      { points: row.points, goalDifference: row.goalsFor - row.goalsAgainst, goalsFor: row.goalsFor },
     ]),
   )
 }
 
+// The Olympic method: teams level on points are separated by a table built only from
+// the matches they played against each other. Two teams tied is the same rule as any
+// other number, it just happens to read as "who won between them".
+//
+// It applies to however many teams are level. Restricting it to two or three would mean
+// four tied teams got ordered by overall goal difference, which would put a team above
+// one that beat it.
 function resolvePointsTie(
   rows: StandingRow[],
   matches: ResultMatch[],
   scoring: ScoringRules,
 ): StandingRow[] {
-  if (rows.length !== 2 && rows.length !== 3) return [...rows].sort(compareOverall)
+  if (rows.length < 2) return rows
 
   const miniTable = createMiniTable(rows, matches, scoring)
-  return [...rows].sort((a, b) => {
-    const aMini = miniTable.get(a.team.id)!
-    const bMini = miniTable.get(b.team.id)!
-    return (
-      bMini.points - aMini.points ||
-      (rows.length === 3 ? bMini.goalDifference - aMini.goalDifference : 0) ||
-      compareOverall(a, b)
-    )
+  const compareMini = (a: StandingRow, b: StandingRow) => {
+    const left = miniTable.get(a.team.id)!
+    const right = miniTable.get(b.team.id)!
+    return right.points - left.points ||
+      right.goalDifference - left.goalDifference ||
+      right.goalsFor - left.goalsFor
+  }
+
+  const groups = new Map<string, StandingRow[]>()
+  rows.forEach((row) => {
+    const mini = miniTable.get(row.team.id)!
+    const key = `${mini.points}|${mini.goalDifference}|${mini.goalsFor}`
+    groups.set(key, [...(groups.get(key) ?? []), row])
   })
+
+  // The mini-table separated nobody, so there is nothing left but the overall record.
+  if (groups.size === 1) return [...rows].sort(compareOverall)
+
+  // Whoever is still level is re-compared using only the matches among themselves,
+  // which is how a five-team tie can resolve down to a clean order. Every subgroup is
+  // strictly smaller than what came in, so this always ends.
+  return [...groups.values()]
+    .sort((a, b) => compareMini(a[0], b[0]))
+    .flatMap((group) => resolvePointsTie(group, matches, scoring))
 }
 
 export function calculateStandings(

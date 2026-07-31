@@ -161,18 +161,25 @@ an overtime result would be worth three points inside a tiebreaker.
 `StandingRow.won` and `StandingRow.lost` count regulation results only.
 Overtime results live in `overtimeWon` and `overtimeLost`.
 
-Ordering:
+Ordering follows the Olympic method:
 
 1. Total points.
-2. Exactly two teams tied: points from their direct match.
-3. Exactly three teams tied: mini-table points using only matches among those
-   three teams.
-4. If the three-team mini-table remains tied: mini-table goal difference using
-   only those internal matches.
-5. Unresolved ties: overall goal difference, overall goals for, alphabetical
-   order.
+2. Any number of teams level on points are separated by a mini-table built only from
+   the matches they played against each other: mini-table points, then mini-table goal
+   difference, then mini-table goals for.
+3. Whoever is still level after that is compared again the same way, using only the
+   matches among the teams that remain level. A five-team tie can resolve down to a
+   clean order this way, and each pass is strictly smaller so it always terminates.
+4. When the mini-table separates nobody, the overall record decides: goal difference,
+   goals for, alphabetical order.
 
-Never let a match against a fourth team affect a three-team mini-table.
+The rule applies to a tie of any size. Restricting it to two or three teams was a bug:
+four level teams fell through to overall goal difference, which put a team above one
+that had beaten it, on the strength of goals scored against somebody else entirely.
+
+Never let a match against a team outside the tie affect the mini-table. And note that
+with more than two teams level, "they beat us" is not decisive on its own: the
+mini-table is a real table, and goal difference inside it counts.
 
 ## Discipline
 

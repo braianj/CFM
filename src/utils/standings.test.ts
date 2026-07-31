@@ -355,4 +355,73 @@ describe('calculateStandings', () => {
       })
     })
   })
+  describe('when four teams are level on points', () => {
+    let standings: StandingRow[]
+
+    beforeEach(() => {
+      // A, B, C and D all finish on 6. Among themselves A wins two of three, so the
+      // mini-table puts it first. Its overall goal difference is the worst of the four
+      // only because a team outside the tie thrashed it, which the tie must ignore.
+      const outsiders: Team[] = [
+        { id: 'e', name: 'E', shortName: 'E', category: 'men' },
+        { id: 'f', name: 'F', shortName: 'F', category: 'men' },
+      ]
+      standings = calculateStandings('men', [...teams, ...outsiders], [
+        createMatch({ id: 'm1', homeTeamId: 'a', awayTeamId: 'b', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm2', homeTeamId: 'a', awayTeamId: 'c', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm3', homeTeamId: 'd', awayTeamId: 'a', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm4', homeTeamId: 'b', awayTeamId: 'c', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm5', homeTeamId: 'b', awayTeamId: 'd', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm6', homeTeamId: 'c', awayTeamId: 'd', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm7', homeTeamId: 'e', awayTeamId: 'a', homeScore: 9, awayScore: 0 }),
+        createMatch({ id: 'm8', homeTeamId: 'f', awayTeamId: 'b', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm9', homeTeamId: 'c', awayTeamId: 'e', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm10', homeTeamId: 'd', awayTeamId: 'f', homeScore: 1, awayScore: 0 }),
+      ], scoring)
+    })
+
+    it('should separate them by the matches among themselves', () => {
+      expect(standings.slice(0, 4).every((row) => row.points === 6)).toBe(true)
+      expect(standings.slice(0, 4).map((row) => row.team.id)).toEqual(['a', 'b', 'c', 'd'])
+    })
+
+    it('should ignore goals conceded to a team outside the tie', () => {
+      // A has the worst overall goal difference of the four and still finishes first.
+      const [first] = standings
+      expect(first.team.id).toBe('a')
+      expect(first.goalDifference).toBeLessThan(standings[1].goalDifference)
+    })
+  })
+
+  describe('when the whole group is level and the mini-table says nothing', () => {
+    it('should fall back to the overall record', () => {
+      // A perfect cycle: each beat the next by one goal, so the mini-table is identical
+      // for all three. Only the goals scored outside it can tell them apart.
+      const standings = calculateStandings('men', teams, [
+        createMatch({ id: 'm1', homeTeamId: 'a', awayTeamId: 'b', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm2', homeTeamId: 'b', awayTeamId: 'c', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm3', homeTeamId: 'c', awayTeamId: 'a', homeScore: 1, awayScore: 0 }),
+      ], scoring)
+
+      expect(standings.slice(0, 3).map((row) => row.team.id)).toEqual(['a', 'b', 'c'])
+    })
+  })
+
+  describe('when a mini-table separates only some of the tied teams', () => {
+    it('should re-compare the ones still level among themselves', () => {
+      // A, B and C finish on 3. C lost to both, so it drops. A and B are left level on
+      // the first mini-table and are separated by their own match, which B won.
+      const standings = calculateStandings('men', teams, [
+        createMatch({ id: 'm1', homeTeamId: 'a', awayTeamId: 'c', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm2', homeTeamId: 'b', awayTeamId: 'c', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm3', homeTeamId: 'b', awayTeamId: 'a', homeScore: 1, awayScore: 0 }),
+        createMatch({ id: 'm4', homeTeamId: 'a', awayTeamId: 'd', homeScore: 0, awayScore: 1 }),
+        createMatch({ id: 'm5', homeTeamId: 'b', awayTeamId: 'd', homeScore: 0, awayScore: 1 }),
+      ], scoring)
+
+      const order = standings.map((row) => row.team.id)
+      expect(order.indexOf('b')).toBeLessThan(order.indexOf('a'))
+      expect(order.indexOf('a')).toBeLessThan(order.indexOf('c'))
+    })
+  })
 })
