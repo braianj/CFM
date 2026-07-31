@@ -526,7 +526,9 @@ into one key, so four penalties belonging to two different unknown players added
 an ejection and a suspension against nobody. Losing the row is the correct outcome; the
 panel is where an unattributed penalty gets chased, not the public page.
 
-The statistics view leads with a leaderboard of the players who scored, and keeps the
+The statistics view is split by position, because goalkeeping is measured in shots and
+saves and a skater's table has no column for any of it. `Jugadores` and `Arqueros` never
+share a screen. The players side leads with a leaderboard of who scored, and keeps the
 nine-column sheet behind a disclosure. Players tied on points share a position.
 
 A player who dressed and neither scored nor was penalised is NOT listed. Statistics are

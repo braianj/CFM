@@ -16,3 +16,5 @@
   .header { align-items:end; grid-template-columns:1fr 300px 330px; margin:0 auto; padding:1.1rem max(1rem, calc((100% - 1100px)/2)); }
   .main { padding-top:2rem; }
 }
+
+.emptyNote { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); margin: 0; padding: 2rem 1rem; text-align: center; }

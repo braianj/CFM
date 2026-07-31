@@ -135,6 +135,43 @@ describe('a player card', () => {
   })
 })
 
+describe('goalkeepers on their own tab', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  const openStatistics = () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Estadísticas' }))
+  }
+
+  it('should start on the outfield players', () => {
+    openStatistics()
+
+    // Two tournaments, so one skater section each.
+    expect(screen.getAllByText('Goles y asistencias')).toHaveLength(2)
+    // The tab itself is called Arqueros, so look for the section heading.
+    expect(screen.queryByRole('heading', { name: 'Arqueros' })).toBeNull()
+  })
+
+  it('should swap the whole section for the goalkeepers', () => {
+    openStatistics()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Arqueros' }))
+
+    // Two tournaments, so two goalkeeper tables and no skater table left.
+    expect(screen.getAllByRole('heading', { name: 'Arqueros' })).toHaveLength(2)
+    expect(screen.queryAllByText('Goles y asistencias')).toHaveLength(0)
+  })
+
+  it('should show the saves that ship with the build', () => {
+    openStatistics()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Arqueros' }))
+
+    expect(screen.getByText('Joaquin Bernales')).toBeInTheDocument()
+  })
+})
+
 describe('statistics filtered by team', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())

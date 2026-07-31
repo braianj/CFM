@@ -23,6 +23,7 @@ import { calculateStandings } from './utils/standings'
 import styles from './styles/App.module.css'
 
 type View = 'matches' | 'rosters' | 'standings' | 'statistics'
+type StatsTab = 'players' | 'goalkeepers'
 type Scope = Category | 'all'
 
 const scopeCategories: Record<Scope, Category[]> = {
@@ -41,7 +42,7 @@ const viewSubtitles: Record<View, string> = {
   matches: 'Calendario y resultados',
   rosters: 'Jugadores inscriptos por equipo',
   standings: 'Tabla calculada desde los resultados',
-  statistics: 'Goles, asistencias y faltas',
+  statistics: 'Rendimiento individual',
 }
 
 const readStored = <T extends string>(key: string, allowed: T[], fallback: T): T => {
@@ -55,6 +56,7 @@ export default function App() {
   const [teamId, setTeamIdState] = useState(() => localStorage.getItem('cfm-team') ?? ALL_TEAMS)
   // Not persisted: a player card is where you happen to be, not a preference.
   const [playerId, setPlayerId] = useState('')
+  const [statsTab, setStatsTab] = useState<StatsTab>('players')
   const { matches, teams, players, rosters, events, usingLiveData } = useTournamentData()
 
   const rosterPlayers = useMemo(() => mergeRosters(officialPlayers, players), [players])
@@ -171,6 +173,12 @@ export default function App() {
           ))
         ) : (
           <>
+            {/* Goalkeeping is measured in shots and saves, nothing a skater's table has
+                a column for, so the two never share a screen. */}
+            <SegmentedControl label="Puesto" value={statsTab} onChange={setStatsTab} options={[
+              { value: 'players' as StatsTab, label: 'Jugadores' },
+              { value: 'goalkeepers' as StatsTab, label: 'Arqueros' },
+            ]} />
             <TeamFilter teams={scopedTeams} value={selectedTeam?.id ?? ALL_TEAMS} onChange={setTeamId} />
             {/* A team belongs to one tournament, so picking one drops the other section. */}
             {(selectedTeam ? [selectedTeam.category] : categories).map((category) => (
@@ -181,6 +189,7 @@ export default function App() {
                 events={events}
                 rosters={rosters}
                 teamId={selectedTeam?.id}
+                goalkeepers={statsTab === 'goalkeepers'}
                 showHeading={!selectedTeam && categories.length > 1}
               />
             ))}
@@ -213,21 +222,29 @@ function StandingsSection({ category, teams, matches, showHeading }: SectionProp
   )
 }
 
-function StatisticsSection({ category, teams, events, rosters, teamId, showHeading }: SectionProps & {
-  events: MatchEvent[]; rosters: MatchRosterEntry[]; teamId?: string
+function StatisticsSection({ category, teams, events, rosters, teamId, goalkeepers, showHeading }: SectionProps & {
+  events: MatchEvent[]; rosters: MatchRosterEntry[]; teamId?: string; goalkeepers: boolean
 }) {
   const categoryTeams = teams.filter((team) => team.category === category)
   // Narrowing to one team ranks its own scorers, which is what somebody looking at a
   // single squad is asking for. The totals themselves are the tournament's.
   const ofTeam = <T extends { teamId: string }>(rows: T[]) =>
     teamId ? rows.filter((row) => row.teamId === teamId) : rows
+  const keepers = ofTeam(calculateGoalkeeperStatistics(category, rosters))
 
   return (
     <section className={styles.tournamentSection}>
       {showHeading && <h2 className={styles.tournamentHeading}>{tournamentConfigs[category].name}</h2>}
-      <StatisticsTable rows={ofTeam(calculatePlayerStatistics(category, events, rosters))} teams={categoryTeams} />
-      <GoalkeeperTable rows={ofTeam(calculateGoalkeeperStatistics(category, rosters))} teams={categoryTeams} />
-      <DisciplineNotice rows={ofTeam(calculateDiscipline(category, events))} teams={categoryTeams} />
+      {goalkeepers ? (
+        keepers.length
+          ? <GoalkeeperTable rows={keepers} teams={categoryTeams} />
+          : <p className={styles.emptyNote}>Todavía no hay atajadas cargadas para este torneo.</p>
+      ) : (
+        <>
+          <StatisticsTable rows={ofTeam(calculatePlayerStatistics(category, events, rosters))} teams={categoryTeams} />
+          <DisciplineNotice rows={ofTeam(calculateDiscipline(category, events))} teams={categoryTeams} />
+        </>
+      )}
     </section>
   )
 }
