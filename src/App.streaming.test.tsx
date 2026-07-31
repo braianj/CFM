@@ -11,6 +11,7 @@ interface Emitters {
 }
 
 let emit: Emitters
+let options: { detail?: boolean } | undefined
 
 vi.mock('./data/firestore', () => ({
   subscribeToTournamentData: (
@@ -19,8 +20,11 @@ vi.mock('./data/firestore', () => ({
     onPlayers: Emitters['onPlayers'],
     onRosters: Emitters['onRosters'],
     onEvents: Emitters['onEvents'],
+    _onError: () => void,
+    subscription: { detail?: boolean } = {},
   ) => {
     emit = { onMatches, onTeams, onPlayers, onRosters, onEvents }
+    options = { detail: Boolean(subscription.detail) }
     return () => {}
   },
 }))
@@ -37,56 +41,34 @@ const openRosters = () => {
   fireEvent.click(screen.getByRole('button', { name: 'Planteles' }))
 }
 
-describe('rosters while Firestore streams in', () => {
+describe('what the public site subscribes to', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())
 
-  describe('when only part of the published squads has arrived', () => {
-    it('should keep showing the players that are still on their way', () => {
-      openRosters()
-      act(() => { emit.onTeams(officialTeams); emit.onMatches(officialMatches) })
+  it('should render the squads without any snapshot at all', () => {
+    openRosters()
 
-      // Every squad except CAU lands first.
-      act(() => { emit.onPlayers(officialPlayers.filter((player) => !player.teamId.includes('cau'))) })
-
-      expect(screen.getByText(CAU_BLANCO_GK)).toBeInTheDocument()
-    })
-
-    it('should still show them once the rest arrives', () => {
-      openRosters()
-      act(() => { emit.onPlayers(officialPlayers.filter((player) => !player.teamId.includes('cau'))) })
-
-      act(() => { emit.onPlayers(officialPlayers) })
-
-      expect(screen.getByText(CAU_BLANCO_GK)).toBeInTheDocument()
-    })
+    // Nothing was emitted: this is the versioned copy that ships in the build.
+    expect(screen.getByText(CAU_BLANCO_GK)).toBeInTheDocument()
   })
 
-  describe('when a published document renames a player', () => {
-    it('should show the published name', () => {
-      openRosters()
+  it('should ask Firestore only for the matches and the teams', () => {
+    render(<App />)
 
-      act(() => {
-        emit.onPlayers([{ ...officialPlayers[0], name: 'Nombre Corregido' }])
-      })
-
-      expect(screen.getByText('Nombre Corregido')).toBeInTheDocument()
-      expect(screen.queryByText(officialPlayers[0].name)).toBeNull()
-    })
+    // The squads, the call-ups and the events are about a thousand documents and
+    // Firestore bills one read each on every visit, so the public site never asks for
+    // them. Only the panel does, and it passes detail.
+    expect(options).toEqual({ detail: false })
   })
 
-  describe('when the panel deactivates a player', () => {
-    it('should hide them from the public squad', () => {
-      openRosters()
-      expect(screen.getByText(CAU_BLANCO_GK)).toBeInTheDocument()
+  it('should still take the live result of a match', () => {
+    render(<App />)
+    const played = officialMatches.map((match) =>
+      match.id === 'h-1' ? { ...match, homeScore: 9, awayScore: 0, status: 'finished' as const } : match)
 
-      const deactivated = officialPlayers
-        .filter((player) => player.name === CAU_BLANCO_GK)
-        .map((player) => ({ ...player, active: false }))
-      act(() => { emit.onPlayers(deactivated) })
+    act(() => { emit.onMatches(played) })
 
-      expect(screen.queryByText(CAU_BLANCO_GK)).toBeNull()
-    })
+    expect(screen.getByText('9')).toBeInTheDocument()
   })
 })
 

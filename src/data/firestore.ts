@@ -59,6 +59,12 @@ export const subscribeToTournamentData = (
   onRosters: (rosters: MatchRosterEntry[]) => void,
   onEvents: (events: MatchEvent[]) => void,
   onError: () => void,
+  // The public site never subscribes to the squads, the call-ups and the events. They
+  // are the whole tournament's history, about a thousand documents, and Firestore
+  // charges one read per document on every single page load. They ship inside the
+  // build instead, which the CDN serves for free. Only the panel, which edits them,
+  // needs them live.
+  { detail = false }: { detail?: boolean } = {},
 ): Unsubscribe => {
   const unsubscribes = [
     onSnapshot(collection(db, 'matches'), (snapshot) => {
@@ -69,20 +75,21 @@ export const subscribeToTournamentData = (
       const remote = snapshot.docs.map((item) => item.data() as Team)
       onTeams(remote.length ? remote : seedTeams)
     }, onError),
-    onSnapshot(collection(db, 'players'), (snapshot) => {
-      onPlayers(snapshot.docs.map((item) => item.data() as Player))
-    }, onError),
-    // Rosters and events fall back to the versioned copy the same way matches and teams
-    // do. An empty collection here means the tournament has not been loaded yet, not
-    // that nobody played.
-    onSnapshot(collection(db, 'matchRosters'), (snapshot) => {
-      const remote = snapshot.docs.map((item) => item.data() as MatchRosterEntry)
-      onRosters(remote.length ? remote : seedRosters)
-    }, onError),
-    onSnapshot(collection(db, 'matchEvents'), (snapshot) => {
-      const remote = snapshot.docs.map((item) => item.data() as MatchEvent)
-      onEvents(remote.length ? remote : seedEvents)
-    }, onError),
+    ...(detail ? [
+      onSnapshot(collection(db, 'players'), (snapshot) => {
+        onPlayers(snapshot.docs.map((item) => item.data() as Player))
+      }, onError),
+      // An empty collection means the tournament has not been loaded yet, not that
+      // nobody played, so it falls back to the versioned copy like matches and teams.
+      onSnapshot(collection(db, 'matchRosters'), (snapshot) => {
+        const remote = snapshot.docs.map((item) => item.data() as MatchRosterEntry)
+        onRosters(remote.length ? remote : seedRosters)
+      }, onError),
+      onSnapshot(collection(db, 'matchEvents'), (snapshot) => {
+        const remote = snapshot.docs.map((item) => item.data() as MatchEvent)
+        onEvents(remote.length ? remote : seedEvents)
+      }, onError),
+    ] : []),
   ]
   return () => unsubscribes.forEach((unsubscribe) => unsubscribe())
 }

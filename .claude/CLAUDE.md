@@ -389,8 +389,16 @@ allows 50,000 reads a day, which is roughly fifty visits. Exhausting it returns
 Seeding removes the outage; making the roster and event subscriptions lazy is what
 would remove the cost, and is still pending.
 
-Regenerating the seed from what is published is a manual step, not a build step. Do it
-when the scoresheets are loaded, and keep the files sorted so the diff stays readable. The administration page is
+The public site therefore subscribes to `matches` and `teams` only: 45 documents a visit
+instead of a thousand, which is the difference between the free quota lasting fifty
+visits a day and lasting a thousand. `useTournamentData({ detail: true })` turns the
+other three subscriptions on, and only the panel passes it, because the panel edits them.
+
+The cost is that squads, call-ups and events reach the public site on deploy, not on
+write. That is the right trade for data transcribed off paper hours after the match, and
+it is why `npm run seed` exists: it rewrites the three versioned files from what is
+published. Run it after loading scoresheets, review the diff, and deploy. It reads each
+collection once; do not loop it, because reads are what the quota counts. The administration page is
 available at `/admin/`.
 
 The panel is organised by match, not by feature, because the operator works from one

@@ -9,7 +9,11 @@ import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types
 import { applyAutomaticMatchStatuses } from '../utils/matchStatus'
 import { resolvePlayoffParticipants } from '../utils/playoffs'
 
-export function useTournamentData() {
+// `detail` decides whether the squads, call-ups and events are read from Firestore.
+// The public site leaves it off and uses the versioned copy: that is nine hundred and
+// sixty fewer document reads on every visit, which is the difference between the free
+// quota lasting fifty visits a day and lasting a thousand.
+export function useTournamentData({ detail = false }: { detail?: boolean } = {}) {
   const [storedMatches, setStoredMatches] = useState<Match[]>(staticMatches)
   const [now, setNow] = useState(() => new Date())
   const [teams, setTeams] = useState<Team[]>(staticTeams)
@@ -30,7 +34,8 @@ export function useTournamentData() {
     setRosters,
     setEvents,
     () => setUsingLiveData(false),
-  ), [])
+    { detail },
+  ), [detail])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000)

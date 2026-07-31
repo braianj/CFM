@@ -60,7 +60,7 @@ const getMatchName = (match: Match, teams: Team[]) =>
   `${getTeamName(match.homeTeamId, match.homeLabel, teams)} vs ${getTeamName(match.awayTeamId, match.awayLabel, teams)}`
 
 export function AdminApp() {
-  const { matches, publishedMatches, teams, players, rosters, events } = useTournamentData()
+  const { matches, publishedMatches, teams, players, rosters, events } = useTournamentData({ detail: true })
   const [user, setUser] = useState<User | null>(null)
   const [access, setAccess] = useState<'checking' | AdminRole | 'denied'>('denied')
   const [message, setMessage] = useState('')
