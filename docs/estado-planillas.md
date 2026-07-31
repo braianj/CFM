@@ -1,5 +1,51 @@
 # Estado de las planillas, partido por partido
 
+## Nuevo escaneo recibido el 31/7/2026
+
+`planillas 3.pdf` tiene 28 páginas y contiene 15 planillas. Doce son partidos que no
+estaban en los dos escaneos anteriores; D-6, H-7 y H-8 son copias. Las primeras trece
+planillas usan dos carillas y las dos últimas están completas en una sola página.
+
+| Páginas | Partido | Equipos | Relación con el lote anterior |
+|---|---|---|---|
+| 1-2 | D-6 | ACEMHH - Ñires Zorras | duplicada |
+| 3-4 | D-7 | CAU Kipas - Ovejas Negras Damas | nueva |
+| 5-6 | D-8 | All-Pakas Damas - ACEMHH | nueva |
+| 7-8 | D-9 | All-Pakas Damas - Ñires Zorras | nueva |
+| 9-10 | D-10 | Ovejas Negras Damas - ACEMHH | nueva |
+| 11-12 | H-7 | CAU Blanco - All-Pakas | duplicada |
+| 13-14 | H-8 | CAU Negro - Ovejas Negras | duplicada |
+| 15-16 | H-10 | CAU Negro - CAU Verde | nueva |
+| 17-18 | H-11 | All-Pakas - Ñires | nueva |
+| 19-20 | H-12 | CAU Blanco - Ovejas Negras | nueva |
+| 21-22 | H-13 | CAU Blanco - Ñires | nueva |
+| 23-24 | H-14 | CAU Verde - Ovejas Negras | nueva |
+| 25-26 | H-15 | CAU Negro - All-Pakas | nueva |
+| 27 | D-REP | All-Pakas Damas - Ovejas Negras Damas | nueva |
+| 28 | D-SF2 | CAU Kipas - ACEMHH | nueva |
+
+Este índice está verificado contra el campo `PARTIDO #` de cada hoja y los equipos
+impresos. La carga descrita debajo salió del segundo pase de convocatorias, goles,
+asistencias y penalidades, cruzado con lo que ya estaba publicado.
+
+H-9 (CAU Verde - Ñires) sigue sin aparecer en ninguno de los tres PDFs.
+
+**Cargado el 31/7/2026:** 277 convocatorias y 86 eventos de los 12 partidos nuevos.
+La importación excluyó expresamente las copias D-6, H-7 y H-8, y escribió documentos
+nuevos solamente para D-7, D-8, D-9, D-10, H-10 a H-15, D-REP y D-SF2. Los 300 registros
+de convocatoria y 122 eventos del lote anterior no fueron reescritos.
+
+Los eventos incompletos se publicaron con el mismo criterio del primer lote: existe la
+fila para que el gol o la falta no desaparezca, pero una casaca, asistencia, período,
+reloj, motivo o identidad que no se lee con certeza queda vacío. La cantidad de eventos
+de gol cierra contra el resultado de los doce partidos.
+
+D-SF2 quedó marcado 2-1 en tiempo extra y finalizado. La actualización preparada para
+D-REP (1-0) no se aplicó porque Firestore detectó que el partido había cambiado después
+de la lectura inicial; se respetó la versión más reciente en lugar de sobrescribirla.
+La cuota pública de lectura quedó agotada inmediatamente después de la carga, así que
+queda pendiente un control visual final cuando vuelva a estar disponible.
+
 **Cargado el 30/7/2026:** 122 eventos (69 goles y 53 faltas) de las 14 planillas, mas 65
 convocatorias de las tres planillas del segundo escaneo. De esos 122, **91 quedaron
 completos** y 31 tienen algun dato que la planilla no dejaba leer. El panel los marca con
@@ -57,7 +103,7 @@ PDF 1, páginas 15-16.
 ## 2 · H-1 · sáb 25/7 21:30 · CAU Verde 2 – 6 CAU Blanco
 PDF 1, páginas 1-2. Es la planilla con más problemas de todas.
 
-**Bien**
+**Bien**y enten
 - Verde: P1 6:15 gol #4, asistencia #16
 - Blanco: P1 12:52 gol #53 · P1 0:50 gol #88 · P2 9:20 gol #6 asist #32 · P2 3:23 gol #32 asist #6 y #5
 
