@@ -63,12 +63,14 @@ describe('App', () => {
   })
 
   describe('when a team is selected', () => {
-    it('should list only its matches and the playoffs it could reach', () => {
+    it('should list its own matches and drop the playoffs it can no longer reach', () => {
       render(<App />)
 
       selectTeam('men-cau-1')
 
-      expect(listedMatches()).toBe(9)
+      // Its five regular matches, the final it is seeded into, and the one whose other
+      // half is still a label. The two playoffs that resolved to other teams are gone.
+      expect(listedMatches()).toBe(7)
     })
 
     it('should never mix in the other tournament', () => {

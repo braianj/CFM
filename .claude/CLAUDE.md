@@ -377,7 +377,20 @@ Firebase is configured in project `cfm-hockey` on the free Spark plan:
 - public reads on tournament data; writes restricted to administrators
 
 The public app subscribes to Firestore and falls back to versioned seed data
-when the remote database is empty or unavailable. The administration page is
+when the remote database is empty or unavailable. All five collections are seeded, not
+just `matches` and `teams`: `src/data/matchRosters.ts` and `src/data/matchEvents.ts`
+carry the transcribed scoresheets, and the hook starts from them. The site therefore
+renders the real tournament with zero reads, and a snapshot only refines it.
+
+That matters because the app subscribes to whole collections: every page load costs one
+document read per record, so about a thousand on a loaded tournament. The Spark plan
+allows 50,000 reads a day, which is roughly fifty visits. Exhausting it returns
+`RESOURCE_EXHAUSTED` on every read and the site would otherwise show an empty fixture.
+Seeding removes the outage; making the roster and event subscriptions lazy is what
+would remove the cost, and is still pending.
+
+Regenerating the seed from what is published is a manual step, not a build step. Do it
+when the scoresheets are loaded, and keep the files sorted so the diff stays readable. The administration page is
 available at `/admin/`.
 
 The panel is organised by match, not by feature, because the operator works from one

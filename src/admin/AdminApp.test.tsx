@@ -140,10 +140,11 @@ describe('AdminApp', () => {
     })
 
     it('should say what each match still needs', async () => {
-      settledMatchIds.push('h-2')
       await showTheList()
 
-      expect(document.getElementById('match-h-3')!.textContent).toContain('falta el resultado')
+      // Every regular match already has a result in the versioned fixture; the finals
+      // are the ones still waiting for one.
+      expect(document.getElementById('match-h-final-a')!.textContent).toContain('falta el resultado')
       expect(document.getElementById('match-h-2')!.textContent).not.toContain('falta el resultado')
     })
 

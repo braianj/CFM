@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { matches as staticMatches } from '../data/matches'
+import { matchRosters as staticRosters } from '../data/matchRosters'
+import { matchEvents as staticEvents } from '../data/matchEvents'
+import { players as staticPlayers } from '../data/players'
 import { teams as staticTeams } from '../data/teams'
 import { subscribeToTournamentData } from '../data/firestore'
 import type { Match, MatchEvent, MatchRosterEntry, Player, Team } from '../types/tournament'
@@ -10,9 +13,11 @@ export function useTournamentData() {
   const [storedMatches, setStoredMatches] = useState<Match[]>(staticMatches)
   const [now, setNow] = useState(() => new Date())
   const [teams, setTeams] = useState<Team[]>(staticTeams)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [rosters, setRosters] = useState<MatchRosterEntry[]>([])
-  const [events, setEvents] = useState<MatchEvent[]>([])
+  // Seeded from the versioned copy so the site renders the real tournament even when
+  // Firestore cannot be reached. A snapshot replaces it as soon as one arrives.
+  const [players, setPlayers] = useState<Player[]>(staticPlayers)
+  const [rosters, setRosters] = useState<MatchRosterEntry[]>(staticRosters)
+  const [events, setEvents] = useState<MatchEvent[]>(staticEvents)
   const [usingLiveData, setUsingLiveData] = useState(false)
 
   useEffect(() => subscribeToTournamentData(

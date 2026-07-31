@@ -10,6 +10,8 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore'
 import { matches as seedMatches } from './matches'
+import { matchRosters as seedRosters } from './matchRosters'
+import { matchEvents as seedEvents } from './matchEvents'
 import { players as seedPlayers } from './players'
 import { teams as seedTeams } from './teams'
 import { OWNER_EMAIL, db } from '../firebase'
@@ -70,11 +72,16 @@ export const subscribeToTournamentData = (
     onSnapshot(collection(db, 'players'), (snapshot) => {
       onPlayers(snapshot.docs.map((item) => item.data() as Player))
     }, onError),
+    // Rosters and events fall back to the versioned copy the same way matches and teams
+    // do. An empty collection here means the tournament has not been loaded yet, not
+    // that nobody played.
     onSnapshot(collection(db, 'matchRosters'), (snapshot) => {
-      onRosters(snapshot.docs.map((item) => item.data() as MatchRosterEntry))
+      const remote = snapshot.docs.map((item) => item.data() as MatchRosterEntry)
+      onRosters(remote.length ? remote : seedRosters)
     }, onError),
     onSnapshot(collection(db, 'matchEvents'), (snapshot) => {
-      onEvents(snapshot.docs.map((item) => item.data() as MatchEvent))
+      const remote = snapshot.docs.map((item) => item.data() as MatchEvent)
+      onEvents(remote.length ? remote : seedEvents)
     }, onError),
   ]
   return () => unsubscribes.forEach((unsubscribe) => unsubscribe())
