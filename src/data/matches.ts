@@ -30,7 +30,10 @@ export const matches: Match[] = [
   { id: 'h-13', category: 'men', startDateTime: '2026-07-30T20:30:00-03:00', stage: 'regular', homeTeamId: 'men-cau-1', awayTeamId: 'men-los-nires', homeScore: 0, awayScore: 1, status: 'finished', countsForStandings: true, resolution: 'overtime' },
   { id: 'h-14', category: 'men', startDateTime: '2026-07-30T21:30:00-03:00', stage: 'regular', homeTeamId: 'men-cau-2', awayTeamId: 'men-ovejas-negras', homeScore: 6, awayScore: 0, status: 'upcoming', countsForStandings: true, resolution: 'regulation' },
   { id: 'h-15', category: 'men', startDateTime: '2026-07-30T22:50:00-03:00', stage: 'regular', homeTeamId: 'men-cau-3', awayTeamId: 'men-allpacas', homeScore: 6, awayScore: 2, status: 'upcoming', countsForStandings: true, resolution: 'regulation' },
-  { id: 'd-rep', category: 'women', startDateTime: '2026-07-31T08:00:00-03:00', stage: 'repechaje', homeLabel: '5.ª de fase regular', awayLabel: '4.ª de fase regular', homeScore: null, awayScore: null, status: 'tbd', countsForStandings: false },
+  // 1-0 on the sheet: one goal in the first period and none in the second. The write
+  // that would have published it was refused by a version precondition, so it never
+  // reached Firestore.
+  { id: 'd-rep', category: 'women', startDateTime: '2026-07-31T08:00:00-03:00', stage: 'repechaje', homeLabel: '5.ª de fase regular', awayLabel: '4.ª de fase regular', homeScore: 1, awayScore: 0, status: 'finished', countsForStandings: false, resolution: 'regulation' },
   { id: 'd-sf2', category: 'women', startDateTime: '2026-07-31T09:00:00-03:00', stage: 'semifinal-2', homeLabel: '2.ª de fase regular', awayLabel: '3.ª de fase regular', homeScore: 2, awayScore: 1, status: 'tbd', countsForStandings: false, resolution: 'overtime' },
   { id: 'd-sf1', category: 'women', startDateTime: '2026-07-31T20:30:00-03:00', stage: 'semifinal-1', homeLabel: 'Ganador del Repechaje', awayLabel: '1.ª de fase regular', homeScore: null, awayScore: null, status: 'tbd', countsForStandings: false },
   { id: 'h-rep-b', category: 'men', startDateTime: '2026-07-31T21:30:00-03:00', stage: 'repechaje-b', homeLabel: '5.º de fase regular', awayLabel: '6.º de fase regular', homeScore: null, awayScore: null, status: 'tbd', countsForStandings: false },
