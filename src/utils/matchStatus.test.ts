@@ -65,4 +65,19 @@ describe('getAutomaticMatchStatus', () => {
       expect(getAutomaticMatchStatus(match, new Date('2026-07-25T12:00:00-03:00'))).toBe('tbd')
     })
   })
+  describe('when a match was awarded by walkover', () => {
+    it('should be finished even during its own slot', () => {
+      const kickOff = new Date(match.startDateTime)
+      const walkover = { ...match, resolution: 'walkover' as const, homeScore: 1, awayScore: 0 }
+
+      expect(getAutomaticMatchStatus(walkover, kickOff)).toBe('finished')
+    })
+
+    it('should still wait for the result before calling it finished', () => {
+      const kickOff = new Date(match.startDateTime)
+      const pending = { ...match, resolution: 'walkover' as const }
+
+      expect(getAutomaticMatchStatus(pending, kickOff)).toBe('live')
+    })
+  })
 })

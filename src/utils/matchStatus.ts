@@ -21,6 +21,9 @@ export const MATCH_DURATION_MINUTES = 40
 
 export function getAutomaticMatchStatus(match: Match, now = new Date()): MatchStatus {
   if (match.status === 'postponed') return 'postponed'
+  // A walkover is settled without anybody taking the ice, so the clock says nothing
+  // about it. Without this it would show as live during its own slot.
+  if (match.resolution === 'walkover' && match.homeScore !== null && match.awayScore !== null) return 'finished'
   if (!match.homeTeamId || !match.awayTeamId) return 'tbd'
 
   const start = new Date(match.startDateTime).getTime()

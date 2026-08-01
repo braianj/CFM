@@ -32,11 +32,12 @@ const scopeCategories: Record<AdminScope, Category[]> = {
 }
 
 const eventTypes: MatchEventType[] = ['goal', 'penalty', 'major-penalty']
-const resolutions: MatchResolution[] = ['regulation', 'overtime', 'shootout']
+const resolutions: MatchResolution[] = ['regulation', 'overtime', 'shootout', 'walkover']
 const resolutionLabels: Record<MatchResolution, string> = {
   regulation: 'En tiempo reglamentario (3 / 0)',
   overtime: 'En tiempo extra (2 / 1)',
   shootout: 'Por penales (2 / 1)',
+  walkover: 'No se presentó un equipo (3 / 0)',
 }
 const stagesByCategory: Record<Category, MatchStage[]> = {
   men: ['regular', 'repechaje-a', 'repechaje-b', 'final-a', 'final-b'],

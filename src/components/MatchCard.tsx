@@ -18,6 +18,7 @@ const resolutionLabels: Record<MatchResolution, string> = {
   regulation: '',
   overtime: 'Definido en tiempo extra',
   shootout: 'Definido por penales',
+  walkover: 'Ganado por no presentación',
 }
 
 export function MatchCard({ match, teams, timezone, categoryLabel, summary = [] }: Props) {

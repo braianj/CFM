@@ -145,8 +145,16 @@ Default scoring:
 - Loss in overtime or shootout: 1 point
 - Loss in regulation: 0 points
 
-`Match.resolution` records how the match was settled: `regulation`, `overtime` or
-`shootout`. An absent value means regulation. Overtime and shootout are worth the
+A walkover (`walkover`) is a side not turning up. It pays `walkoverWin` / `walkoverLoss`,
+3 and 0 by default, and is priced by its own keys so the organisation can change what a
+walkover is worth without touching a regulation win. It counts in `won` and `lost`, never
+in the overtime columns, because nothing was played beyond regulation. The nominal score
+the operator enters counts for goal difference like any other, so entering 1-0 gives the
+present team a goal. A walkover is `finished` from the moment its result is loaded:
+`getAutomaticMatchStatus` must not let the clock call it live, because nobody took the ice.
+
+`Match.resolution` records how the match was settled: `regulation`, `overtime`,
+`shootout` or `walkover`. An absent value means regulation. Overtime and shootout are worth the
 same today, but they are stored separately and priced by separate `ScoringRules`
 keys, so the tournament can change one without touching the other.
 

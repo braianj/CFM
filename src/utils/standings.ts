@@ -25,6 +25,7 @@ function awardPoints(match: ResultMatch, scoring: ScoringRules) {
     regulation: { winner: scoring.win, loser: scoring.loss },
     overtime: { winner: scoring.overtimeWin, loser: scoring.overtimeLoss },
     shootout: { winner: scoring.shootoutWin, loser: scoring.shootoutLoss },
+    walkover: { winner: scoring.walkoverWin, loser: scoring.walkoverLoss },
   }
   const { winner, loser } = rewards[match.resolution ?? 'regulation']
 

@@ -21,7 +21,7 @@ describe('calculateStandings', () => {
   let teams: Team[]
 
   beforeEach(() => {
-    scoring = { win: 3, overtimeWin: 2, overtimeLoss: 1, shootoutWin: 2, shootoutLoss: 1, loss: 0, draw: 1 }
+    scoring = { win: 3, overtimeWin: 2, overtimeLoss: 1, shootoutWin: 2, shootoutLoss: 1, walkoverWin: 3, walkoverLoss: 0, loss: 0, draw: 1 }
     teams = [
       { id: 'a', name: 'A', shortName: 'A', category: 'men' },
       { id: 'b', name: 'B', shortName: 'B', category: 'men' },
@@ -422,6 +422,44 @@ describe('calculateStandings', () => {
       const order = standings.map((row) => row.team.id)
       expect(order.indexOf('b')).toBeLessThan(order.indexOf('a'))
       expect(order.indexOf('a')).toBeLessThan(order.indexOf('c'))
+    })
+  })
+  describe('when a team does not turn up', () => {
+    it('should pay the winner like a regulation win and the absent side nothing', () => {
+      const standings = calculateStandings('men', teams, [
+        createMatch({ homeTeamId: 'a', awayTeamId: 'b', homeScore: 1, awayScore: 0, resolution: 'walkover' }),
+      ], scoring)
+
+      expect(standings[0]).toMatchObject({ team: { id: 'a' }, points: 3, won: 1, lost: 0 })
+      expect(standings.find((row) => row.team.id === 'b')).toMatchObject({ points: 0, lost: 1, won: 0 })
+    })
+
+    it('should not count it as an overtime result', () => {
+      const [first] = calculateStandings('men', teams, [
+        createMatch({ homeTeamId: 'a', awayTeamId: 'b', homeScore: 1, awayScore: 0, resolution: 'walkover' }),
+      ], scoring)
+
+      expect(first).toMatchObject({ overtimeWon: 0, overtimeLost: 0 })
+    })
+
+    it('should let the organisation price it apart from a regulation win', () => {
+      const [first] = calculateStandings('men', teams, [
+        createMatch({ homeTeamId: 'a', awayTeamId: 'b', homeScore: 1, awayScore: 0, resolution: 'walkover' }),
+      ], { ...scoring, walkoverWin: 2 })
+
+      expect(first.points).toBe(2)
+    })
+
+    it('should settle a tie on points like any other result', () => {
+      // A wins by walkover, B wins on the ice; they meet and B wins that too.
+      const standings = calculateStandings('men', teams, [
+        createMatch({ id: 'm1', homeTeamId: 'a', awayTeamId: 'c', homeScore: 1, awayScore: 0, resolution: 'walkover' }),
+        createMatch({ id: 'm2', homeTeamId: 'b', awayTeamId: 'd', homeScore: 5, awayScore: 0 }),
+        createMatch({ id: 'm3', homeTeamId: 'b', awayTeamId: 'a', homeScore: 2, awayScore: 1 }),
+      ], scoring)
+
+      const order = standings.map((row) => row.team.id)
+      expect(order.indexOf('b')).toBeLessThan(order.indexOf('a'))
     })
   })
 })
