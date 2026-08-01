@@ -4,6 +4,21 @@ Leído el 31/7/2026 de los tres escaneos. **Todavía no está cargado en Firesto
 cuota diaria de lectura del proyecto está agotada y no se puede resolver casaca →
 jugador sin leer las convocatorias publicadas.
 
+## La segunda planilla: los tiros por jugador
+
+Cada partido tiene **dos hojas**. La segunda es la de juego, con goles y penalidades. La
+primera es **la que firman los jugadores**, y trae `TIROS 1° / TIROS 2° / TIROS OT` por
+jugador. De ahí salen las atajadas de los partidos cuyo pie quedó en blanco:
+
+> **atajadas = tiros del rival − goles que le hicieron en juego**
+
+Verificado contra H-4, donde tenemos las dos hojas: los tiros por jugador suman 12 para
+CAU Negro y 13 para CAU Blanco, que es exactamente el `TAA` del pie, y de ahí salen las
+12 y 8 atajadas que el pie ya declaraba. El método cierra al número.
+
+**El gol que define un shootout no se le carga al arquero.** Cuenta para el resultado
+pero no para el porcentaje de atajadas.
+
 ## De dónde sale cada número
 
 El pie de la segunda carilla trae dos recuadros:
